@@ -66,6 +66,10 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
     // Set this as the active tasting
     setActiveTasting(params.id)
+
+    // Poll for updates every 3 seconds
+    const interval = setInterval(loadTasting, 3000)
+    return () => clearInterval(interval)
   }, [params.id, setActiveTasting])
 
   const loadTasting = async () => {
