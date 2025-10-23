@@ -11,7 +11,7 @@ export async function GET() {
     const tastings = await prisma.tasting.findMany({
       include: {
         _count: {
-          select: { participants: true, beers: true }
+          select: { participants: true, tastingBeers: true }
         }
       },
       orderBy: { createdAt: 'desc' },
@@ -25,7 +25,7 @@ export async function GET() {
         status: t.status,
         createdAt: t.createdAt,
         participantCount: t._count.participants,
-        beerCount: t._count.beers
+        beerCount: t._count.tastingBeers
       }))
     });
   } catch (error) {
