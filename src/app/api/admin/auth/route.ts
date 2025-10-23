@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create admin session
-    createAdminSession();
+    await createAdminSession();
 
     return NextResponse.json({
       success: true

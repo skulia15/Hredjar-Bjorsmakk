@@ -10,7 +10,8 @@ const ADMIN_MAX_AGE = 86400; // 24 hours
  * Create a participant session cookie
  */
 export async function createParticipantSession(rejoinToken: string) {
-  cookies().set(SESSION_COOKIE_NAME, rejoinToken, {
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, rejoinToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -23,7 +24,7 @@ export async function createParticipantSession(rejoinToken: string) {
  * Get participant from session cookie
  */
 export async function getParticipantFromSession() {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const rejoinToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (!rejoinToken) {
@@ -58,7 +59,7 @@ export async function getParticipantFromSession() {
  * Get participant from specific tasting by session
  */
 export async function getParticipantFromTasting(tastingId: string) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const rejoinToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
 
   if (!rejoinToken) {
@@ -86,15 +87,17 @@ export async function getParticipantFromTasting(tastingId: string) {
 /**
  * Clear participant session cookie
  */
-export function clearParticipantSession() {
-  cookies().delete(SESSION_COOKIE_NAME);
+export async function clearParticipantSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
 /**
  * Create admin session cookie
  */
-export function createAdminSession() {
-  cookies().set(ADMIN_COOKIE_NAME, 'true', {
+export async function createAdminSession() {
+  const cookieStore = await cookies();
+  cookieStore.set(ADMIN_COOKIE_NAME, 'true', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -106,8 +109,8 @@ export function createAdminSession() {
 /**
  * Check if current session is admin
  */
-export function isAdminSession(): boolean {
-  const cookieStore = cookies();
+export async function isAdminSession(): Promise<boolean> {
+  const cookieStore = await cookies();
   const adminCookie = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
   return adminCookie === 'true';
 }
@@ -115,15 +118,17 @@ export function isAdminSession(): boolean {
 /**
  * Clear admin session cookie
  */
-export function clearAdminSession() {
-  cookies().delete(ADMIN_COOKIE_NAME);
+export async function clearAdminSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(ADMIN_COOKIE_NAME);
 }
 
 /**
  * Require admin session or throw error
  */
-export function requireAdminSession() {
-  if (!isAdminSession()) {
+export async function requireAdminSession() {
+  const isAdmin = await isAdminSession();
+  if (!isAdmin) {
     throw new Error('Admin access required');
   }
 }

@@ -6,7 +6,7 @@ import { requireAdminSession } from '@/lib/session';
 export async function GET(request: NextRequest) {
   try {
     // Verify admin session
-    requireAdminSession();
+    await requireAdminSession();
 
     const users = await prisma.user.findMany({
       include: {

@@ -10,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     // Verify admin session
-    requireAdminSession();
+    await requireAdminSession();
 
     const body = await request.json();
     const validation = validateInput(updateUserSchema, body);
