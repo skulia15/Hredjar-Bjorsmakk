@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createTastingSchema, validateInput } from '@/lib/validation';
 import { getOrCreateUser, generateUniqueParticipantCode } from '@/lib/auth';
-import { createParticipantSession } from '@/lib/session';
+import { createParticipantSession, requireAdminSession } from '@/lib/session';
 import { randomUUID } from 'crypto';
 
 // GET /api/tastings - List all tastings
@@ -40,6 +40,9 @@ export async function GET() {
 // POST /api/tastings - Create new tasting
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin session
+    await requireAdminSession();
+
     const body = await request.json();
     const validation = validateInput(createTastingSchema, body);
 
@@ -96,6 +99,13 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
     console.error('Error creating tasting:', error);
     return NextResponse.json(
       { error: 'Failed to create tasting' },

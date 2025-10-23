@@ -1,6 +1,8 @@
 import Link from 'next/link'
+import { isAdminSession } from '@/lib/session'
 
-export default function HomePage() {
+export default async function HomePage() {
+  const isAdmin = await isAdminSession();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
@@ -13,29 +15,40 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-4">
-          <Link
-            href="/create"
-            className="block w-full px-4 py-3 text-center bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
-          >
-            Create New Tasting
-          </Link>
+          {isAdmin && (
+            <>
+              <Link
+                href="/create"
+                className="block w-full px-4 py-3 text-center bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              >
+                Create New Tasting
+              </Link>
 
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-background px-2 text-muted-foreground">
-                Or
-              </span>
-            </div>
-          </div>
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or
+                  </span>
+                </div>
+              </div>
+            </>
+          )}
 
           <Link
             href="/tastings"
             className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             Browse Tastings
+          </Link>
+
+          <Link
+            href="/beers"
+            className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            View Beer Catalog
           </Link>
 
           <Link
