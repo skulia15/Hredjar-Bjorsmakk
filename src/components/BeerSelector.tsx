@@ -18,13 +18,14 @@ interface Beer {
 interface BeerSelectorProps {
   beers: Beer[]
   onSelectBeer: (beerId: string) => void
+  onSelectMultipleBeers?: (beerIds: string[]) => void
   onCreateCustom: (data: { name: string; brewery: string; style?: string; abv?: number }) => void
 }
 
-export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelectorProps) {
+export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCreateCustom }: BeerSelectorProps) {
   const [mode, setMode] = useState<'catalog' | 'custom'>('catalog')
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedBeerId, setSelectedBeerId] = useState('')
+  const [selectedBeerIds, setSelectedBeerIds] = useState<Set<string>>(new Set())
 
   // Custom beer form state
   const [customName, setCustomName] = useState('')
@@ -42,15 +43,31 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
     )
   }, [beers, searchTerm])
 
-  const selectedBeer = beers.find(b => b.id === selectedBeerId)
+  const selectedBeers = beers.filter(b => selectedBeerIds.has(b.id))
+
+  const toggleBeerSelection = (beerId: string) => {
+    setSelectedBeerIds(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(beerId)) {
+        newSet.delete(beerId)
+      } else {
+        newSet.add(beerId)
+      }
+      return newSet
+    })
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (mode === 'catalog') {
-      if (selectedBeerId) {
-        onSelectBeer(selectedBeerId)
+      if (selectedBeerIds.size > 0) {
+        if (onSelectMultipleBeers && selectedBeerIds.size > 1) {
+          onSelectMultipleBeers(Array.from(selectedBeerIds))
+        } else if (selectedBeerIds.size === 1) {
+          onSelectBeer(Array.from(selectedBeerIds)[0])
+        }
         // Reset
-        setSelectedBeerId('')
+        setSelectedBeerIds(new Set())
         setSearchTerm('')
       }
     } else {
@@ -115,55 +132,58 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
             <div className="border rounded-lg max-h-96 overflow-y-auto bg-background">
               {filteredBeers.length > 0 ? (
                 <div className="divide-y">
-                  {filteredBeers.map((beer) => (
-                    <button
-                      key={beer.id}
-                      type="button"
-                      onClick={() => setSelectedBeerId(beer.id)}
-                      className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${
-                        selectedBeerId === beer.id ? 'bg-primary/10 border-l-4 border-l-primary' : ''
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="font-medium text-sm truncate">{beer.name}</div>
-                            {beer.priceISK && (
-                              <div className="text-sm font-semibold text-green-600 whitespace-nowrap">
-                                {beer.priceISK} kr
-                              </div>
-                            )}
+                  {filteredBeers.map((beer) => {
+                    const isSelected = selectedBeerIds.has(beer.id)
+                    return (
+                      <button
+                        key={beer.id}
+                        type="button"
+                        onClick={() => toggleBeerSelection(beer.id)}
+                        className={`w-full text-left px-4 py-3 hover:bg-muted/50 transition-colors ${
+                          isSelected ? 'bg-primary/10 border-l-4 border-l-primary' : ''
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="font-medium text-sm truncate">{beer.name}</div>
+                              {beer.priceISK && (
+                                <div className="text-sm font-semibold text-green-600 whitespace-nowrap">
+                                  {beer.priceISK} kr
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground truncate">{beer.brewery}</div>
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
+                              {beer.style && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">
+                                  {beer.style}
+                                </span>
+                              )}
+                              {beer.abv && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-600">
+                                  {beer.abv}%
+                                </span>
+                              )}
+                              {beer.containerSize && beer.containerType && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-600">
+                                  {beer.containerSize}ml {beer.containerType}
+                                </span>
+                              )}
+                              {beer.country && (
+                                <span className="text-xs text-muted-foreground">
+                                  {beer.country}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs text-muted-foreground truncate">{beer.brewery}</div>
-                          <div className="flex items-center gap-2 mt-1 flex-wrap">
-                            {beer.style && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">
-                                {beer.style}
-                              </span>
-                            )}
-                            {beer.abv && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-600">
-                                {beer.abv}%
-                              </span>
-                            )}
-                            {beer.containerSize && beer.containerType && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-600">
-                                {beer.containerSize}ml {beer.containerType}
-                              </span>
-                            )}
-                            {beer.country && (
-                              <span className="text-xs text-muted-foreground">
-                                {beer.country}
-                              </span>
-                            )}
-                          </div>
+                          {isSelected && (
+                            <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
+                          )}
                         </div>
-                        {selectedBeerId === beer.id && (
-                          <Check className="h-5 w-5 text-primary flex-shrink-0 mt-1" />
-                        )}
-                      </div>
-                    </button>
-                  ))}
+                      </button>
+                    )
+                  })}
                 </div>
               ) : (
                 <div className="px-4 py-12 text-center space-y-2">
@@ -179,28 +199,46 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
               )}
             </div>
 
-            {/* Selected Beer Preview */}
-            {selectedBeer && (
-              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-                <div className="text-sm font-medium text-muted-foreground mb-2">Selected:</div>
-                <div className="font-semibold">{selectedBeer.name}</div>
-                <div className="text-sm text-muted-foreground">{selectedBeer.brewery}</div>
-                {(selectedBeer.style || selectedBeer.abv) && (
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {selectedBeer.style}{selectedBeer.style && selectedBeer.abv && ' • '}
-                    {selectedBeer.abv && `${selectedBeer.abv}%`}
-                  </div>
-                )}
+            {/* Selected Beers Preview */}
+            {selectedBeers.length > 0 && (
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
+                <div className="text-sm font-medium text-muted-foreground mb-2">
+                  {selectedBeers.length} beer{selectedBeers.length !== 1 ? 's' : ''} selected:
+                </div>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {selectedBeers.map(beer => (
+                    <div key={beer.id} className="flex items-center justify-between text-sm">
+                      <div className="flex-1 min-w-0">
+                        <span className="font-semibold truncate block">{beer.name}</span>
+                        <span className="text-xs text-muted-foreground truncate block">{beer.brewery}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          toggleBeerSelection(beer.id)
+                        }}
+                        className="ml-2 text-muted-foreground hover:text-destructive"
+                        title="Remove"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={!selectedBeerId}
+              disabled={selectedBeerIds.size === 0}
               className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Add Selected Beer ({filteredBeers.length} available)
+              {selectedBeerIds.size > 0
+                ? `Add ${selectedBeerIds.size} Beer${selectedBeerIds.size !== 1 ? 's' : ''}`
+                : `Select beers to add (${filteredBeers.length} available)`
+              }
             </button>
           </div>
         ) : (

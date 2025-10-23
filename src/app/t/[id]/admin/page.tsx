@@ -100,6 +100,38 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
+  const handleSelectMultipleBeers = async (beerIds: string[]) => {
+    setMessage(`Adding ${beerIds.length} beers...`)
+    try {
+      // Add all beers in parallel
+      const results = await Promise.allSettled(
+        beerIds.map(beerId =>
+          fetch(`/api/tastings/${params.id}/beers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ beerId, userName })
+          })
+        )
+      )
+
+      // Count successes and failures
+      const successes = results.filter(r => r.status === 'fulfilled').length
+      const failures = results.filter(r => r.status === 'rejected').length
+
+      if (failures > 0) {
+        setMessage(`Added ${successes} beers, ${failures} failed`)
+      } else {
+        setMessage(`Successfully added ${successes} beers!`)
+      }
+
+      setTimeout(() => setMessage(''), 3000)
+      loadTasting()
+    } catch (error) {
+      setMessage('Error adding beers')
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
   const handleCreateCustom = async (data: { name: string; brewery: string; style?: string; abv?: number }) => {
     setMessage('')
     try {
@@ -473,6 +505,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               <BeerSelector
                 beers={availableBeers}
                 onSelectBeer={handleSelectBeer}
+                onSelectMultipleBeers={handleSelectMultipleBeers}
                 onCreateCustom={handleCreateCustom}
               />
 
