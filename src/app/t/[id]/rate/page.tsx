@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
+import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
 
 interface Beer {
   id: string
@@ -42,6 +43,9 @@ export default function RatePage({ params }: { params: { id: string } }) {
   } | null>(null)
   const [previousBeerId, setPreviousBeerId] = useState<string | null>(null)
 
+  // Leaderboard waiting state (shown after wrap-up completes)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+
   const { setActiveTasting } = useActiveTasting()
 
   useEffect(() => {
@@ -75,7 +79,7 @@ export default function RatePage({ params }: { params: { id: string } }) {
 
     const currentBeerId = tasting.currentBeerId
 
-    // If current beer changed and we had a previous beer
+    // If current beer changed
     if (previousBeerId && previousBeerId !== currentBeerId) {
       // Check if the previous beer is now finished
       const finishedBeer = tasting.beers.find(
@@ -91,12 +95,18 @@ export default function RatePage({ params }: { params: { id: string } }) {
           count: finishedBeer.ratingCount || 0
         })
         setShowWrapUp(true)
+        setShowLeaderboard(false) // Hide leaderboard when showing wrap-up
       }
+    }
+
+    // If a new current beer is set, hide leaderboard
+    if (currentBeerId && showLeaderboard) {
+      setShowLeaderboard(false)
     }
 
     // Update previous beer ID for next comparison
     setPreviousBeerId(currentBeerId || null)
-  }, [tasting, previousBeerId])
+  }, [tasting, previousBeerId, showLeaderboard])
 
   const currentBeer = tasting?.beers.find(b => b.id === tasting.currentBeerId)
 
@@ -167,6 +177,12 @@ export default function RatePage({ params }: { params: { id: string } }) {
     )
   }
 
+  // Show leaderboard if no current beer and we've shown wrap-up before
+  if (!currentBeer && (showLeaderboard || tasting.beers.some(b => b.status === 'finished'))) {
+    return <LeaderboardWaiting tastingId={params.id} />
+  }
+
+  // Show basic waiting state if no current beer and no finished beers yet
   if (!currentBeer) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -274,8 +290,10 @@ export default function RatePage({ params }: { params: { id: string } }) {
           average={wrapUpData.average}
           count={wrapUpData.count}
           onComplete={() => {
+            // After wrap-up completes, show leaderboard
             setShowWrapUp(false)
             setWrapUpData(null)
+            setShowLeaderboard(true)
           }}
           minDuration={5000}
         />

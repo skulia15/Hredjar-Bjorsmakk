@@ -1,0 +1,187 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Link from 'next/link'
+
+interface Tasting {
+  id: string
+  title: string
+  status: string
+  createdAt: string
+  createdBy: string | null
+  createdByName: string | null
+  participantCount: number
+  beerCount: number
+  ratingCount: number
+  finishedBeerCount: number
+}
+
+export default function AdminTastingsPage() {
+  const [tastings, setTastings] = useState<Tasting[]>([])
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    closed: 0,
+    draft: 0
+  })
+
+  useEffect(() => {
+    loadTastings()
+  }, [])
+
+  const loadTastings = async () => {
+    try {
+      const response = await fetch('/api/admin/tastings')
+
+      if (!response.ok) {
+        throw new Error('Failed to load tastings')
+      }
+
+      const data = await response.json()
+      setTastings(data.tastings || [])
+
+      // Calculate stats
+      const total = data.tastings.length
+      const active = data.tastings.filter((t: Tasting) => t.status === 'active').length
+      const closed = data.tastings.filter((t: Tasting) => t.status === 'closed').length
+      const draft = data.tastings.filter((t: Tasting) => t.status === 'draft').length
+
+      setStats({ total, active, closed, draft })
+    } catch (error) {
+      console.error('Error loading tastings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const getStatusBadge = (status: string) => {
+    const styles = {
+      draft: 'bg-gray-500/10 text-gray-600',
+      active: 'bg-green-500/10 text-green-600',
+      closed: 'bg-blue-500/10 text-blue-600'
+    }
+
+    return (
+      <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status as keyof typeof styles] || styles.draft}`}>
+        {status}
+      </span>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🍺</div>
+          <p className="text-muted-foreground">Loading tastings...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen p-4 md:p-8">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Admin: All Tastings</h1>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/admin/users"
+              className="text-sm text-primary hover:underline"
+            >
+              ← Back to Users
+            </Link>
+          </div>
+        </div>
+
+        {/* Stats Dashboard */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-card p-4 rounded-lg border">
+            <div className="text-2xl font-bold text-primary">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total Tastings</div>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <div className="text-2xl font-bold text-green-600">{stats.active}</div>
+            <div className="text-sm text-muted-foreground">Active</div>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <div className="text-2xl font-bold text-blue-600">{stats.closed}</div>
+            <div className="text-sm text-muted-foreground">Closed</div>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <div className="text-2xl font-bold text-gray-600">{stats.draft}</div>
+            <div className="text-sm text-muted-foreground">Draft</div>
+          </div>
+        </div>
+
+        {/* Tastings Table */}
+        {tastings.length > 0 ? (
+          <div className="bg-card rounded-lg border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Creator</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Stats</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Created</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {tastings.map((tasting) => (
+                    <tr key={tasting.id} className="hover:bg-muted/50">
+                      <td className="px-4 py-3">
+                        <div className="font-medium">{tasting.title}</div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {getStatusBadge(tasting.status)}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {tasting.createdByName || 'Unknown'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        <div className="space-y-1">
+                          <div>{tasting.participantCount} participants</div>
+                          <div>{tasting.beerCount} beers ({tasting.finishedBeerCount} finished)</div>
+                          <div>{tasting.ratingCount} ratings</div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-muted-foreground">
+                        {new Date(tasting.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <Link
+                            href={`/t/${tasting.id}/scores`}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Scores
+                          </Link>
+                          <Link
+                            href={`/t/${tasting.id}/admin`}
+                            className="text-sm text-primary hover:underline"
+                          >
+                            Manage
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🍺</div>
+            <p className="text-muted-foreground">No tastings found</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
