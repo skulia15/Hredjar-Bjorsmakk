@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
+import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 
 interface Beer {
   id: string
@@ -13,6 +14,8 @@ interface Beer {
   abv?: number
   status: string
   orderIndex: number
+  currentSince?: Date | string | null
+  finishedAt?: Date | string | null
   averageRating?: number
   ratingCount?: number
 }
@@ -335,7 +338,16 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Current Beer */}
               {currentBeer && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold text-green-600">🍺 Current Beer</h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-semibold text-green-600">🍺 Current Beer</h3>
+                    {currentBeer.currentSince && (
+                      <CurrentBeerTimer
+                        currentSince={currentBeer.currentSince}
+                        colorCoded={true}
+                        size="md"
+                      />
+                    )}
+                  </div>
                   <div>
                     <h4 className="font-bold text-lg">{currentBeer.name}</h4>
                     <p className="text-muted-foreground">{currentBeer.brewery}</p>

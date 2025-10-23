@@ -51,7 +51,11 @@ export async function GET(request: NextRequest) {
         abv: true,
         country: true,
         imageUrl: true,
-        description: true
+        description: true,
+        containerSize: true,
+        containerType: true,
+        productNumber: true,
+        vinbudinUrl: true
       }
     })
 

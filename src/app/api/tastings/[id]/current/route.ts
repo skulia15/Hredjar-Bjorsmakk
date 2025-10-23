@@ -62,10 +62,13 @@ export async function PATCH(
         });
       }
 
-      // Set new current beer
+      // Set new current beer and record when it became current
       await tx.tastingBeer.update({
         where: { id: tastingBeerId },
-        data: { status: 'current' }
+        data: {
+          status: 'current',
+          currentSince: new Date()
+        }
       });
 
       // Update tasting with new current beer and increment version

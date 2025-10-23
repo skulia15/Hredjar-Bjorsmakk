@@ -6,6 +6,7 @@ import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
 import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
 import { StarRating } from '@/components/StarRating'
+import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 
 interface Beer {
   id: string
@@ -14,6 +15,8 @@ interface Beer {
   style?: string
   abv?: number
   status: string
+  currentSince?: Date | string | null
+  finishedAt?: Date | string | null
   averageRating?: number
   ratingCount?: number
 }
@@ -233,6 +236,15 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               <p className="text-sm text-muted-foreground mt-1">
                 {currentBeer.style} {currentBeer.abv && `• ${currentBeer.abv}%`}
               </p>
+            )}
+            {currentBeer.currentSince && (
+              <div className="flex justify-center mt-2">
+                <CurrentBeerTimer
+                  currentSince={currentBeer.currentSince}
+                  colorCoded={false}
+                  size="sm"
+                />
+              </div>
             )}
           </div>
 

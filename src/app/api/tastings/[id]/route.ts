@@ -8,11 +8,12 @@ import { broadcastTastingClosed } from '@/lib/sse';
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const tasting = await prisma.tasting.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         tastingBeers: {
           include: {
@@ -37,7 +38,7 @@ export async function GET(
     }
 
     // Check if current user is a leader
-    const participant = await getParticipantFromTasting(params.id);
+    const participant = await getParticipantFromTasting(id);
     const currentUserIsLeader = participant?.user?.isLeader ?? false;
 
     // Calculate averages for each tasting beer
@@ -67,6 +68,8 @@ export async function GET(
           status: tastingBeer.status,
           orderIndex: tastingBeer.orderIndex,
           createdAt: tastingBeer.createdAt,
+          currentSince: tastingBeer.currentSince,
+          finishedAt: tastingBeer.finishedAt,
           averageRating: Number(average.toFixed(2)),
           ratingCount: ratings.length
         };
@@ -98,9 +101,10 @@ export async function GET(
 // PATCH /api/tastings/[id] - Update tasting status
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validation = validateInput(updateTastingSchema, body);
 
@@ -118,7 +122,7 @@ export async function PATCH(
 
     // Update tasting
     const tasting = await prisma.tasting.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         status,
         version: { increment: 1 }
@@ -127,7 +131,7 @@ export async function PATCH(
 
     // Broadcast if closed
     if (status === 'closed') {
-      broadcastTastingClosed(params.id, tasting.version);
+      broadcastTastingClosed(id, tasting.version);
     }
 
     return NextResponse.json({

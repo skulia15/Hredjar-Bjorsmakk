@@ -56,10 +56,13 @@ export async function POST(
 
     // Transaction: Finish beer and update tasting
     const result = await prisma.$transaction(async (tx) => {
-      // Mark beer as finished
+      // Mark beer as finished and record when it was finished
       await tx.tastingBeer.update({
         where: { id: params.beerId },
-        data: { status: 'finished' }
+        data: {
+          status: 'finished',
+          finishedAt: new Date()
+        }
       });
 
       // Clear current beer from tasting and increment version

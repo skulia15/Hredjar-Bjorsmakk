@@ -54,6 +54,12 @@ model Beer {
   imageUrl      String?
   description   String?
 
+  // Product details (Quick Wins)
+  containerSize Int?     // Volume in ml (330, 500, 750, etc.)
+  containerType String?  // "Can", "Bottle", "Keg"
+  productNumber String?  // Vínbúðin product/SKU number
+  vinbudinUrl   String?  // Direct link to product page
+
   // Metadata
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -64,6 +70,7 @@ model Beer {
   @@unique([name, brewery])  // Prevent duplicate beers
   @@index([name])
   @@index([brewery])
+  @@index([productNumber])
 }
 
 // Tasting event
@@ -103,6 +110,10 @@ model TastingBeer {
 
   orderIndex    Int      @default(0)
   status        String   @default("untasted")  // "untasted" | "current" | "finished"
+
+  // Timer tracking
+  currentSince  DateTime? // When beer became "current"
+  finishedAt    DateTime? // When beer was finished
 
   createdAt     DateTime @default(now())
 

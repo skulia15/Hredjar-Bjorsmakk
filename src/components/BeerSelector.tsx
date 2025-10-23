@@ -10,6 +10,8 @@ interface Beer {
   style?: string
   abv?: number
   country?: string
+  containerSize?: number
+  containerType?: string
 }
 
 interface BeerSelectorProps {
@@ -134,6 +136,11 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
                             {beer.abv && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-600">
                                 {beer.abv}%
+                              </span>
+                            )}
+                            {beer.containerSize && beer.containerType && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-500/10 text-blue-600">
+                                {beer.containerSize}ml {beer.containerType}
                               </span>
                             )}
                             {beer.country && (
