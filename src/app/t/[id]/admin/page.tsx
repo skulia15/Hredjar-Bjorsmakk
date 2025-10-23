@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Home, Users, Trophy } from 'lucide-react'
+import { Home, Users, Trophy, Trash2 } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
@@ -158,6 +158,30 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
+  const handleDeleteBeer = async (beerId: string) => {
+    if (!confirm('Remove this beer from the tasting?')) return
+
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to delete beer')
+      }
+
+      setMessage('Beer removed!')
+      setTimeout(() => setMessage(''), 3000)
+      loadTasting()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Error deleting beer')
+      setTimeout(() => setMessage(''), 5000)
+    }
+  }
+
   const handleStartTasting = async () => {
     try {
       const response = await fetch(`/api/tastings/${params.id}`, {
@@ -223,6 +247,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
   const untastedBeers = tasting.beers.filter(b => b.status === 'untasted')
   const finishedBeers = tasting.beers.filter(b => b.status === 'finished')
+
+  // Filter out beers that are already in the tasting (by matching name and brewery)
+  const availableBeers = catalogBeers.filter(catalogBeer => {
+    return !tasting.beers.some(tastingBeer =>
+      tastingBeer.name === catalogBeer.name && tastingBeer.brewery === catalogBeer.brewery
+    )
+  })
 
   return (
     <div className="min-h-screen p-4 md:p-8">
@@ -349,11 +380,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                 </div>
               </div>
 
-              {/* Current Beer */}
+              {/* Current Beer - Highlighted */}
               {currentBeer && (
-                <div className="bg-card p-4 rounded-lg border space-y-3">
+                <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-2 border-green-500 shadow-lg space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-green-600">🍺 Current Beer</h3>
+                    <div className="flex items-center gap-2">
+                      <span className="text-2xl">🍺</span>
+                      <h3 className="font-bold text-lg text-green-700 dark:text-green-400">CURRENT BEER</h3>
+                    </div>
                     {currentBeer.currentSince && (
                       <CurrentBeerTimer
                         currentSince={currentBeer.currentSince}
@@ -362,10 +396,10 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       />
                     )}
                   </div>
-                  <div>
-                    <h4 className="font-bold text-lg">{currentBeer.name}</h4>
-                    <p className="text-muted-foreground">{currentBeer.brewery}</p>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <div className="bg-white dark:bg-gray-900 p-4 rounded-md">
+                    <h4 className="font-bold text-xl">{currentBeer.name}</h4>
+                    <p className="text-muted-foreground text-lg">{currentBeer.brewery}</p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       {currentBeer.containerSize && currentBeer.containerType && (
                         <span className="text-sm text-muted-foreground">
                           {currentBeer.containerSize}ml {currentBeer.containerType}
@@ -378,14 +412,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       )}
                     </div>
                     {currentBeer.ratingCount !== undefined && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {currentBeer.ratingCount} rating{currentBeer.ratingCount !== 1 ? 's' : ''}
+                      <p className="text-sm font-semibold text-green-600 mt-2">
+                        {currentBeer.ratingCount} rating{currentBeer.ratingCount !== 1 ? 's' : ''} submitted
                       </p>
                     )}
                   </div>
                   <button
                     onClick={() => handleFinishBeer(currentBeer.id)}
-                    className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
+                    className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 transition-colors"
                   >
                     Finish This Beer
                   </button>
@@ -404,21 +438,31 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Untasted Beers */}
               {untastedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold">Untasted Beers ({untastedBeers.length})</h3>
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400">⏳ Untasted Beers ({untastedBeers.length})</h3>
                   <div className="space-y-2">
                     {untastedBeers.map((beer) => (
-                      <div key={beer.id} className="flex items-center justify-between p-3 bg-muted rounded">
-                        <div>
-                          <h4 className="font-medium">{beer.name}</h4>
-                          <p className="text-sm text-muted-foreground">{beer.brewery}</p>
+                      <div key={beer.id} className="flex items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800 rounded-md hover:border-blue-400 transition-colors">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-lg truncate">{beer.name}</h4>
+                          <p className="text-sm text-muted-foreground truncate">{beer.brewery}</p>
                         </div>
-                        <button
-                          onClick={() => handleSetCurrent(beer.id)}
-                          disabled={tasting.status !== 'active' || !!currentBeer}
-                          className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          Set Current
-                        </button>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            onClick={() => handleDeleteBeer(beer.id)}
+                            className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                            title="Remove beer"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Remove
+                          </button>
+                          <button
+                            onClick={() => handleSetCurrent(beer.id)}
+                            disabled={tasting.status !== 'active' || !!currentBeer}
+                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Set Current
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -427,7 +471,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
               {/* Add Beer - Beautiful Searchable Selector */}
               <BeerSelector
-                beers={catalogBeers}
+                beers={availableBeers}
                 onSelectBeer={handleSelectBeer}
                 onCreateCustom={handleCreateCustom}
               />
@@ -435,16 +479,16 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Finished Beers */}
               {finishedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold">Finished Beers ({finishedBeers.length})</h3>
+                  <h3 className="font-semibold text-gray-600 dark:text-gray-400">✓ Finished Beers ({finishedBeers.length})</h3>
                   <div className="space-y-2">
                     {finishedBeers.map((beer) => (
-                      <div key={beer.id} className="flex items-center justify-between p-3 bg-muted rounded">
+                      <div key={beer.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-md opacity-75">
                         <div>
-                          <h4 className="font-medium">{beer.name}</h4>
+                          <h4 className="font-semibold text-lg">{beer.name}</h4>
                           <p className="text-sm text-muted-foreground">{beer.brewery}</p>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold text-primary">
+                          <div className="text-2xl font-bold text-primary">
                             {beer.averageRating?.toFixed(2) || 'N/A'}
                           </div>
                           <div className="text-xs text-muted-foreground">

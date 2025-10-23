@@ -166,8 +166,15 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
                   ))}
                 </div>
               ) : (
-                <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  {searchTerm ? 'No beers found matching your search' : 'No beers available'}
+                <div className="px-4 py-12 text-center space-y-2">
+                  <p className="text-sm text-muted-foreground">
+                    {searchTerm ? 'No beers found matching your search' : 'All catalog beers have been added to this tasting'}
+                  </p>
+                  {!searchTerm && (
+                    <p className="text-xs text-muted-foreground">
+                      Click "Create Custom Beer" above to add a custom beer
+                    </p>
+                  )}
                 </div>
               )}
             </div>

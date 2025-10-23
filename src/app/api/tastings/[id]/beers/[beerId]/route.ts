@@ -6,9 +6,10 @@ import { requireLeader } from '@/lib/auth';
 // PATCH /api/tastings/[id]/beers/[beerId] - Edit beer
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string; beerId: string } }
+  { params }: { params: Promise<{ id: string; beerId: string }> }
 ) {
   try {
+    const { id, beerId } = await params;
     const body = await request.json();
     const validation = validateInput(editBeerSchema, body);
 
@@ -20,7 +21,7 @@ export async function PATCH(
     }
 
     const { name, brewery, style, abv, userName } = validation.data;
-    const tastingBeerId = params.beerId; // Accept beerId for backwards compatibility
+    const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
     await requireLeader(userName);
@@ -83,9 +84,10 @@ export async function PATCH(
 // DELETE /api/tastings/[id]/beers/[beerId] - Delete beer
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string; beerId: string } }
+  { params }: { params: Promise<{ id: string; beerId: string }> }
 ) {
   try {
+    const { id, beerId } = await params;
     const body = await request.json();
     const validation = validateInput(deleteBeerSchema, body);
 
@@ -97,7 +99,7 @@ export async function DELETE(
     }
 
     const { userName } = validation.data;
-    const tastingBeerId = params.beerId; // Accept beerId for backwards compatibility
+    const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
     await requireLeader(userName);
