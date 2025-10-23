@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation'
 export default function CreateTastingPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
-  const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,7 +20,7 @@ export default function CreateTastingPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
-          creatorName: name
+          creatorName: 'admin' // Admins are already authenticated
         })
       })
 
@@ -62,21 +61,6 @@ export default function CreateTastingPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Friday Night Beers"
-              required
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium">
-              Your Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
               required
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
