@@ -80,33 +80,36 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
     const currentBeerId = tasting.currentBeerId
 
-    // If current beer changed
-    if (previousBeerId && previousBeerId !== currentBeerId) {
-      // Check if the previous beer is now finished
-      const finishedBeer = tasting.beers.find(
-        b => b.id === previousBeerId && b.status === 'finished'
-      )
+    // Only update if the beer ID actually changed
+    if (currentBeerId !== previousBeerId) {
+      // If current beer changed and we had a previous beer
+      if (previousBeerId && previousBeerId !== currentBeerId) {
+        // Check if the previous beer is now finished
+        const finishedBeer = tasting.beers.find(
+          b => b.id === previousBeerId && b.status === 'finished'
+        )
 
-      if (finishedBeer) {
-        // Show wrap-up overlay with the finished beer's data
-        setWrapUpData({
-          beerName: finishedBeer.name,
-          brewery: finishedBeer.brewery,
-          average: finishedBeer.averageRating || 0,
-          count: finishedBeer.ratingCount || 0
-        })
-        setShowWrapUp(true)
-        setShowLeaderboard(false) // Hide leaderboard when showing wrap-up
+        if (finishedBeer) {
+          // Show wrap-up overlay with the finished beer's data
+          setWrapUpData({
+            beerName: finishedBeer.name,
+            brewery: finishedBeer.brewery,
+            average: finishedBeer.averageRating || 0,
+            count: finishedBeer.ratingCount || 0
+          })
+          setShowWrapUp(true)
+          setShowLeaderboard(false) // Hide leaderboard when showing wrap-up
+        }
       }
+
+      // Update previous beer ID for next comparison
+      setPreviousBeerId(currentBeerId || null)
     }
 
     // If a new current beer is set, hide leaderboard
     if (currentBeerId && showLeaderboard) {
       setShowLeaderboard(false)
     }
-
-    // Update previous beer ID for next comparison
-    setPreviousBeerId(currentBeerId || null)
   }, [tasting, previousBeerId, showLeaderboard])
 
   const currentBeer = tasting?.beers.find(b => b.id === tasting.currentBeerId)
