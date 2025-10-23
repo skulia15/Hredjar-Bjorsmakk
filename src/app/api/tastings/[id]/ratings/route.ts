@@ -20,20 +20,21 @@ export async function POST(
     }
 
     const { beerId, participantId, score } = validation.data;
+    const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
-    // Verify beer exists and is not untasted
-    const beer = await prisma.beer.findUnique({
-      where: { id: beerId }
+    // Verify tasting beer exists and is not untasted
+    const tastingBeer = await prisma.tastingBeer.findUnique({
+      where: { id: tastingBeerId }
     });
 
-    if (!beer) {
+    if (!tastingBeer) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
       );
     }
 
-    if (beer.status === 'untasted') {
+    if (tastingBeer.status === 'untasted') {
       return NextResponse.json(
         { error: 'Cannot rate untasted beer' },
         { status: 400 }
@@ -55,8 +56,8 @@ export async function POST(
     // Upsert rating (create or update)
     const rating = await prisma.rating.upsert({
       where: {
-        beerId_participantId: {
-          beerId,
+        tastingBeerId_participantId: {
+          tastingBeerId,
           participantId
         }
       },
@@ -66,7 +67,7 @@ export async function POST(
       },
       create: {
         tastingId: params.id,
-        beerId,
+        tastingBeerId,
         participantId,
         score
       }
@@ -77,7 +78,7 @@ export async function POST(
 
     return NextResponse.json({
       id: rating.id,
-      beerId: rating.beerId,
+      beerId: rating.tastingBeerId, // Return as beerId for backwards compatibility
       participantId: rating.participantId,
       score: rating.score,
       createdAt: rating.createdAt,

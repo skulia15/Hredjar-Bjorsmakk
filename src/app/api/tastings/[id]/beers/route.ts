@@ -1,31 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { addBeerSchema, validateInput } from '@/lib/validation';
 import { requireLeader } from '@/lib/auth';
 
 // POST /api/tastings/[id]/beers - Add beer to tasting
+// Supports two modes:
+// 1. From catalog: { beerId: "uuid", userName: "admin" }
+// 2. Custom beer: { name: "...", brewery: "...", style?: "...", abv?: 6.5, userName: "admin" }
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
     const body = await request.json();
-    const validation = validateInput(addBeerSchema, body);
+    const { beerId, name, brewery, style, abv, userName } = body;
 
-    if (!validation.success) {
+    if (!userName) {
       return NextResponse.json(
-        { error: validation.error },
+        { error: 'userName is required' },
         { status: 400 }
       );
     }
 
-    const { name, brewery, style, abv, userName } = validation.data;
-
     // Verify user is leader
     await requireLeader(userName);
 
+    // Validate input: either beerId OR name+brewery required
+    if (!beerId && (!name || !brewery)) {
+      return NextResponse.json(
+        { error: 'Either beerId (from catalog) or name+brewery (custom) required' },
+        { status: 400 }
+      );
+    }
+
     // Get current max orderIndex
-    const maxOrder = await prisma.beer.findFirst({
+    const maxOrder = await prisma.tastingBeer.findFirst({
       where: { tastingId: params.id },
       orderBy: { orderIndex: 'desc' },
       select: { orderIndex: true }
@@ -33,27 +41,38 @@ export async function POST(
 
     const nextOrderIndex = (maxOrder?.orderIndex ?? -1) + 1;
 
-    // Create beer
-    const beer = await prisma.beer.create({
+    // Create tasting beer
+    const tastingBeer = await prisma.tastingBeer.create({
       data: {
         tastingId: params.id,
-        name,
-        brewery,
-        style,
-        abv,
+        beerId: beerId || null, // Reference catalog beer if provided
+        customName: beerId ? null : name,
+        customBrewery: beerId ? null : brewery,
+        customStyle: beerId ? null : style,
+        customAbv: beerId ? null : abv,
         orderIndex: nextOrderIndex,
         status: 'untasted'
+      },
+      include: {
+        beer: true // Include catalog beer details if referenced
       }
     });
 
+    // Return unified response
+    const responseName = tastingBeer.beer?.name || tastingBeer.customName;
+    const responseBrewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery;
+    const responseStyle = tastingBeer.beer?.style || tastingBeer.customStyle;
+    const responseAbv = tastingBeer.beer?.abv || tastingBeer.customAbv;
+
     return NextResponse.json({
-      id: beer.id,
-      name: beer.name,
-      brewery: beer.brewery,
-      style: beer.style,
-      abv: beer.abv,
-      status: beer.status,
-      orderIndex: beer.orderIndex
+      id: tastingBeer.id,
+      name: responseName,
+      brewery: responseBrewery,
+      style: responseStyle,
+      abv: responseAbv,
+      status: tastingBeer.status,
+      orderIndex: tastingBeer.orderIndex,
+      fromCatalog: !!beerId
     }, { status: 201 });
 
   } catch (error) {

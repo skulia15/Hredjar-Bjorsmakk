@@ -21,23 +21,24 @@ export async function PATCH(
     }
 
     const { beerId, userName } = validation.data;
+    const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
     await requireLeader(userName);
 
-    // Verify beer exists and is untasted
-    const beer = await prisma.beer.findUnique({
-      where: { id: beerId }
+    // Verify tasting beer exists and is untasted
+    const tastingBeer = await prisma.tastingBeer.findUnique({
+      where: { id: tastingBeerId }
     });
 
-    if (!beer) {
+    if (!tastingBeer) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
       );
     }
 
-    if (beer.status !== 'untasted') {
+    if (tastingBeer.status !== 'untasted') {
       return NextResponse.json(
         { error: 'Beer must be untasted to set as current' },
         { status: 400 }
@@ -47,7 +48,7 @@ export async function PATCH(
     // Transaction: Update old current beer and set new current beer
     const result = await prisma.$transaction(async (tx) => {
       // Find and update old current beer if exists
-      const oldCurrent = await tx.beer.findFirst({
+      const oldCurrent = await tx.tastingBeer.findFirst({
         where: {
           tastingId: params.id,
           status: 'current'
@@ -55,15 +56,15 @@ export async function PATCH(
       });
 
       if (oldCurrent) {
-        await tx.beer.update({
+        await tx.tastingBeer.update({
           where: { id: oldCurrent.id },
           data: { status: 'untasted' }
         });
       }
 
       // Set new current beer
-      await tx.beer.update({
-        where: { id: beerId },
+      await tx.tastingBeer.update({
+        where: { id: tastingBeerId },
         data: { status: 'current' }
       });
 
@@ -71,7 +72,7 @@ export async function PATCH(
       const tasting = await tx.tasting.update({
         where: { id: params.id },
         data: {
-          currentBeerId: beerId,
+          currentTastingBeerId: tastingBeerId,
           version: { increment: 1 }
         }
       });
@@ -80,11 +81,11 @@ export async function PATCH(
     });
 
     // Broadcast change via SSE
-    broadcastCurrentBeerChanged(params.id, beerId, result.version);
+    broadcastCurrentBeerChanged(params.id, tastingBeerId, result.version);
 
     return NextResponse.json({
       tastingId: params.id,
-      currentBeerId: beerId,
+      currentBeerId: tastingBeerId, // Return as currentBeerId for backwards compatibility
       version: result.version
     });
 

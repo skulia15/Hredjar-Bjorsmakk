@@ -14,8 +14,9 @@ export async function GET(
     const tasting = await prisma.tasting.findUnique({
       where: { id: params.id },
       include: {
-        beers: {
+        tastingBeers: {
           include: {
+            beer: true, // Include global beer if referenced
             _count: {
               select: { ratings: true }
             }
@@ -39,11 +40,11 @@ export async function GET(
     const participant = await getParticipantFromTasting(params.id);
     const currentUserIsLeader = participant?.user?.isLeader ?? false;
 
-    // Calculate averages for each beer
+    // Calculate averages for each tasting beer
     const beersWithStats = await Promise.all(
-      tasting.beers.map(async (beer) => {
+      tasting.tastingBeers.map(async (tastingBeer) => {
         const ratings = await prisma.rating.findMany({
-          where: { beerId: beer.id },
+          where: { tastingBeerId: tastingBeer.id },
           select: { score: true }
         });
 
@@ -51,15 +52,21 @@ export async function GET(
           ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
           : 0;
 
+        // Get beer details from catalog or custom fields
+        const name = tastingBeer.beer?.name || tastingBeer.customName || 'Unknown';
+        const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
+        const style = tastingBeer.beer?.style || tastingBeer.customStyle || null;
+        const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
+
         return {
-          id: beer.id,
-          name: beer.name,
-          brewery: beer.brewery,
-          style: beer.style,
-          abv: beer.abv,
-          status: beer.status,
-          orderIndex: beer.orderIndex,
-          createdAt: beer.createdAt,
+          id: tastingBeer.id,
+          name,
+          brewery,
+          style,
+          abv,
+          status: tastingBeer.status,
+          orderIndex: tastingBeer.orderIndex,
+          createdAt: tastingBeer.createdAt,
           averageRating: Number(average.toFixed(2)),
           ratingCount: ratings.length
         };
@@ -70,12 +77,12 @@ export async function GET(
       id: tasting.id,
       title: tasting.title,
       status: tasting.status,
-      currentBeerId: tasting.currentBeerId,
+      currentBeerId: tasting.currentTastingBeerId, // Map to old field name for backwards compatibility
       version: tasting.version,
       createdAt: tasting.createdAt,
       updatedAt: tasting.updatedAt,
       participantCount: tasting._count.participants,
-      beers: beersWithStats,
+      beers: beersWithStats, // Map tastingBeers to beers for backwards compatibility
       currentUserIsLeader
     });
 
