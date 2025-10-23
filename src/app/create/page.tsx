@@ -1,0 +1,111 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function CreateTastingPage() {
+  const router = useRouter()
+  const [title, setTitle] = useState('')
+  const [name, setName] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/tastings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          creatorName: name
+        })
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to create tasting')
+      }
+
+      const data = await response.json()
+
+      // Redirect to tasting admin page
+      router.push(`/t/${data.id}/admin`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold">Create New Tasting</h1>
+          <p className="mt-2 text-muted-foreground">
+            Set up a new beer tasting session
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg border">
+          <div className="space-y-2">
+            <label htmlFor="title" className="block text-sm font-medium">
+              Tasting Name
+            </label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Friday Night Beers"
+              required
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label htmlFor="name" className="block text-sm font-medium">
+              Your Name
+            </label>
+            <input
+              id="name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              required
+              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          {error && (
+            <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? 'Creating...' : 'Create Tasting'}
+          </button>
+        </form>
+
+        <div className="text-center">
+          <button
+            onClick={() => router.push('/')}
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
