@@ -1,13 +1,13 @@
 # Missing & Incomplete PRD Features
 
-## ❌ Critical - App is Broken (Must Fix First)
+## ✅ Phase 1 Complete - Critical Endpoints Fixed
 
-These endpoints still use the old `Beer` model and will **crash** when used:
+All critical endpoints have been updated to use the new `TastingBeer` model:
 
-### 1. **Finish Beer Endpoint** (HIGH PRIORITY)
+### 1. **Finish Beer Endpoint** ✅ **FIXED**
 **PRD Requirement:** Lines 475-486 - Leader marks beer as finished
 
-**Status:** ❌ **BROKEN**
+**Status:** ✅ **WORKING**
 - Endpoint: `POST /api/tastings/[id]/beers/[beerId]/finish`
 - Still queries old `Beer` model instead of `TastingBeer`
 - Still uses `beerId` instead of `tastingBeerId` in ratings query
@@ -34,10 +34,10 @@ const ratings = await prisma.rating.findMany({
 
 ---
 
-### 2. **Scores Page API** (HIGH PRIORITY)
+### 2. **Scores Page API** ✅ **FIXED**
 **PRD Requirement:** Lines 96-101, 1503-1526 - Show all finished beers with medals
 
-**Status:** ❌ **BROKEN**
+**Status:** ✅ **WORKING**
 - Endpoint: `GET /api/tastings/[id]/scores`
 - Still queries old `Beer` model
 - Medal indicators won't show
@@ -76,10 +76,10 @@ beers.map((tb, idx) => ({
 
 ---
 
-### 3. **Export Endpoint** (HIGH PRIORITY)
+### 3. **Export Endpoint** ✅ **FIXED**
 **PRD Requirement:** Lines 520-530, 1550-1579 - Export results to CSV/XLSX
 
-**Status:** ❌ **BROKEN**
+**Status:** ✅ **WORKING**
 - Endpoint: `GET /api/tastings/[id]/export`
 - Still queries old `Beer` model
 - Export generation will fail
@@ -233,23 +233,23 @@ These PRD requirements are **100% complete**:
 
 ## 📊 Implementation Priority
 
-### Phase 1: Fix Broken Endpoints (~2 hours)
+### Phase 1: Fix Broken Endpoints ✅ **COMPLETED**
 **Critical - App doesn't work without these**
 
-1. ✅ Update Finish Beer endpoint (30 min)
-2. ✅ Update Scores API (45 min)
-3. ✅ Update Export endpoint (45 min)
+1. ✅ Update Finish Beer endpoint (30 min) - **DONE**
+2. ✅ Update Scores API (45 min) - **DONE**
+3. ✅ Update Export endpoint (45 min) - **DONE**
 
-**Impact:** Core PRD features work again
+**Impact:** Core PRD features work again ✅
 
 ---
 
-### Phase 2: Complete Beer Management (~1 hour)
+### Phase 2: Complete Beer Management (~1 hour) 🚧 **NEXT**
 **Medium - Admin features**
 
-4. ✅ Update Edit Beer endpoint (20 min)
-5. ✅ Update Delete Beer endpoint (15 min)
-6. ✅ Update Admin Tastings API (15 min)
+4. ⏳ Update Edit Beer endpoint (20 min)
+5. ⏳ Update Delete Beer endpoint (15 min)
+6. ⏳ Update Admin Tastings API (15 min)
 
 **Impact:** Full CRUD operations on beers
 
