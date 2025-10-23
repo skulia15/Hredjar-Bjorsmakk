@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        beers: {
+        tastingBeers: {
           select: {
             id: true,
             status: true
@@ -76,9 +76,9 @@ export async function GET(request: NextRequest) {
       createdBy: tasting.createdBy,
       createdByName: tasting.createdBy ? creatorMap.get(tasting.createdBy) : null,
       participantCount: tasting.participants.length,
-      beerCount: tasting.beers.length,
+      beerCount: tasting.tastingBeers.length,
       ratingCount: tasting.ratings.length,
-      finishedBeerCount: tasting.beers.filter(b => b.status === 'finished').length
+      finishedBeerCount: tasting.tastingBeers.filter(b => b.status === 'finished').length
     }))
 
     return NextResponse.json({

@@ -20,27 +20,48 @@ export async function PATCH(
     }
 
     const { name, brewery, style, abv, userName } = validation.data;
+    const tastingBeerId = params.beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
     await requireLeader(userName);
 
-    // Update beer
-    const beer = await prisma.beer.update({
-      where: { id: params.beerId },
+    // Check if this is a custom beer (can only edit custom beers)
+    const tastingBeer = await prisma.tastingBeer.findUnique({
+      where: { id: tastingBeerId },
+      include: { beer: true }
+    });
+
+    if (!tastingBeer) {
+      return NextResponse.json(
+        { error: 'Beer not found' },
+        { status: 404 }
+      );
+    }
+
+    if (tastingBeer.beerId) {
+      return NextResponse.json(
+        { error: 'Cannot edit beers from catalog. Only custom beers can be edited.' },
+        { status: 400 }
+      );
+    }
+
+    // Update custom beer fields
+    const updatedBeer = await prisma.tastingBeer.update({
+      where: { id: tastingBeerId },
       data: {
-        name,
-        brewery,
-        style,
-        abv
+        customName: name,
+        customBrewery: brewery,
+        customStyle: style,
+        customAbv: abv
       }
     });
 
     return NextResponse.json({
-      id: beer.id,
-      name: beer.name,
-      brewery: beer.brewery,
-      style: beer.style,
-      abv: beer.abv
+      id: updatedBeer.id,
+      name: updatedBeer.customName,
+      brewery: updatedBeer.customBrewery,
+      style: updatedBeer.customStyle,
+      abv: updatedBeer.customAbv
     });
 
   } catch (error) {
@@ -76,13 +97,14 @@ export async function DELETE(
     }
 
     const { userName } = validation.data;
+    const tastingBeerId = params.beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
     await requireLeader(userName);
 
     // Check beer status and ratings
-    const beer = await prisma.beer.findUnique({
-      where: { id: params.beerId },
+    const tastingBeer = await prisma.tastingBeer.findUnique({
+      where: { id: tastingBeerId },
       include: {
         _count: {
           select: { ratings: true }
@@ -90,7 +112,7 @@ export async function DELETE(
       }
     });
 
-    if (!beer) {
+    if (!tastingBeer) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -98,16 +120,16 @@ export async function DELETE(
     }
 
     // Can only delete untasted beers with no ratings
-    if (beer.status !== 'untasted' || beer._count.ratings > 0) {
+    if (tastingBeer.status !== 'untasted' || tastingBeer._count.ratings > 0) {
       return NextResponse.json(
         { error: 'Cannot delete beer with ratings or in current/finished state' },
         { status: 400 }
       );
     }
 
-    // Delete beer
-    await prisma.beer.delete({
-      where: { id: params.beerId }
+    // Delete tasting beer
+    await prisma.tastingBeer.delete({
+      where: { id: tastingBeerId }
     });
 
     return NextResponse.json({

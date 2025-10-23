@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
 import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
+import { StarRating } from '@/components/StarRating'
 
 interface Beer {
   id: string
@@ -28,7 +29,7 @@ interface Tasting {
 export default function RatePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
-  const [rating, setRating] = useState<string>('5.0')
+  const [rating, setRating] = useState<number>(5.0)
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
@@ -65,10 +66,16 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     setLoading(true)
     try {
       const response = await fetch(`/api/tastings/${params.id}`)
+      if (!response.ok) {
+        console.error('Failed to load tasting:', response.statusText)
+        setTasting(null)
+        return
+      }
       const data = await response.json()
       setTasting(data)
     } catch (error) {
       console.error('Error loading tasting:', error)
+      setTasting(null)
     } finally {
       setLoading(false)
     }
@@ -85,7 +92,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       // If current beer changed and we had a previous beer
       if (previousBeerId && previousBeerId !== currentBeerId) {
         // Check if the previous beer is now finished
-        const finishedBeer = tasting.beers.find(
+        const finishedBeer = tasting.beers?.find(
           b => b.id === previousBeerId && b.status === 'finished'
         )
 
@@ -112,7 +119,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     }
   }, [tasting, previousBeerId, showLeaderboard])
 
-  const currentBeer = tasting?.beers.find(b => b.id === tasting.currentBeerId)
+  const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -128,7 +135,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         body: JSON.stringify({
           beerId: currentBeer.id,
           participantId,
-          score: parseFloat(rating)
+          score: rating
         })
       })
 
@@ -182,7 +189,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   }
 
   // Show leaderboard if no current beer and we've shown wrap-up before
-  if (!currentBeer && (showLeaderboard || tasting.beers.some(b => b.status === 'finished'))) {
+  if (!currentBeer && (showLeaderboard || tasting.beers?.some(b => b.status === 'finished'))) {
     return <LeaderboardWaiting tastingId={params.id} />
   }
 
@@ -235,24 +242,15 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               <label className="block text-sm font-medium text-center">
                 Your Rating (1.0 - 10.0)
               </label>
-              <input
-                type="number"
-                min="1.0"
-                max="10.0"
-                step="0.5"
-                value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                className="w-full text-center text-3xl font-bold px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <input
-                type="range"
-                min="1.0"
-                max="10.0"
-                step="0.5"
-                value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                className="w-full"
-              />
+              <div className="flex justify-center">
+                <StarRating
+                  value={rating}
+                  onChange={setRating}
+                  max={10}
+                  size={36}
+                  showNumeric={true}
+                />
+              </div>
             </div>
 
             {message && (
