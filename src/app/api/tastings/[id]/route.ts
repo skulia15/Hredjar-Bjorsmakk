@@ -41,46 +41,57 @@ export async function GET(
     const participant = await getParticipantFromTasting(id);
     const currentUserIsLeader = participant?.user?.isLeader ?? false;
 
-    // Calculate averages for each tasting beer
-    const beersWithStats = await Promise.all(
-      tasting.tastingBeers.map(async (tastingBeer) => {
-        const ratings = await prisma.rating.findMany({
-          where: { tastingBeerId: tastingBeer.id },
-          select: { score: true }
-        });
+    // Fetch all ratings for this tasting in one query (eliminates N+1 problem)
+    const allRatings = await prisma.rating.findMany({
+      where: { tastingId: id },
+      select: {
+        tastingBeerId: true,
+        score: true
+      }
+    });
 
-        const average = ratings.length > 0
-          ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
-          : 0;
+    // Group ratings by tastingBeerId for O(1) lookup
+    const ratingsByBeerId = new Map<string, number[]>();
+    allRatings.forEach(rating => {
+      const existing = ratingsByBeerId.get(rating.tastingBeerId) || [];
+      existing.push(rating.score);
+      ratingsByBeerId.set(rating.tastingBeerId, existing);
+    });
 
-        // Get beer details from catalog or custom fields
-        const name = tastingBeer.beer?.name || tastingBeer.customName || 'Unknown';
-        const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
-        const style = tastingBeer.beer?.style || tastingBeer.customStyle || null;
-        const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
-        const containerSize = tastingBeer.beer?.containerSize || null;
-        const containerType = tastingBeer.beer?.containerType || null;
-        const priceISK = tastingBeer.beer?.priceISK || null;
+    // Calculate averages for each tasting beer (no more async queries!)
+    const beersWithStats = tasting.tastingBeers.map((tastingBeer) => {
+      const ratings = ratingsByBeerId.get(tastingBeer.id) || [];
+      const average = ratings.length > 0
+        ? ratings.reduce((sum, score) => sum + score, 0) / ratings.length
+        : 0;
 
-        return {
-          id: tastingBeer.id,
-          name,
-          brewery,
-          style,
-          abv,
-          containerSize,
-          containerType,
-          priceISK,
-          status: tastingBeer.status,
-          orderIndex: tastingBeer.orderIndex,
-          createdAt: tastingBeer.createdAt,
-          currentSince: tastingBeer.currentSince,
-          finishedAt: tastingBeer.finishedAt,
-          averageRating: Number(average.toFixed(2)),
-          ratingCount: ratings.length
-        };
-      })
-    );
+      // Get beer details from catalog or custom fields
+      const name = tastingBeer.beer?.name || tastingBeer.customName || 'Unknown';
+      const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
+      const style = tastingBeer.beer?.style || tastingBeer.customStyle || null;
+      const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
+      const containerSize = tastingBeer.beer?.containerSize || null;
+      const containerType = tastingBeer.beer?.containerType || null;
+      const priceISK = tastingBeer.beer?.priceISK || null;
+
+      return {
+        id: tastingBeer.id,
+        name,
+        brewery,
+        style,
+        abv,
+        containerSize,
+        containerType,
+        priceISK,
+        status: tastingBeer.status,
+        orderIndex: tastingBeer.orderIndex,
+        createdAt: tastingBeer.createdAt,
+        currentSince: tastingBeer.currentSince,
+        finishedAt: tastingBeer.finishedAt,
+        averageRating: Number(average.toFixed(2)),
+        ratingCount: ratings.length
+      };
+    });
 
     return NextResponse.json({
       id: tasting.id,

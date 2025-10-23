@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Enable static generation with revalidation
+export const revalidate = 3600 // Revalidate every hour
+
 /**
  * GET /api/beers
  * List all beers from global catalog
+ * Cached for 1 hour (3600 seconds)
  *
  * Query params:
  * - search: Filter by name or brewery (optional)
@@ -55,7 +59,8 @@ export async function GET(request: NextRequest) {
         containerSize: true,
         containerType: true,
         productNumber: true,
-        vinbudinUrl: true
+        vinbudinUrl: true,
+        priceISK: true
       }
     })
 
@@ -70,7 +75,7 @@ export async function GET(request: NextRequest) {
     const styles = [...new Set(allBeers.map(b => b.style).filter(Boolean))].sort()
     const countries = [...new Set(allBeers.map(b => b.country).filter(Boolean))].sort()
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       beers,
       total: beers.length,
       filters: {
@@ -78,6 +83,11 @@ export async function GET(request: NextRequest) {
         countries
       }
     })
+
+    // Add cache headers for client-side caching
+    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=7200')
+
+    return response
 
   } catch (error) {
     console.error('Error fetching beers:', error)

@@ -144,6 +144,7 @@ model Rating {
   @@unique([tastingBeerId, participantId])  // One rating per tasting beer per participant
   @@index([tastingBeerId])
   @@index([participantId])
+  @@index([tastingId])  // For fetching all ratings in a tasting (analytics/export)
 }
 
 // Admin authentication

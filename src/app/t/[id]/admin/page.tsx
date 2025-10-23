@@ -2,9 +2,11 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Home, Users, Trophy } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
+import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 
 interface Beer {
   id: string
@@ -32,7 +34,7 @@ interface Tasting {
   participantCount: number
 }
 
-type TabType = 'manage' | 'rate' | 'scores'
+type TabType = 'manage' | 'rate' | 'scores' | 'analytics'
 
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -233,24 +235,27 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             <span>{tasting.participantCount} participants</span>
             <span>{tasting.beers.length} beers</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link
               href="/"
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
-              ← Home
+              <Home className="w-4 h-4" />
+              Home
             </Link>
             <Link
               href={`/t/${params.id}/rate`}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
-              Participant View →
+              <Users className="w-4 h-4" />
+              Participant View
             </Link>
             <Link
               href={`/t/${params.id}/scores`}
-              className="text-sm text-primary hover:underline"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
-              Leaderboard →
+              <Trophy className="w-4 h-4" />
+              Leaderboard
             </Link>
           </div>
         </div>
@@ -287,7 +292,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         {/* Tabs */}
         <div className="border-b">
           <div className="flex gap-4">
-            {(['manage', 'rate', 'scores'] as TabType[]).map((tab) => (
+            {(['manage', 'analytics', 'rate', 'scores'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -452,6 +457,10 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                 </div>
               )}
             </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <AnalyticsDashboard tastingId={params.id} />
           )}
 
           {activeTab === 'rate' && (
