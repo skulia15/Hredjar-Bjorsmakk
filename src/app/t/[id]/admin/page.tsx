@@ -41,11 +41,31 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const [style, setStyle] = useState('')
   const [abv, setAbv] = useState('')
 
+  // Beer catalog state
+  const [useCatalog, setUseCatalog] = useState(true)
+  const [catalogBeers, setCatalogBeers] = useState<Array<{
+    id: string
+    name: string
+    brewery: string
+    style?: string
+    abv?: number
+  }>>([])
+  const [selectedBeerId, setSelectedBeerId] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+
   useEffect(() => {
     loadTasting()
     const interval = setInterval(loadTasting, 5000)
     return () => clearInterval(interval)
   }, [params.id])
+
+  // Load beer catalog
+  useEffect(() => {
+    fetch('/api/beers')
+      .then(res => res.json())
+      .then(data => setCatalogBeers(data.beers || []))
+      .catch(err => console.error('Error loading beer catalog:', err))
+  }, [])
 
   const loadTasting = async () => {
     try {
@@ -64,25 +84,47 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     setMessage('')
 
     try {
-      const response = await fetch(`/api/tastings/${params.id}/beers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      let body
+      if (useCatalog) {
+        // Add from catalog
+        if (!selectedBeerId) {
+          setMessage('Please select a beer from the catalog')
+          return
+        }
+        body = { beerId: selectedBeerId, userName }
+      } else {
+        // Add custom beer
+        if (!beerName || !brewery) {
+          setMessage('Beer name and brewery are required')
+          return
+        }
+        body = {
           name: beerName,
           brewery,
           style: style || undefined,
           abv: abv ? parseFloat(abv) : undefined,
           userName
-        })
+        }
+      }
+
+      const response = await fetch(`/api/tastings/${params.id}/beers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
       })
 
       if (!response.ok) throw new Error('Failed to add beer')
 
       setMessage('Beer added successfully!')
+
+      // Reset form
+      setSelectedBeerId('')
+      setSearchTerm('')
       setBeerName('')
       setBrewery('')
       setStyle('')
       setAbv('')
+
       loadTasting()
     } catch (error) {
       setMessage('Error adding beer')
@@ -366,48 +408,103 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
               {/* Add Beer Form */}
               <div className="bg-card p-4 rounded-lg border">
-                <h3 className="font-semibold mb-4">Add New Beer</h3>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="font-semibold">Add Beer</h3>
+                  <button
+                    type="button"
+                    onClick={() => setUseCatalog(!useCatalog)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {useCatalog ? '+ Create Custom Beer' : '← Select from Catalog'}
+                  </button>
+                </div>
+
                 <form onSubmit={handleAddBeer} className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Beer name *"
-                      value={beerName}
-                      onChange={(e) => setBeerName(e.target.value)}
-                      required
-                      className="px-3 py-2 border rounded"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Brewery *"
-                      value={brewery}
-                      onChange={(e) => setBrewery(e.target.value)}
-                      required
-                      className="px-3 py-2 border rounded"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Style (optional)"
-                      value={style}
-                      onChange={(e) => setStyle(e.target.value)}
-                      className="px-3 py-2 border rounded"
-                    />
-                    <input
-                      type="number"
-                      placeholder="ABV % (optional)"
-                      value={abv}
-                      onChange={(e) => setAbv(e.target.value)}
-                      step="0.1"
-                      min="0"
-                      max="100"
-                      className="px-3 py-2 border rounded"
-                    />
-                  </div>
+                  {useCatalog ? (
+                    /* Select from Catalog */
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        placeholder="Search beers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full px-3 py-2 border rounded"
+                      />
+                      <select
+                        value={selectedBeerId}
+                        onChange={(e) => setSelectedBeerId(e.target.value)}
+                        required
+                        className="w-full px-3 py-2 border rounded"
+                        size={8}
+                      >
+                        <option value="">-- Select a beer ({catalogBeers.length} available) --</option>
+                        {catalogBeers
+                          .filter(beer => {
+                            if (!searchTerm) return true
+                            const term = searchTerm.toLowerCase()
+                            return (
+                              beer.name.toLowerCase().includes(term) ||
+                              beer.brewery.toLowerCase().includes(term) ||
+                              beer.style?.toLowerCase().includes(term)
+                            )
+                          })
+                          .map(beer => (
+                            <option key={beer.id} value={beer.id}>
+                              {beer.name} - {beer.brewery} {beer.style ? `(${beer.style})` : ''}
+                              {beer.abv ? ` - ${beer.abv}%` : ''}
+                            </option>
+                          ))}
+                      </select>
+                      {selectedBeerId && (
+                        <div className="p-3 bg-muted rounded text-sm">
+                          <strong>Selected:</strong> {catalogBeers.find(b => b.id === selectedBeerId)?.name} - {catalogBeers.find(b => b.id === selectedBeerId)?.brewery}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Create Custom Beer */
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        placeholder="Beer name *"
+                        value={beerName}
+                        onChange={(e) => setBeerName(e.target.value)}
+                        required
+                        className="px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Brewery *"
+                        value={brewery}
+                        onChange={(e) => setBrewery(e.target.value)}
+                        required
+                        className="px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Style (optional)"
+                        value={style}
+                        onChange={(e) => setStyle(e.target.value)}
+                        className="px-3 py-2 border rounded"
+                      />
+                      <input
+                        type="number"
+                        placeholder="ABV % (optional)"
+                        value={abv}
+                        onChange={(e) => setAbv(e.target.value)}
+                        step="0.1"
+                        min="0"
+                        max="100"
+                        className="px-3 py-2 border rounded"
+                      />
+                    </div>
+                  )}
+
                   <button
                     type="submit"
                     className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
                   >
-                    Add Beer
+                    {useCatalog ? 'Add Selected Beer' : 'Add Custom Beer'}
                   </button>
                 </form>
               </div>
