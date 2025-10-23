@@ -136,31 +136,6 @@ const ICELANDIC_BEERS = [
     description: 'Hoppy Christmas IPA from renowned Danish brewery.'
   },
 
-  // Classic Icelandic options
-  {
-    name: 'Gull',
-    brewery: 'Vífilfell',
-    style: 'Pilsner',
-    abv: 5.0,
-    country: 'Iceland',
-    description: 'Iceland's most popular pilsner, a classic choice.'
-  },
-  {
-    name: 'Thule',
-    brewery: 'Vífilfell',
-    style: 'Pilsner',
-    abv: 4.6,
-    country: 'Iceland',
-    description: 'Light and refreshing Icelandic pilsner.'
-  },
-  {
-    name: 'Boli',
-    brewery: 'Egils',
-    style: 'Pilsner',
-    abv: 2.25,
-    country: 'Iceland',
-    description: 'Light pilsner-style beer.'
-  },
 
   // Craft selections
   {
