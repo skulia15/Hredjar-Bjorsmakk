@@ -77,12 +77,20 @@ export default function AdminUsersPage() {
             <h1 className="text-3xl font-bold">User Management</h1>
             <p className="text-muted-foreground">Manage users and leader permissions</p>
           </div>
-          <Link
-            href="/"
-            className="px-4 py-2 border rounded hover:bg-accent"
-          >
-            ← Home
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/admin/tastings"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+            >
+              View Tastings
+            </Link>
+            <Link
+              href="/"
+              className="px-4 py-2 border rounded hover:bg-accent"
+            >
+              ← Home
+            </Link>
+          </div>
         </div>
 
         {/* Stats */}

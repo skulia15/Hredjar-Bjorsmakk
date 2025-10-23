@@ -32,10 +32,10 @@ export default function HomePage() {
           </div>
 
           <Link
-            href="/join"
+            href="/tastings"
             className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Join Existing Tasting
+            Browse Tastings
           </Link>
 
           <Link
