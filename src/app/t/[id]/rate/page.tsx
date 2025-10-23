@@ -57,7 +57,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   const { setActiveTasting } = useActiveTasting()
 
   useEffect(() => {
-    loadTasting()
+    loadTasting(true) // Show loading spinner on initial load
     // Get participant ID from session (simplified - in real app would use proper session management)
     const stored = localStorage.getItem(`participant_${params.id}`)
     if (stored) {
@@ -67,13 +67,15 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     // Set this as the active tasting
     setActiveTasting(params.id)
 
-    // Poll for updates every 3 seconds
-    const interval = setInterval(loadTasting, 3000)
+    // Poll for updates every 3 seconds (without loading spinner)
+    const interval = setInterval(() => loadTasting(false), 3000)
     return () => clearInterval(interval)
   }, [params.id, setActiveTasting])
 
-  const loadTasting = async () => {
-    setLoading(true)
+  const loadTasting = async (showLoadingSpinner = false) => {
+    if (showLoadingSpinner) {
+      setLoading(true)
+    }
     try {
       const response = await fetch(`/api/tastings/${params.id}`)
       if (!response.ok) {
@@ -87,7 +89,9 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       console.error('Error loading tasting:', error)
       setTasting(null)
     } finally {
-      setLoading(false)
+      if (showLoadingSpinner) {
+        setLoading(false)
+      }
     }
   }
 
@@ -117,17 +121,15 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           setShowWrapUp(true)
           setShowLeaderboard(false) // Hide leaderboard when showing wrap-up
         }
+      } else if (currentBeerId) {
+        // If a new current beer is set, hide leaderboard
+        setShowLeaderboard(false)
       }
 
       // Update previous beer ID for next comparison
       setPreviousBeerId(currentBeerId || null)
     }
-
-    // If a new current beer is set, hide leaderboard
-    if (currentBeerId && showLeaderboard) {
-      setShowLeaderboard(false)
-    }
-  }, [tasting, previousBeerId, showLeaderboard])
+  }, [tasting, previousBeerId])
 
   const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
 
