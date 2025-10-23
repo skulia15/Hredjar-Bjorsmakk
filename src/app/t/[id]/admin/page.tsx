@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { PendingRaters } from '@/components/PendingRaters'
 
@@ -27,7 +27,8 @@ interface Tasting {
 
 type TabType = 'manage' | 'rate' | 'scores'
 
-export default function AdminPage({ params }: { params: { id: string } }) {
+export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('manage')
   const [loading, setLoading] = useState(true)

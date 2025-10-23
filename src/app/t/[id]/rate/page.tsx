@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
@@ -25,7 +25,8 @@ interface Tasting {
   beers: Beer[]
 }
 
-export default function RatePage({ params }: { params: { id: string } }) {
+export default function RatePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [rating, setRating] = useState<string>('5.0')
   const [loading, setLoading] = useState(false)

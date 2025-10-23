@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-export default function JoinTastingPage({ params }: { params: { id: string } }) {
+export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise)
   const router = useRouter()
   const [name, setName] = useState('')
   const [loading, setLoading] = useState(false)
