@@ -7,27 +7,56 @@ import Link from 'next/link'
 /**
  * Global navigation button that appears when user has an active tasting
  * Does NOT show on the main tasting rating page
+ * Only shows if tasting status is "active"
  */
 export function ReturnToTastingButton() {
   const pathname = usePathname()
   const router = useRouter()
   const [activeTastingId, setActiveTastingId] = useState<string | null>(null)
+  const [tastingStatus, setTastingStatus] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Check localStorage for active tasting
-    const stored = localStorage.getItem('activeTastingId')
-    if (stored) {
-      setActiveTastingId(stored)
+    const checkActiveTasting = async () => {
+      // Check localStorage for active tasting
+      const stored = localStorage.getItem('activeTastingId')
+      if (!stored) {
+        setIsLoading(false)
+        return
+      }
+
+      // Verify the tasting is actually active
+      try {
+        const response = await fetch(`/api/tastings/${stored}`)
+        if (response.ok) {
+          const data = await response.json()
+          // Only set if tasting status is "active"
+          if (data.status === 'active') {
+            setActiveTastingId(stored)
+            setTastingStatus(data.status)
+          } else {
+            // Tasting is not active, clear it from localStorage
+            localStorage.removeItem('activeTastingId')
+          }
+        } else {
+          // Tasting not found, clear it
+          localStorage.removeItem('activeTastingId')
+        }
+      } catch (error) {
+        console.error('Error checking tasting status:', error)
+      }
+
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    checkActiveTasting()
   }, [])
 
   // Don't show if:
   // 1. Still loading
   // 2. No active tasting
-  // 3. Already on the main tasting rating page
-  if (isLoading || !activeTastingId) {
+  // 3. Tasting is not "active" status
+  if (isLoading || !activeTastingId || tastingStatus !== 'active') {
     return null
   }
 

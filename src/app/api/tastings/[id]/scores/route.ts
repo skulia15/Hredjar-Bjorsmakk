@@ -10,11 +10,12 @@ export async function GET(
     const tasting = await prisma.tasting.findUnique({
       where: { id: params.id },
       include: {
-        beers: {
+        tastingBeers: {
           where: {
             status: 'finished'
           },
           include: {
+            beer: true,  // Include catalog beer if referenced
             ratings: {
               select: { score: true }
             }
@@ -32,33 +33,43 @@ export async function GET(
     }
 
     // Calculate averages and sort by rating
-    const beersWithScores = tasting.beers.map(beer => {
-      const ratings = beer.ratings;
+    const beersWithScores = tasting.tastingBeers.map(tb => {
+      const ratings = tb.ratings;
       const average = ratings.length > 0
         ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
         : 0;
 
       return {
-        beerId: beer.id,
-        name: beer.name,
-        brewery: beer.brewery,
-        style: beer.style,
-        abv: beer.abv,
+        tastingBeerId: tb.id,
+        name: tb.beer?.name || tb.customName || 'Unknown',
+        brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
+        style: tb.beer?.style || tb.customStyle || null,
+        abv: tb.beer?.abv || tb.customAbv || null,
         average: Number(average.toFixed(2)),
         count: ratings.length,
-        status: beer.status,
-        orderIndex: beer.orderIndex
+        status: tb.status,
+        orderIndex: tb.orderIndex
       };
     });
 
     // Sort by average descending
     beersWithScores.sort((a, b) => b.average - a.average);
 
-    // Add ranks
-    const beersWithRanks = beersWithScores.map((beer, index) => ({
-      ...beer,
-      rank: index + 1
-    }));
+    // Add ranks and medals
+    const beersWithRanks = beersWithScores.map((beer, index) => {
+      const rank = index + 1;
+      let medal = null;
+
+      if (rank === 1) medal = '🥇';
+      else if (rank === 2) medal = '🥈';
+      else if (rank === 3) medal = '🥉';
+
+      return {
+        ...beer,
+        rank,
+        medal
+      };
+    });
 
     return NextResponse.json({
       tastingId: tasting.id,

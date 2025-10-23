@@ -26,18 +26,18 @@ export async function POST(
     await requireLeader(userName);
 
     // Verify beer is current
-    const beer = await prisma.beer.findUnique({
+    const tastingBeer = await prisma.tastingBeer.findUnique({
       where: { id: params.beerId }
     });
 
-    if (!beer) {
+    if (!tastingBeer) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
       );
     }
 
-    if (beer.status !== 'current') {
+    if (tastingBeer.status !== 'current') {
       return NextResponse.json(
         { error: 'Only current beer can be finished' },
         { status: 400 }
@@ -46,7 +46,7 @@ export async function POST(
 
     // Get ratings to calculate average
     const ratings = await prisma.rating.findMany({
-      where: { beerId: params.beerId },
+      where: { tastingBeerId: params.beerId },
       select: { score: true }
     });
 
@@ -57,7 +57,7 @@ export async function POST(
     // Transaction: Finish beer and update tasting
     const result = await prisma.$transaction(async (tx) => {
       // Mark beer as finished
-      await tx.beer.update({
+      await tx.tastingBeer.update({
         where: { id: params.beerId },
         data: { status: 'finished' }
       });
@@ -66,7 +66,7 @@ export async function POST(
       const tasting = await tx.tasting.update({
         where: { id: params.id },
         data: {
-          currentBeerId: null,
+          currentTastingBeerId: null,
           version: { increment: 1 }
         }
       });
@@ -84,7 +84,7 @@ export async function POST(
     );
 
     return NextResponse.json({
-      beerId: params.beerId,
+      tastingBeerId: params.beerId,
       status: 'finished',
       average: Number(average.toFixed(2)),
       count: ratings.length,

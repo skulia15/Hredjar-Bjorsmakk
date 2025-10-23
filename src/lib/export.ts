@@ -12,8 +12,9 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   const tasting = await prisma.tasting.findUnique({
     where: { id: tastingId },
     include: {
-      beers: {
+      tastingBeers: {
         include: {
+          beer: true,  // Include catalog beer if referenced
           ratings: {
             include: {
               participant: {
@@ -58,11 +59,14 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   };
 
   // Add rating data
-  tasting.beers.forEach(beer => {
-    beer.ratings.forEach(rating => {
+  tasting.tastingBeers.forEach(tb => {
+    const beerName = tb.beer?.name || tb.customName || 'Unknown';
+    const brewery = tb.beer?.brewery || tb.customBrewery || 'Unknown';
+
+    tb.ratings.forEach(rating => {
       ratingsSheet.addRow({
-        beerName: beer.name,
-        brewery: beer.brewery,
+        beerName,
+        brewery,
         participant: rating.participant.user.name,
         code: rating.participant.code,
         rating: rating.score,
@@ -93,19 +97,19 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   };
 
   // Calculate averages and sort by average descending
-  const beerSummaries = tasting.beers.map(beer => {
-    const ratings = beer.ratings;
+  const beerSummaries = tasting.tastingBeers.map(tb => {
+    const ratings = tb.ratings;
     const average = ratings.length > 0
       ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
       : 0;
 
     return {
-      name: beer.name,
-      brewery: beer.brewery,
+      name: tb.beer?.name || tb.customName || 'Unknown',
+      brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
       average,
       count: ratings.length,
-      status: beer.status,
-      orderIndex: beer.orderIndex
+      status: tb.status,
+      orderIndex: tb.orderIndex
     };
   });
 
@@ -146,8 +150,8 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
 
   infoSheet.addRow({ property: 'Tasting Name', value: tasting.title });
   infoSheet.addRow({ property: 'Status', value: tasting.status });
-  infoSheet.addRow({ property: 'Total Beers', value: tasting.beers.length });
-  infoSheet.addRow({ property: 'Total Ratings', value: tasting.beers.reduce((sum, b) => sum + b.ratings.length, 0) });
+  infoSheet.addRow({ property: 'Total Beers', value: tasting.tastingBeers.length });
+  infoSheet.addRow({ property: 'Total Ratings', value: tasting.tastingBeers.reduce((sum, tb) => sum + tb.ratings.length, 0) });
   infoSheet.addRow({ property: 'Created', value: format(tasting.createdAt, 'yyyy-MM-dd HH:mm:ss') });
   infoSheet.addRow({ property: 'Exported', value: format(new Date(), 'yyyy-MM-dd HH:mm:ss') });
 

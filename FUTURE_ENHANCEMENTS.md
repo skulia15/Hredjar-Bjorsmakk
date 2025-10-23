@@ -1,5 +1,118 @@
 # 🚀 Future Enhancements
 
+## Current Beer Timer Feature
+
+### User Requirement
+**Timer on current beer showing how long it has been the "current" beer**
+
+### Description
+Display a live timer showing how long the current beer has been active (i.e., how long it's been available for rating).
+
+### Use Cases
+- **Leaders:** Track how long participants have had to rate the current beer
+- **Participants:** Visual indicator of time spent on this beer
+- **Analytics:** Understand pacing of tasting sessions
+
+### Implementation Details
+
+**Database Schema Update:**
+```prisma
+model TastingBeer {
+  // ... existing fields ...
+  currentSince   DateTime?  // When beer became "current"
+  finishedAt     DateTime?  // When beer was finished
+}
+```
+
+**API Changes:**
+```typescript
+// When setting current beer
+await prisma.tastingBeer.update({
+  where: { id: tastingBeerId },
+  data: {
+    status: 'current',
+    currentSince: new Date()  // Record when it became current
+  }
+})
+
+// When finishing beer
+await prisma.tastingBeer.update({
+  where: { id: tastingBeerId },
+  data: {
+    status: 'finished',
+    finishedAt: new Date()
+  }
+})
+```
+
+**UI Component:**
+```tsx
+// src/components/CurrentBeerTimer.tsx
+export function CurrentBeerTimer({ currentSince }: { currentSince: Date }) {
+  const [elapsed, setElapsed] = useState(0)
+
+  useEffect(() => {
+    const start = new Date(currentSince).getTime()
+    const interval = setInterval(() => {
+      const now = Date.now()
+      setElapsed(Math.floor((now - start) / 1000))
+    }, 1000)
+
+    return () => clearInterval(interval)
+  }, [currentSince])
+
+  const minutes = Math.floor(elapsed / 60)
+  const seconds = elapsed % 60
+
+  return (
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <span>⏱️</span>
+      <span>{minutes}:{seconds.toString().padStart(2, '0')}</span>
+    </div>
+  )
+}
+```
+
+**Display Locations:**
+1. **Leader Admin Page:** Show timer next to "Current Beer" section
+2. **Participant Rating Page:** Show timer in header/beer card
+3. **Pending Raters Component:** Show timer to indicate urgency
+
+**Visual Design:**
+```
+┌─────────────────────────────────┐
+│ 🍺 IPA Sample - Brewery A      │
+│ Brewery A                       │
+│                                 │
+│ ⏱️ Active for: 2:35            │
+│                                 │
+│ Your Rating: [8.5___]           │
+│ [Submit Rating]                 │
+└─────────────────────────────────┘
+```
+
+**Advanced Features (Optional):**
+- **Color coding:** Green (0-5 min), Yellow (5-10 min), Red (>10 min)
+- **Average time stats:** Track average time per beer across tastings
+- **Leader alerts:** Notify if beer has been current for >15 minutes
+- **Auto-finish:** Option to auto-finish beer after X minutes (with warning)
+
+### Migration Strategy
+1. Add optional `currentSince` and `finishedAt` fields
+2. For existing tastings, estimate `currentSince` from `updatedAt` if needed
+3. Start recording timestamps for new beer transitions
+4. Backfill data from audit logs if available
+
+### Estimated Effort
+- **Schema update:** 15 minutes
+- **API updates:** 30 minutes
+- **Timer component:** 1 hour
+- **Integration:** 30 minutes
+- **Testing:** 30 minutes
+- **Total:** ~3 hours
+
+---
+
 ## Beer Catalog - Additional Fields from Vínbúðin
 
 ### Current Schema
