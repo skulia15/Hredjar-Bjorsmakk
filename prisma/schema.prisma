@@ -1,0 +1,115 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Global user registry
+model User {
+  id             String        @id @default(uuid())
+  name           String        @unique  // Case-insensitive in queries
+  isLeader       Boolean       @default(false)
+  createdAt      DateTime      @default(now())
+
+  participations Participant[]
+
+  @@index([name])
+}
+
+// Per-tasting participation
+model Participant {
+  id            String   @id @default(uuid())
+  tastingId     String
+  tasting       Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
+
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  code          String   // 4-char alphanumeric, unique per tasting
+  rejoinToken   String   @unique
+  lastSeenAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  ratings       Rating[]
+
+  @@unique([tastingId, userId])  // One participation per user per tasting
+  @@unique([tastingId, code])
+  @@index([rejoinToken])
+}
+
+// Tasting event
+model Tasting {
+  id            String   @id @default(uuid())
+  title         String
+  status        String   @default("draft")  // "draft" | "active" | "closed"
+  currentBeerId String?
+  createdBy     String?  // User.id who created it
+
+  version       Int      @default(1)  // Increments on state changes
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  beers         Beer[]
+  participants  Participant[]
+  ratings       Rating[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Beer in a tasting
+model Beer {
+  id            String   @id @default(uuid())
+  tastingId     String
+  tasting       Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
+
+  name          String
+  brewery       String
+  style         String?
+  abv           Float?
+  orderIndex    Int      @default(0)
+  status        String   @default("untasted")  // "untasted" | "current" | "finished"
+
+  createdAt     DateTime @default(now())
+
+  ratings       Rating[]
+
+  @@index([tastingId, status])
+  @@index([tastingId, orderIndex])
+}
+
+// Rating submission
+model Rating {
+  id              String   @id @default(uuid())
+  tastingId       String
+  tasting         Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
+
+  beerId          String
+  beer            Beer     @relation(fields: [beerId], references: [id], onDelete: Cascade)
+
+  participantId   String
+  participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  score           Float    // 1.0 to 10.0, step 0.5
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([beerId, participantId])  // One rating per beer per participant
+  @@index([beerId])
+  @@index([participantId])
+}
+
+// Admin authentication
+model AdminAuth {
+  id            String    @id @default(uuid())
+  passwordHash  String    // Hash of "admin" or custom secret
+  lastLoginAt   DateTime?
+
+  @@map("admin_auth")
+}
