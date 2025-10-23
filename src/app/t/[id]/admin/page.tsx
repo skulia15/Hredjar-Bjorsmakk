@@ -215,7 +215,36 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleStartTasting = async () => {
+    // Check if there are any beers
+    if (!tasting || tasting.beers.length === 0) {
+      setMessage('Please add at least one beer before starting')
+      setTimeout(() => setMessage(''), 5000)
+      return
+    }
+
     try {
+      // If no current beer is set, automatically set the first untasted beer as current
+      if (!tasting.currentBeerId) {
+        const firstUntastedBeer = tasting.beers.find(b => b.status === 'untasted')
+        if (!firstUntastedBeer) {
+          setMessage('No untasted beers available')
+          setTimeout(() => setMessage(''), 5000)
+          return
+        }
+
+        // Set first beer as current
+        const setCurrentResponse = await fetch(`/api/tastings/${params.id}/current`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ beerId: firstUntastedBeer.id, userName })
+        })
+
+        if (!setCurrentResponse.ok) {
+          throw new Error('Failed to set starting beer')
+        }
+      }
+
+      // Start the tasting
       const response = await fetch(`/api/tastings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -228,7 +257,8 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       setTimeout(() => setMessage(''), 3000)
       loadTasting()
     } catch (error) {
-      setMessage('Error starting tasting')
+      setMessage(error instanceof Error ? error.message : 'Error starting tasting')
+      setTimeout(() => setMessage(''), 5000)
     }
   }
 
@@ -378,11 +408,18 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Tasting Controls */}
               <div className="bg-card p-4 rounded-lg border space-y-3">
                 <h3 className="font-semibold">Tasting Controls</h3>
-                <div className="flex gap-2">
+                {tasting.status === 'draft' && tasting.beers.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Add at least one beer below to start the tasting
+                  </p>
+                )}
+                <div className="flex gap-2 flex-wrap">
                   {tasting.status === 'draft' && (
                     <button
                       onClick={handleStartTasting}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                      disabled={tasting.beers.length === 0}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title={tasting.beers.length === 0 ? 'Add beers first' : 'Start the tasting'}
                     >
                       Start Tasting
                     </button>
