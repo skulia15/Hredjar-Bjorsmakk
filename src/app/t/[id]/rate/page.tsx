@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { WrapUpOverlay } from '@/components/WrapUpOverlay'
+import { useActiveTasting } from '@/components/ReturnToTastingButton'
 
 interface Beer {
   id: string
@@ -10,6 +12,8 @@ interface Beer {
   style?: string
   abv?: number
   status: string
+  averageRating?: number
+  ratingCount?: number
 }
 
 interface Tasting {
@@ -28,6 +32,18 @@ export default function RatePage({ params }: { params: { id: string } }) {
   const [message, setMessage] = useState('')
   const [participantId, setParticipantId] = useState('')
 
+  // Wrap-up overlay state
+  const [showWrapUp, setShowWrapUp] = useState(false)
+  const [wrapUpData, setWrapUpData] = useState<{
+    beerName: string
+    brewery: string
+    average: number
+    count: number
+  } | null>(null)
+  const [previousBeerId, setPreviousBeerId] = useState<string | null>(null)
+
+  const { setActiveTasting } = useActiveTasting()
+
   useEffect(() => {
     loadTasting()
     // Get participant ID from session (simplified - in real app would use proper session management)
@@ -35,7 +51,10 @@ export default function RatePage({ params }: { params: { id: string } }) {
     if (stored) {
       setParticipantId(JSON.parse(stored).participantId)
     }
-  }, [params.id])
+
+    // Set this as the active tasting
+    setActiveTasting(params.id)
+  }, [params.id, setActiveTasting])
 
   const loadTasting = async () => {
     setLoading(true)
@@ -49,6 +68,35 @@ export default function RatePage({ params }: { params: { id: string } }) {
       setLoading(false)
     }
   }
+
+  // Detect when a beer has been finished and show wrap-up overlay
+  useEffect(() => {
+    if (!tasting) return
+
+    const currentBeerId = tasting.currentBeerId
+
+    // If current beer changed and we had a previous beer
+    if (previousBeerId && previousBeerId !== currentBeerId) {
+      // Check if the previous beer is now finished
+      const finishedBeer = tasting.beers.find(
+        b => b.id === previousBeerId && b.status === 'finished'
+      )
+
+      if (finishedBeer) {
+        // Show wrap-up overlay with the finished beer's data
+        setWrapUpData({
+          beerName: finishedBeer.name,
+          brewery: finishedBeer.brewery,
+          average: finishedBeer.averageRating || 0,
+          count: finishedBeer.ratingCount || 0
+        })
+        setShowWrapUp(true)
+      }
+    }
+
+    // Update previous beer ID for next comparison
+    setPreviousBeerId(currentBeerId || null)
+  }, [tasting, previousBeerId])
 
   const currentBeer = tasting?.beers.find(b => b.id === tasting.currentBeerId)
 
@@ -217,6 +265,21 @@ export default function RatePage({ params }: { params: { id: string } }) {
           </Link>
         </div>
       </div>
+
+      {/* Wrap-up overlay shown when beer is finished */}
+      {showWrapUp && wrapUpData && (
+        <WrapUpOverlay
+          beerName={wrapUpData.beerName}
+          brewery={wrapUpData.brewery}
+          average={wrapUpData.average}
+          count={wrapUpData.count}
+          onComplete={() => {
+            setShowWrapUp(false)
+            setWrapUpData(null)
+          }}
+          minDuration={5000}
+        />
+      )}
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { PendingRaters } from '@/components/PendingRaters'
 
 interface Beer {
   id: string
@@ -327,6 +328,15 @@ export default function AdminPage({ params }: { params: { id: string } }) {
                     Finish This Beer
                   </button>
                 </div>
+              )}
+
+              {/* Pending Raters - shows who has/hasn't rated current beer */}
+              {currentBeer && (
+                <PendingRaters
+                  tastingId={params.id}
+                  currentBeerId={currentBeer.id}
+                  refreshInterval={3000}
+                />
               )}
 
               {/* Untasted Beers */}
