@@ -1,0 +1,105 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { setCurrentBeerSchema, validateInput } from '@/lib/validation';
+import { requireLeader } from '@/lib/auth';
+import { broadcastCurrentBeerChanged } from '@/lib/sse';
+
+// PATCH /api/tastings/[id]/current - Set current beer
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const body = await request.json();
+    const validation = validateInput(setCurrentBeerSchema, body);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: validation.error },
+        { status: 400 }
+      );
+    }
+
+    const { beerId, userName } = validation.data;
+
+    // Verify user is leader
+    await requireLeader(userName);
+
+    // Verify beer exists and is untasted
+    const beer = await prisma.beer.findUnique({
+      where: { id: beerId }
+    });
+
+    if (!beer) {
+      return NextResponse.json(
+        { error: 'Beer not found' },
+        { status: 404 }
+      );
+    }
+
+    if (beer.status !== 'untasted') {
+      return NextResponse.json(
+        { error: 'Beer must be untasted to set as current' },
+        { status: 400 }
+      );
+    }
+
+    // Transaction: Update old current beer and set new current beer
+    const result = await prisma.$transaction(async (tx) => {
+      // Find and update old current beer if exists
+      const oldCurrent = await tx.beer.findFirst({
+        where: {
+          tastingId: params.id,
+          status: 'current'
+        }
+      });
+
+      if (oldCurrent) {
+        await tx.beer.update({
+          where: { id: oldCurrent.id },
+          data: { status: 'untasted' }
+        });
+      }
+
+      // Set new current beer
+      await tx.beer.update({
+        where: { id: beerId },
+        data: { status: 'current' }
+      });
+
+      // Update tasting with new current beer and increment version
+      const tasting = await tx.tasting.update({
+        where: { id: params.id },
+        data: {
+          currentBeerId: beerId,
+          version: { increment: 1 }
+        }
+      });
+
+      return tasting;
+    });
+
+    // Broadcast change via SSE
+    broadcastCurrentBeerChanged(params.id, beerId, result.version);
+
+    return NextResponse.json({
+      tastingId: params.id,
+      currentBeerId: beerId,
+      version: result.version
+    });
+
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Leader access required') {
+      return NextResponse.json(
+        { error: 'Leader access required' },
+        { status: 403 }
+      );
+    }
+
+    console.error('Error setting current beer:', error);
+    return NextResponse.json(
+      { error: 'Failed to set current beer' },
+      { status: 500 }
+    );
+  }
+}
