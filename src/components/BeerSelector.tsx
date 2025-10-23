@@ -12,6 +12,7 @@ interface Beer {
   country?: string
   containerSize?: number
   containerType?: string
+  priceISK?: number
 }
 
 interface BeerSelectorProps {
@@ -125,7 +126,14 @@ export function BeerSelector({ beers, onSelectBeer, onCreateCustom }: BeerSelect
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{beer.name}</div>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="font-medium text-sm truncate">{beer.name}</div>
+                            {beer.priceISK && (
+                              <div className="text-sm font-semibold text-green-600 whitespace-nowrap">
+                                {beer.priceISK} kr
+                              </div>
+                            )}
+                          </div>
                           <div className="text-xs text-muted-foreground truncate">{beer.brewery}</div>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             {beer.style && (

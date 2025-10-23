@@ -15,7 +15,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'BB-JOL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 549
   },
   {
     name: 'Úlfur IPA',
@@ -27,7 +28,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'BB-ULF-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 579
   },
   {
     name: 'Garún nr. 19',
@@ -39,7 +41,8 @@ const ICELANDIC_BEERS = [
     containerSize: 500,
     containerType: 'Bottle',
     productNumber: 'BB-GAR-500',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 699
   },
 
   // Gæðingur - Another Icelandic brewery
@@ -53,7 +56,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'GAE-JOL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 529
   },
   {
     name: 'Beljandi IPA',
@@ -65,7 +69,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'GAE-BEL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 589
   },
 
   // Einstök - Well-known Icelandic brand
@@ -79,7 +84,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'EIN-WHI-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 499
   },
   {
     name: 'Arctic Pale Ale',
@@ -91,7 +97,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'EIN-ARC-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 519
   },
   {
     name: 'Toasted Porter',
@@ -103,7 +110,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'EIN-POR-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 539
   },
 
   // Kaldi - One of Iceland's first microbreweries
@@ -117,7 +125,8 @@ const ICELANDIC_BEERS = [
     containerSize: 500,
     containerType: 'Bottle',
     productNumber: 'KAL-JOL-500',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 649
   },
   {
     name: 'Móri',
@@ -129,7 +138,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'KAL-MOR-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 499
   },
 
   // Bríó - Craft brewery
@@ -143,7 +153,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'BRI-JOL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 599
   },
   {
     name: 'Austri',
@@ -155,7 +166,8 @@ const ICELANDIC_BEERS = [
     containerSize: 500,
     containerType: 'Can',
     productNumber: 'BRI-AUS-500',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 629
   },
 
   // Popular international Christmas beers often available in Iceland
@@ -169,7 +181,8 @@ const ICELANDIC_BEERS = [
     containerSize: 500,
     containerType: 'Bottle',
     productNumber: 'TUB-JUL-500',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 579
   },
   {
     name: 'Nisseøl',
@@ -181,7 +194,8 @@ const ICELANDIC_BEERS = [
     containerSize: 500,
     containerType: 'Bottle',
     productNumber: 'NOG-NIS-500',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 799
   },
   {
     name: 'Juleøl',
@@ -193,7 +207,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Can',
     productNumber: 'MIK-JUL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 749
   },
 
 
@@ -208,7 +223,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'OLV-LAV-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 699
   },
   {
     name: 'Bruggsmiðjan Jólabjór',
@@ -220,7 +236,8 @@ const ICELANDIC_BEERS = [
     containerSize: 330,
     containerType: 'Bottle',
     productNumber: 'BRG-JOL-330',
-    vinbudinUrl: 'https://www.vinbudin.is'
+    vinbudinUrl: 'https://www.vinbudin.is',
+    priceISK: 559
   }
 ]
 

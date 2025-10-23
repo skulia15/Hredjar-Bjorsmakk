@@ -59,6 +59,7 @@ model Beer {
   containerType String?  // "Can", "Bottle", "Keg"
   productNumber String?  // Vínbúðin product/SKU number
   vinbudinUrl   String?  // Direct link to product page
+  priceISK      Float?   // Price in Icelandic Króna
 
   // Metadata
   createdAt     DateTime @default(now())

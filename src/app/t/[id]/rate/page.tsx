@@ -14,6 +14,9 @@ interface Beer {
   brewery: string
   style?: string
   abv?: number
+  containerSize?: number
+  containerType?: string
+  priceISK?: number
   status: string
   currentSince?: Date | string | null
   finishedAt?: Date | string | null
@@ -237,6 +240,18 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
                 {currentBeer.style} {currentBeer.abv && `• ${currentBeer.abv}%`}
               </p>
             )}
+            <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
+              {currentBeer.containerSize && currentBeer.containerType && (
+                <span className="text-sm text-muted-foreground">
+                  {currentBeer.containerSize}ml {currentBeer.containerType}
+                </span>
+              )}
+              {currentBeer.priceISK && (
+                <span className="text-sm font-semibold text-green-600">
+                  {currentBeer.priceISK} kr
+                </span>
+              )}
+            </div>
             {currentBeer.currentSince && (
               <div className="flex justify-center mt-2">
                 <CurrentBeerTimer

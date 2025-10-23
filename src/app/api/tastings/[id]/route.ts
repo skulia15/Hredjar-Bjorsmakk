@@ -58,6 +58,9 @@ export async function GET(
         const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
         const style = tastingBeer.beer?.style || tastingBeer.customStyle || null;
         const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
+        const containerSize = tastingBeer.beer?.containerSize || null;
+        const containerType = tastingBeer.beer?.containerType || null;
+        const priceISK = tastingBeer.beer?.priceISK || null;
 
         return {
           id: tastingBeer.id,
@@ -65,6 +68,9 @@ export async function GET(
           brewery,
           style,
           abv,
+          containerSize,
+          containerType,
+          priceISK,
           status: tastingBeer.status,
           orderIndex: tastingBeer.orderIndex,
           createdAt: tastingBeer.createdAt,

@@ -12,6 +12,9 @@ interface Beer {
   brewery: string
   style?: string
   abv?: number
+  containerSize?: number
+  containerType?: string
+  priceISK?: number
   status: string
   orderIndex: number
   currentSince?: Date | string | null
@@ -232,6 +235,12 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           </div>
           <div className="flex gap-2">
             <Link
+              href="/"
+              className="text-sm text-primary hover:underline"
+            >
+              ← Home
+            </Link>
+            <Link
               href={`/t/${params.id}/rate`}
               className="text-sm text-primary hover:underline"
             >
@@ -351,6 +360,18 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   <div>
                     <h4 className="font-bold text-lg">{currentBeer.name}</h4>
                     <p className="text-muted-foreground">{currentBeer.brewery}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {currentBeer.containerSize && currentBeer.containerType && (
+                        <span className="text-sm text-muted-foreground">
+                          {currentBeer.containerSize}ml {currentBeer.containerType}
+                        </span>
+                      )}
+                      {currentBeer.priceISK && (
+                        <span className="text-sm font-semibold text-green-600">
+                          {currentBeer.priceISK} kr
+                        </span>
+                      )}
+                    </div>
                     {currentBeer.ratingCount !== undefined && (
                       <p className="text-sm text-muted-foreground mt-1">
                         {currentBeer.ratingCount} rating{currentBeer.ratingCount !== 1 ? 's' : ''}
