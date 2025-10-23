@@ -43,36 +43,64 @@ model Participant {
   @@index([rejoinToken])
 }
 
-// Tasting event
-model Tasting {
+// Global beer catalog
+model Beer {
   id            String   @id @default(uuid())
-  title         String
-  status        String   @default("draft")  // "draft" | "active" | "closed"
-  currentBeerId String?
-  createdBy     String?  // User.id who created it
+  name          String
+  brewery       String
+  style         String?
+  abv           Float?
+  country       String?
+  imageUrl      String?
+  description   String?
 
-  version       Int      @default(1)  // Increments on state changes
+  // Metadata
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  beers         Beer[]
-  participants  Participant[]
-  ratings       Rating[]
+  // Relations
+  tastingBeers  TastingBeer[]
+
+  @@unique([name, brewery])  // Prevent duplicate beers
+  @@index([name])
+  @@index([brewery])
+}
+
+// Tasting event
+model Tasting {
+  id                 String   @id @default(uuid())
+  title              String
+  status             String   @default("draft")  // "draft" | "active" | "closed"
+  currentTastingBeerId String?  // References TastingBeer.id
+  createdBy          String?  // User.id who created it
+
+  version            Int      @default(1)  // Increments on state changes
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tastingBeers       TastingBeer[]
+  participants       Participant[]
+  ratings            Rating[]
 
   @@index([status])
   @@index([createdAt])
 }
 
-// Beer in a tasting
-model Beer {
+// Instance of a beer in a specific tasting
+model TastingBeer {
   id            String   @id @default(uuid())
   tastingId     String
   tasting       Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
 
-  name          String
-  brewery       String
-  style         String?
-  abv           Float?
+  beerId        String?  // Optional - references global Beer catalog
+  beer          Beer?    @relation(fields: [beerId], references: [id], onDelete: SetNull)
+
+  // Allow custom beers not in catalog
+  customName    String?
+  customBrewery String?
+  customStyle   String?
+  customAbv     Float?
+
   orderIndex    Int      @default(0)
   status        String   @default("untasted")  // "untasted" | "current" | "finished"
 
@@ -82,26 +110,27 @@ model Beer {
 
   @@index([tastingId, status])
   @@index([tastingId, orderIndex])
+  @@index([beerId])
 }
 
 // Rating submission
 model Rating {
-  id              String   @id @default(uuid())
+  id              String      @id @default(uuid())
   tastingId       String
-  tasting         Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
+  tasting         Tasting     @relation(fields: [tastingId], references: [id], onDelete: Cascade)
 
-  beerId          String
-  beer            Beer     @relation(fields: [beerId], references: [id], onDelete: Cascade)
+  tastingBeerId   String
+  tastingBeer     TastingBeer @relation(fields: [tastingBeerId], references: [id], onDelete: Cascade)
 
   participantId   String
   participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
-  score           Float    // 1.0 to 10.0, step 0.5
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  score           Float       // 1.0 to 10.0, step 0.5
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
-  @@unique([beerId, participantId])  // One rating per beer per participant
-  @@index([beerId])
+  @@unique([tastingBeerId, participantId])  // One rating per tasting beer per participant
+  @@index([tastingBeerId])
   @@index([participantId])
 }
 
