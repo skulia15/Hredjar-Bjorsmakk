@@ -14,8 +14,16 @@ export async function isLeader(userName: string): Promise<boolean> {
 
 /**
  * Require leader access or throw error
+ * Note: Admin users automatically have leader access
  */
 export async function requireLeader(userName: string): Promise<void> {
+  // Admin users automatically have leader privileges
+  const normalizedName = userName.toLowerCase().trim();
+  if (normalizedName === 'admin') {
+    return;
+  }
+
+  // Check if user is a leader
   const leader = await isLeader(userName);
 
   if (!leader) {
