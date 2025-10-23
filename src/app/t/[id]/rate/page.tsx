@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
@@ -56,23 +56,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
   const { setActiveTasting } = useActiveTasting()
 
+  // Set active tasting once on mount
   useEffect(() => {
-    loadTasting(true) // Show loading spinner on initial load
-    // Get participant ID from session (simplified - in real app would use proper session management)
-    const stored = localStorage.getItem(`participant_${params.id}`)
-    if (stored) {
-      setParticipantId(JSON.parse(stored).participantId)
-    }
-
-    // Set this as the active tasting
     setActiveTasting(params.id)
-
-    // Poll for updates every 3 seconds (without loading spinner)
-    const interval = setInterval(() => loadTasting(false), 3000)
-    return () => clearInterval(interval)
   }, [params.id, setActiveTasting])
 
-  const loadTasting = async (showLoadingSpinner = false) => {
+  const loadTasting = useCallback(async (showLoadingSpinner = false) => {
     if (showLoadingSpinner) {
       setLoading(true)
     }
@@ -93,7 +82,23 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         setLoading(false)
       }
     }
-  }
+  }, [params.id])
+
+  // Load initial data and set up polling
+  useEffect(() => {
+    // Initial load with spinner
+    loadTasting(true)
+
+    // Get participant ID from session
+    const stored = localStorage.getItem(`participant_${params.id}`)
+    if (stored) {
+      setParticipantId(JSON.parse(stored).participantId)
+    }
+
+    // Poll for updates every 3 seconds (without loading spinner)
+    const interval = setInterval(() => loadTasting(false), 3000)
+    return () => clearInterval(interval)
+  }, [params.id, loadTasting])
 
   // Detect when a beer has been finished and show wrap-up overlay
   useEffect(() => {
