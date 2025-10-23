@@ -41,7 +41,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [activeTab, setActiveTab] = useState<TabType>('manage')
   const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState('skuli') // TODO: Get from session
+  const [userName] = useState('admin') // Admin user accessing admin page
   const [message, setMessage] = useState('')
 
   // Beer catalog state
