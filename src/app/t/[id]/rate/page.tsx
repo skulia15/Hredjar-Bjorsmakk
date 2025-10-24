@@ -40,6 +40,10 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [participantId, setParticipantId] = useState('')
+  const [participantInfo, setParticipantInfo] = useState<{
+    name?: string
+    code?: string
+  } | null>(null)
 
   // Wrap-up overlay state
   const [showWrapUp, setShowWrapUp] = useState(false)
@@ -92,7 +96,19 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     // Get participant ID from session
     const stored = localStorage.getItem(`participant_${params.id}`)
     if (stored) {
-      setParticipantId(JSON.parse(stored).participantId)
+      const data = JSON.parse(stored)
+      setParticipantId(data.participantId)
+
+      // Fetch participant details including name
+      fetch(`/api/participants/${data.participantId}`)
+        .then(res => res.json())
+        .then(participant => {
+          setParticipantInfo({
+            name: participant.user?.name,
+            code: participant.code
+          })
+        })
+        .catch(err => console.error('Error loading participant info:', err))
     }
 
     // Poll for updates every 3 seconds (without loading spinner)
@@ -249,6 +265,21 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">
+        {/* User Info */}
+        {participantInfo && (
+          <div className="bg-muted/50 px-4 py-2 rounded-lg border text-center">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Logged in as: </span>
+              <span className="font-semibold">{participantInfo.name}</span>
+              {participantInfo.code && (
+                <span className="text-muted-foreground ml-2">
+                  (Code: {participantInfo.code})
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">{tasting.title}</h1>

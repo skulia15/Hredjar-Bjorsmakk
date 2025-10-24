@@ -322,7 +322,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">{tasting.title}</h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-3xl font-bold">{tasting.title}</h1>
+            <div className="bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 text-sm">
+              <span className="text-muted-foreground">Admin: </span>
+              <span className="font-semibold text-primary">{userName}</span>
+            </div>
+          </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-primary/10 rounded">{tasting.status}</span>
             <span>{tasting.participantCount} participants</span>
