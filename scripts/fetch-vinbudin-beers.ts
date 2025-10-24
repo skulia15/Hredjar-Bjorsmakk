@@ -93,10 +93,9 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
         const url = linkEl?.getAttribute('href') || ''
         const imageUrl = imageEl?.getAttribute('src') || imageEl?.getAttribute('data-src') || ''
 
-        // Extract product number from URL or data attribute
-        const productNumberMatch = url.match(/productid[=/](\d+)/i) ||
-                                  element.getAttribute('data-product-id')?.match(/(\d+)/) ||
-                                  element.getAttribute('data-productid')?.match(/(\d+)/)
+        // Extract numeric product ID from URL (not SKU codes)
+        // URL format: /stoek-vara.aspx/?productid=21582/
+        const productNumberMatch = url.match(/productid=(\d+)/i)
         const productNumber = productNumberMatch?.[1] || ''
 
         // Parse brewery and beer name
