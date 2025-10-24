@@ -124,6 +124,12 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
         }
       }
 
+      // Extract brewery/producer
+      const breweryEl = document.querySelector('#ctl00_ctl01_Label_Producer')
+      if (breweryEl && breweryEl.textContent) {
+        result.brewery = breweryEl.textContent.trim()
+      }
+
       // Extract country
       const countryMatch = detailsText.match(/Land[:\s]+([A-ZÁ-Ý][a-zá-ý]+)/i) ||
                           detailsText.match(/Country[:\s]+([A-Z][a-z]+)/i) ||
@@ -293,6 +299,7 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
         const details = await fetchBeerDetails(page, beer.vinbudinUrl, beer.productNumber)
 
         // Merge detailed info, prioritizing scraped details over name parsing
+        if (details.brewery) beer.brewery = details.brewery
         if (details.abv !== undefined) beer.abv = details.abv
         if (details.containerSize !== undefined) beer.containerSize = details.containerSize
         if (details.containerType !== undefined) beer.containerType = details.containerType
