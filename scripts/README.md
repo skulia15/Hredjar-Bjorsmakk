@@ -16,11 +16,17 @@ npx playwright install chromium
 ### Notkun
 
 ```bash
-# Með local database
+# Dry run - sjá hvað myndi gerast án þess að gera breytingar
+npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
+
+# Keyra með local database
 npx tsx scripts/fetch-vinbudin-beers.ts
 
-# Með production database
+# Keyra með production database
 DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts
+
+# Dry run með production database
+DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
 ```
 
 ### Hvað gerist?
@@ -94,11 +100,17 @@ npx playwright install chromium
 ### Usage
 
 ```bash
-# With local database
+# Dry run - see what would happen without making changes
+npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
+
+# Run with local database
 npx tsx scripts/fetch-vinbudin-beers.ts
 
-# With production database
+# Run with production database
 DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts
+
+# Dry run with production database
+DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
 ```
 
 ### What happens?

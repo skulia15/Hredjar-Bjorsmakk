@@ -228,6 +228,13 @@ async function importBeers(beers: VinbudinBeer[]) {
 
 async function main() {
   try {
+    // Check for dry-run flag
+    const isDryRun = process.argv.includes('--dry-run') || process.argv.includes('-d')
+
+    if (isDryRun) {
+      console.log('🔍 DRY RUN MODE - engar breytingar verða gerðar á gagnagrunninum\n')
+    }
+
     const beers = await fetchBeersFromVinbudin()
 
     if (beers.length === 0) {
@@ -238,7 +245,11 @@ async function main() {
       process.exit(1)
     }
 
-    await importBeers(beers)
+    if (isDryRun) {
+      await dryRunImport(beers)
+    } else {
+      await importBeers(beers)
+    }
 
     console.log('\n✨ Lokið!')
     await prisma.$disconnect()
@@ -247,6 +258,59 @@ async function main() {
     await prisma.$disconnect()
     process.exit(1)
   }
+}
+
+async function dryRunImport(beers: VinbudinBeer[]) {
+  console.log('\n📊 DRY RUN - Sýni hvað myndi gerast:\n')
+
+  // Get existing beers to avoid duplicates
+  const existingBeers = await prisma.beer.findMany({
+    select: {
+      name: true,
+      brewery: true,
+      productNumber: true
+    }
+  })
+
+  const existingSet = new Set(
+    existingBeers.map(b => `${b.name.toLowerCase()}|${b.brewery.toLowerCase()}`)
+  )
+  const existingProductNumbers = new Set(
+    existingBeers.map(b => b.productNumber).filter(Boolean)
+  )
+
+  const newBeers = beers.filter(beer => {
+    const key = `${beer.name.toLowerCase()}|${beer.brewery.toLowerCase()}`
+    const existsByName = existingSet.has(key)
+    const existsByProductNumber = beer.productNumber && existingProductNumbers.has(beer.productNumber)
+
+    return !existsByName && !existsByProductNumber
+  })
+
+  console.log(`📈 Samantekt:`)
+  console.log(`  • ${beers.length} bjórar fundust á Vínbúðinni`)
+  console.log(`  • ${beers.length - newBeers.length} bjórar eru þegar í gagnagrunninum`)
+  console.log(`  • ${newBeers.length} nýjir bjórar yrðu bættir við\n`)
+
+  if (newBeers.length > 0) {
+    console.log('📋 Nýir bjórar sem yrðu bættir við:\n')
+    newBeers.forEach((beer, index) => {
+      console.log(`${index + 1}. ${beer.name} - ${beer.brewery}`)
+      console.log(`   Verð: ${beer.priceISK} kr`)
+      if (beer.abv) console.log(`   ABV: ${beer.abv}%`)
+      if (beer.productNumber) console.log(`   Vörunúmer: ${beer.productNumber}`)
+      if (beer.containerSize && beer.containerType) {
+        console.log(`   Umbúðir: ${beer.containerSize}ml ${beer.containerType}`)
+      }
+      console.log(`   URL: ${beer.vinbudinUrl}`)
+      if (beer.imageUrl) console.log(`   Mynd: ${beer.imageUrl}`)
+      console.log('')
+    })
+  } else {
+    console.log('✅ Allir bjórar eru þegar í gagnagrunninum - ekkert að gera!\n')
+  }
+
+  console.log('💡 Til að flytja inn í raun og veru, keyrðu án --dry-run flaggsins')
 }
 
 main()
