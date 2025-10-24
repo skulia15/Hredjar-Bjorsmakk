@@ -8,6 +8,7 @@ import { useActiveTasting } from '@/components/ReturnToTastingButton'
 import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
 import { StarRating } from '@/components/StarRating'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
+import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 
 interface Beer {
   id: string
@@ -18,6 +19,7 @@ interface Beer {
   containerSize?: number
   containerType?: string
   priceISK?: number
+  imageUrl?: string
   status: string
   currentSince?: Date | string | null
   finishedAt?: Date | string | null
@@ -364,7 +366,30 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         {/* Current Beer Card */}
         <div className="bg-card p-6 rounded-lg border space-y-4">
           <div className="text-center">
-            <div className="text-5xl mb-3">🍺</div>
+            {/* Beer Image */}
+            <div className="flex justify-center mb-3">
+              {currentBeer.imageUrl ? (
+                <img
+                  src={currentBeer.imageUrl}
+                  alt={currentBeer.name}
+                  className="h-20 w-auto object-contain"
+                  onError={(e) => {
+                    // Show placeholder if image fails to load
+                    const parent = e.currentTarget.parentElement
+                    if (parent) {
+                      e.currentTarget.style.display = 'none'
+                      const placeholder = parent.querySelector('.beer-placeholder')
+                      if (placeholder) {
+                        (placeholder as HTMLElement).style.display = 'block'
+                      }
+                    }
+                  }}
+                />
+              ) : null}
+              <div className={currentBeer.imageUrl ? 'hidden beer-placeholder' : 'beer-placeholder'}>
+                <BeerPlaceholder className="h-20 w-auto text-muted-foreground" />
+              </div>
+            </div>
             <h2 className="text-2xl font-bold">{currentBeer.name}</h2>
             <p className="text-lg text-muted-foreground">{currentBeer.brewery}</p>
             {currentBeer.style && (
