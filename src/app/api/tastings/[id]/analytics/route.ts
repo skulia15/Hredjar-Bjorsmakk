@@ -131,16 +131,62 @@ export async function GET(
       .sort((a, b) => b.average - a.average)
       .slice(0, 10);
 
-    // Participant engagement
+    // Enhanced participant statistics with per-user details
     const participantStats = tasting.participants.map(p => {
-      const ratingsCount = tasting.tastingBeers.reduce((count, beer) => {
-        return count + beer.ratings.filter(r => r.participantId === p.id).length;
-      }, 0);
+      // Get all ratings from this participant
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings.filter(r => r.participantId === p.id).map(rating => ({
+          score: rating.score,
+          beerId: beer.id,
+          beerName: beer.beer?.name || beer.customName || 'Unknown',
+          brewery: beer.beer?.brewery || beer.customBrewery || 'Unknown',
+          style: beer.beer?.style || beer.customStyle || null,
+        }))
+      );
 
+      const ratingsCount = userRatings.length;
       const possibleRatings = finishedBeers.length + (tasting.currentTastingBeerId ? 1 : 0);
       const engagementRate = possibleRatings > 0
         ? (ratingsCount / possibleRatings) * 100
         : 0;
+
+      // Calculate average rating for this user
+      const userAverage = ratingsCount > 0
+        ? userRatings.reduce((sum, r) => sum + r.score, 0) / ratingsCount
+        : 0;
+
+      // Find user's top beer (highest rated)
+      const topBeer = ratingsCount > 0
+        ? userRatings.reduce((top, current) =>
+            current.score > top.score ? current : top
+          )
+        : null;
+
+      // Calculate favorite style (style with highest average rating)
+      const styleRatings = userRatings
+        .filter(r => r.style)
+        .reduce((acc, r) => {
+          if (!acc[r.style!]) {
+            acc[r.style!] = { scores: [], count: 0 };
+          }
+          acc[r.style!].scores.push(r.score);
+          acc[r.style!].count++;
+          return acc;
+        }, {} as Record<string, { scores: number[], count: number }>);
+
+      const favoriteStyle = Object.entries(styleRatings)
+        .map(([style, data]) => ({
+          style,
+          average: data.scores.reduce((sum, s) => sum + s, 0) / data.count,
+          count: data.count
+        }))
+        .sort((a, b) => b.average - a.average)[0] || null;
+
+      // Calculate rating variance (standard deviation)
+      const variance = ratingsCount > 1
+        ? userRatings.reduce((sum, r) => sum + Math.pow(r.score - userAverage, 2), 0) / ratingsCount
+        : 0;
+      const stdDev = Math.sqrt(variance);
 
       return {
         participantId: p.id,
@@ -148,7 +194,20 @@ export async function GET(
         code: p.code,
         ratingsCount,
         possibleRatings,
-        engagementRate: Math.round(engagementRate * 10) / 10
+        engagementRate: Math.round(engagementRate * 10) / 10,
+        averageRating: Number(userAverage.toFixed(2)),
+        topBeer: topBeer ? {
+          beerId: topBeer.beerId,
+          name: topBeer.beerName,
+          brewery: topBeer.brewery,
+          score: Number(topBeer.score.toFixed(2))
+        } : null,
+        favoriteStyle: favoriteStyle ? {
+          style: favoriteStyle.style,
+          average: Number(favoriteStyle.average.toFixed(2)),
+          count: favoriteStyle.count
+        } : null,
+        ratingVariance: Number(stdDev.toFixed(2))
       };
     }).sort((a, b) => b.ratingsCount - a.ratingsCount);
 
