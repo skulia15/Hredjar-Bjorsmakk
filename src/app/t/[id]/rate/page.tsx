@@ -155,12 +155,29 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   // Derive current beer from tasting state
   const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
 
-  // Load rating stats when current beer changes
+  // Load existing rating and stats when current beer changes
   useEffect(() => {
-    if (currentBeer) {
+    if (currentBeer && participantId) {
       loadRatingStats()
+
+      // Load existing rating for this beer
+      fetch(`/api/tastings/${params.id}/current/pending-raters`)
+        .then(res => res.json())
+        .then(data => {
+          // Check if this participant has already rated
+          const existingRating = data.rated?.find((r: { participantId: string; score: number }) =>
+            r.participantId === participantId
+          )
+          if (existingRating) {
+            setRating(existingRating.score)
+          } else {
+            // Reset to 0 for new beer
+            setRating(0)
+          }
+        })
+        .catch(err => console.error('Error loading existing rating:', err))
     }
-  }, [currentBeer?.id, loadRatingStats])
+  }, [currentBeer?.id, participantId, loadRatingStats, params.id])
 
   // Detect when a beer has been finished and show wrap-up overlay
   useEffect(() => {
