@@ -214,6 +214,43 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
+  const handleRemoveParticipant = async (participantId: string) => {
+    // Ask if they want to keep ratings
+    const keepRatings = confirm(
+      'Do you want to KEEP this participant\'s ratings?\n\n' +
+      'Click OK to KEEP ratings (participant removed from list but ratings preserved)\n' +
+      'Click Cancel to DELETE ratings (participant and all their ratings will be removed)'
+    )
+
+    // Confirm the action
+    const confirmMessage = keepRatings
+      ? 'Remove this participant from the list while preserving their ratings?'
+      : 'Remove this participant AND delete all their ratings?'
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      const url = `/api/tastings/${params.id}/participants/${participantId}${keepRatings ? '?keepRatings=true' : ''}`
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to remove participant')
+      }
+
+      const data = await response.json()
+      setMessage(data.message || 'Participant removed!')
+      setTimeout(() => setMessage(''), 3000)
+      loadTasting()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : 'Error removing participant')
+      setTimeout(() => setMessage(''), 5000)
+    }
+  }
+
   const handleStartTasting = async () => {
     // Check if there are any beers
     if (!tasting || tasting.beers.length === 0) {
@@ -356,6 +393,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               <Trophy className="w-4 h-4" />
               Leaderboard
             </Link>
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
+            >
+              <Users className="w-4 h-4" />
+              Manage Users
+            </Link>
           </div>
         </div>
 
@@ -411,50 +455,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         <div>
           {activeTab === 'manage' && (
             <div className="space-y-6">
-              {/* Tasting Controls */}
-              <div className="bg-card p-4 rounded-lg border space-y-3">
-                <h3 className="font-semibold">Tasting Controls</h3>
-                {tasting.status === 'draft' && tasting.beers.length === 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Add at least one beer below to start the tasting
-                  </p>
-                )}
-                <div className="flex gap-2 flex-wrap">
-                  {tasting.status === 'draft' && (
-                    <button
-                      onClick={handleStartTasting}
-                      disabled={tasting.beers.length === 0}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title={tasting.beers.length === 0 ? 'Add beers first' : 'Start the tasting'}
-                    >
-                      Start Tasting
-                    </button>
-                  )}
-                  {tasting.status === 'active' && (
-                    <button
-                      onClick={handleCompleteTasting}
-                      className="px-4 py-2 bg-orange-600 text-white rounded hover:bg-orange-700"
-                    >
-                      Complete Tasting
-                    </button>
-                  )}
-                  <a
-                    href={`/api/tastings/${params.id}/export?format=xlsx&userName=${userName}`}
-                    download
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-                  >
-                    Export XLSX
-                  </a>
-                  <a
-                    href={`/api/tastings/${params.id}/export?format=csv&userName=${userName}`}
-                    download
-                    className="px-4 py-2 border rounded hover:bg-accent"
-                  >
-                    Export CSV
-                  </a>
-                </div>
-              </div>
-
               {/* Current Beer - Highlighted */}
               {currentBeer && (
                 <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-2 border-green-500 shadow-lg space-y-3">
@@ -507,6 +507,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   tastingId={params.id}
                   currentBeerId={currentBeer.id}
                   refreshInterval={3000}
+                  onRemoveParticipant={handleRemoveParticipant}
                 />
               )}
 
@@ -576,6 +577,50 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   </div>
                 </div>
               )}
+
+              {/* Tasting Controls */}
+              <div className="bg-card p-4 rounded-lg border space-y-3">
+                <h3 className="font-semibold">Tasting Controls</h3>
+                {tasting.status === 'draft' && tasting.beers.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Add at least one beer above to start the tasting
+                  </p>
+                )}
+                <div className="flex gap-2 flex-wrap">
+                  {tasting.status === 'draft' && (
+                    <button
+                      onClick={handleStartTasting}
+                      disabled={tasting.beers.length === 0}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      title={tasting.beers.length === 0 ? 'Add beers first' : 'Start the tasting'}
+                    >
+                      Start Tasting
+                    </button>
+                  )}
+                  {tasting.status === 'active' && (
+                    <button
+                      onClick={handleCompleteTasting}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-orange-700"
+                    >
+                      End Tasting
+                    </button>
+                  )}
+                  <a
+                    href={`/api/tastings/${params.id}/export?format=xlsx&userName=${userName}`}
+                    download
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                  >
+                    Export XLSX
+                  </a>
+                  <a
+                    href={`/api/tastings/${params.id}/export?format=csv&userName=${userName}`}
+                    download
+                    className="px-4 py-2 border rounded hover:bg-accent"
+                  >
+                    Export CSV
+                  </a>
+                </div>
+              </div>
             </div>
           )}
 

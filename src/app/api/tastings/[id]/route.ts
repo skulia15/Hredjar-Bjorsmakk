@@ -25,7 +25,11 @@ export async function GET(
           orderBy: { orderIndex: 'asc' }
         },
         _count: {
-          select: { participants: true }
+          select: {
+            participants: {
+              where: { active: true }  // Only count active participants
+            }
+          }
         }
       }
     });

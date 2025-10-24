@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 
 interface BeerScore {
@@ -19,7 +19,8 @@ interface ScoresData {
   beers: BeerScore[]
 }
 
-export default function ScoresPage({ params }: { params: { id: string } }) {
+export default function ScoresPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
+  const params = use(paramsPromise)
   const [scores, setScores] = useState<ScoresData | null>(null)
   const [loading, setLoading] = useState(true)
 

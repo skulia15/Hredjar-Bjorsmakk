@@ -29,6 +29,7 @@ export async function GET(
           }
         },
         participants: {
+          where: { active: true },  // Only include active participants
           include: { user: true }
         }
       }

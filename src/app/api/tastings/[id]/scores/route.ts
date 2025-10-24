@@ -40,7 +40,7 @@ export async function GET(
         : 0;
 
       return {
-        tastingBeerId: tb.id,
+        beerId: tb.id,
         name: tb.beer?.name || tb.customName || 'Unknown',
         brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
         style: tb.beer?.style || tb.customStyle || null,

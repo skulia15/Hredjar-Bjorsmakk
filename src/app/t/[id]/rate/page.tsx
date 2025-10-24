@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { WrapUpOverlay } from '@/components/WrapUpOverlay'
 import { useActiveTasting } from '@/components/ReturnToTastingButton'
 import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
@@ -30,10 +31,12 @@ interface Tasting {
   status: string
   currentBeerId?: string | null
   beers: Beer[]
+  currentUserIsLeader?: boolean
 }
 
 export default function RatePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
+  const router = useRouter()
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [rating, setRating] = useState<number>(5.0)
   const [loading, setLoading] = useState(false)
@@ -43,6 +46,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   const [participantInfo, setParticipantInfo] = useState<{
     name?: string
     code?: string
+  } | null>(null)
+  const [checkingAuth, setCheckingAuth] = useState(true)
+  const [ratingStats, setRatingStats] = useState<{
+    totalParticipants: number
+    ratedCount: number
+    pendingCount: number
   } | null>(null)
 
   // Wrap-up overlay state
@@ -88,6 +97,23 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     }
   }, [params.id])
 
+  const loadRatingStats = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/current/pending-raters`)
+      if (!response.ok) {
+        return
+      }
+      const data = await response.json()
+      setRatingStats({
+        totalParticipants: data.totalParticipants,
+        ratedCount: data.ratedCount,
+        pendingCount: data.pendingCount
+      })
+    } catch (error) {
+      console.error('Error loading rating stats:', error)
+    }
+  }, [params.id])
+
   // Load initial data and set up polling
   useEffect(() => {
     // Initial load with spinner
@@ -98,6 +124,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     if (stored) {
       const data = JSON.parse(stored)
       setParticipantId(data.participantId)
+      setCheckingAuth(false)
 
       // Fetch participant details including name
       fetch(`/api/participants/${data.participantId}`)
@@ -109,12 +136,26 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           })
         })
         .catch(err => console.error('Error loading participant info:', err))
+    } else {
+      // No participant ID found - redirect to join page
+      router.push(`/t/${params.id}`)
+      return
     }
 
     // Poll for updates every 3 seconds (without loading spinner)
-    const interval = setInterval(() => loadTasting(false), 3000)
+    const interval = setInterval(() => {
+      loadTasting(false)
+      loadRatingStats()
+    }, 3000)
     return () => clearInterval(interval)
-  }, [params.id, loadTasting])
+  }, [params.id, loadTasting, loadRatingStats, router])
+
+  // Load rating stats when current beer changes
+  useEffect(() => {
+    if (currentBeer) {
+      loadRatingStats()
+    }
+  }, [currentBeer?.id, loadRatingStats])
 
   // Detect when a beer has been finished and show wrap-up overlay
   useEffect(() => {
@@ -198,7 +239,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     }
   }
 
-  if (loading) {
+  if (checkingAuth || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -265,6 +306,22 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">
+        {/* Leader Controls Access */}
+        {tasting.currentUserIsLeader && (
+          <div className="text-center">
+            <Link
+              href={`/t/${params.id}/admin`}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/30 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              Switch to leader View
+            </Link>
+          </div>
+        )}
+
         {/* User Info */}
         {participantInfo && (
           <div className="bg-muted/50 px-4 py-2 rounded-lg border text-center">
@@ -357,8 +414,51 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           </form>
         </div>
 
+        {/* Rating Progress */}
+        {ratingStats && (
+          <div className="bg-card p-4 rounded-lg border space-y-3">
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium">Participant Progress</span>
+              <span className="text-muted-foreground">
+                {ratingStats.ratedCount} / {ratingStats.totalParticipants} rated
+              </span>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all duration-500"
+                style={{
+                  width: ratingStats.totalParticipants > 0
+                    ? `${(ratingStats.ratedCount / ratingStats.totalParticipants) * 100}%`
+                    : '0%'
+                }}
+              />
+            </div>
+
+            {/* Status message */}
+            {ratingStats.pendingCount > 0 ? (
+              <p className="text-xs text-muted-foreground text-center">
+                Waiting for {ratingStats.pendingCount} {ratingStats.pendingCount === 1 ? 'person' : 'people'}
+              </p>
+            ) : (
+              <p className="text-xs text-green-600 text-center font-medium">
+                🎉 Everyone has rated!
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Navigation */}
         <div className="flex justify-center gap-4">
+          {tasting.currentUserIsLeader && (
+            <Link
+              href={`/t/${params.id}/admin`}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Leader View
+            </Link>
+          )}
           <Link
             href={`/t/${params.id}/scores`}
             className="text-sm text-muted-foreground hover:text-foreground"

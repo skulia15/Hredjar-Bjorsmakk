@@ -29,12 +29,14 @@ interface PendingRatersProps {
   tastingId: string
   currentBeerId: string
   refreshInterval?: number
+  onRemoveParticipant?: (participantId: string) => void
 }
 
 export function PendingRaters({
   tastingId,
   currentBeerId,
-  refreshInterval = 3000
+  refreshInterval = 3000,
+  onRemoveParticipant
 }: PendingRatersProps) {
   const [data, setData] = useState<PendingRatersData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -138,10 +140,32 @@ export function PendingRaters({
             {data.pending.map((participant) => (
               <div
                 key={participant.participantId}
-                className="flex items-center gap-2 p-2 bg-orange-50 dark:bg-orange-950 rounded text-sm"
+                className="flex items-center justify-between gap-2 p-2 bg-orange-50 dark:bg-orange-950 rounded text-sm"
               >
-                <span className="font-medium">{participant.name}</span>
-                <span className="text-xs text-muted-foreground">({participant.code})</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">{participant.name}</span>
+                  <span className="text-xs text-muted-foreground">({participant.code})</span>
+                </div>
+                {onRemoveParticipant && (
+                  <button
+                    onClick={() => onRemoveParticipant(participant.participantId)}
+                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors p-1"
+                    title="Remove participant"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </button>
+                )}
               </div>
             ))}
           </div>

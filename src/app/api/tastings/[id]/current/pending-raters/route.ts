@@ -20,6 +20,9 @@ export async function GET(
       select: {
         currentTastingBeerId: true,
         participants: {
+          where: {
+            active: true  // Only include active participants
+          },
           include: {
             user: {
               select: {
