@@ -67,7 +67,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
       ratingsSheet.addRow({
         beerName,
         brewery,
-        participant: rating.participant.user.name,
+        participant: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
         code: rating.participant.code,
         rating: rating.score,
         timestamp: formatDate(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),

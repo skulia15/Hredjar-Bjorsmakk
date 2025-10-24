@@ -190,7 +190,7 @@ export async function GET(
 
       return {
         participantId: p.id,
-        userName: p.user.name,
+        userName: p.user?.name || `Notandi ${p.code}`,
         code: p.code,
         ratingsCount,
         possibleRatings,

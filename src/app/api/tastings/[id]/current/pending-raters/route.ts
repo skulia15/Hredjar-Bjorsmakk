@@ -75,7 +75,7 @@ export async function GET(
     // Split participants into rated and pending
     const rated = ratings.map(rating => ({
       participantId: rating.participantId,
-      name: rating.participant.user.name,
+      name: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
       code: rating.participant.code,
       score: rating.score,
       submittedAt: rating.updatedAt.toISOString()
@@ -85,7 +85,7 @@ export async function GET(
       .filter(p => !ratedParticipantIds.has(p.id))
       .map(p => ({
         participantId: p.id,
-        name: p.user.name,
+        name: p.user?.name || `Notandi ${p.code}`,
         code: p.code
       }))
       .sort((a, b) => a.name.localeCompare(b.name))

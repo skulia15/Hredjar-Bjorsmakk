@@ -477,6 +477,12 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           >
             ← Til baka
           </button>
+          <Link
+            href="/"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            Forsíða →
+          </Link>
         </div>
       </div>
     </div>
