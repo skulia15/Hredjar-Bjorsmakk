@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
           id: user.id,
           name: user.name,
           isLeader: user.isLeader,
+          isAdmin: user.isAdmin,
           createdAt: user.createdAt,
           tastingCount: user._count.participations,
           ratingCount

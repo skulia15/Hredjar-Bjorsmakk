@@ -24,12 +24,17 @@ export async function PATCH(
       );
     }
 
-    const { isLeader } = validation.data;
+    const { isLeader, isAdmin } = validation.data;
+
+    // Build update data object with only provided fields
+    const updateData: { isLeader?: boolean; isAdmin?: boolean } = {};
+    if (isLeader !== undefined) updateData.isLeader = isLeader;
+    if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
 
     // Update user
     const user = await prisma.user.update({
       where: { id: userId },
-      data: { isLeader }
+      data: updateData
     });
 
     return NextResponse.json({
@@ -37,7 +42,8 @@ export async function PATCH(
       user: {
         id: user.id,
         name: user.name,
-        isLeader: user.isLeader
+        isLeader: user.isLeader,
+        isAdmin: user.isAdmin
       }
     });
 

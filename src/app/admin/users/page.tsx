@@ -7,6 +7,7 @@ interface User {
   id: string
   name: string
   isLeader: boolean
+  isAdmin: boolean
   createdAt: string
   tastingCount: number
   ratingCount: number
@@ -51,6 +52,24 @@ export default function AdminUsersPage() {
       if (!response.ok) throw new Error('Failed to update user')
 
       setMessage(`Notandi ${!currentStatus ? 'gerður að' : 'fjarlægður úr'} leiðtoga!`)
+      setTimeout(() => setMessage(''), 3000)
+      loadUsers()
+    } catch (error) {
+      setMessage('Villa við að uppfæra notanda')
+    }
+  }
+
+  const handleToggleAdmin = async (userId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isAdmin: !currentStatus })
+      })
+
+      if (!response.ok) throw new Error('Failed to update user')
+
+      setMessage(`Notandi ${!currentStatus ? 'gerður að' : 'fjarlægður úr'} stjórnanda!`)
       setTimeout(() => setMessage(''), 3000)
       loadUsers()
     } catch (error) {
@@ -119,17 +138,21 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold">{users.length}</div>
             <div className="text-sm text-muted-foreground">Fjöldi notenda</div>
+          </div>
+          <div className="bg-card p-4 rounded-lg border">
+            <div className="text-2xl font-bold">{users.filter(u => u.isAdmin).length}</div>
+            <div className="text-sm text-muted-foreground">Stjórnendur</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold">{users.filter(u => u.isLeader).length}</div>
             <div className="text-sm text-muted-foreground">Leiðtogar</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
-            <div className="text-2xl font-bold">{users.filter(u => !u.isLeader).length}</div>
+            <div className="text-2xl font-bold">{users.filter(u => !u.isLeader && !u.isAdmin).length}</div>
             <div className="text-sm text-muted-foreground">Þátttakendur</div>
           </div>
         </div>
@@ -162,6 +185,11 @@ export default function AdminUsersPage() {
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
                       <h3 className="font-semibold text-lg">{user.name}</h3>
+                      {user.isAdmin && (
+                        <span className="px-2 py-1 bg-purple-500/10 text-purple-600 text-xs font-medium rounded">
+                          Stjórnandi
+                        </span>
+                      )}
                       {user.isLeader && (
                         <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
                           Leiðtogi
@@ -176,6 +204,16 @@ export default function AdminUsersPage() {
                   </div>
 
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleAdmin(user.id, user.isAdmin)}
+                      className={`px-4 py-2 rounded font-medium transition-colors ${
+                        user.isAdmin
+                          ? 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20'
+                          : 'bg-purple-500/10 text-purple-600 hover:bg-purple-500/20'
+                      }`}
+                    >
+                      {user.isAdmin ? 'Fjarlægja stjórnanda' : 'Gera að stjórnanda'}
+                    </button>
                     <button
                       onClick={() => handleToggleLeader(user.id, user.isLeader)}
                       className={`px-4 py-2 rounded font-medium transition-colors ${
@@ -201,15 +239,26 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Info Box */}
-        <div className="bg-muted p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">Um réttindi leiðtoga</h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Leiðtogar geta búið til og stjórnað smökkunum</li>
-            <li>• Leiðtogar geta bætt við, breytt og eytt bjórum</li>
-            <li>• Leiðtogar geta stjórnað flæði smökkunar (velja núverandi bjór, klára bjóra)</li>
-            <li>• Leiðtogar geta líka tekið þátt og gefið bjórum einkunnir</li>
-            <li>• Leiðtogastaða gildir fyrir allar smakkanir</li>
-          </ul>
+        <div className="bg-muted p-4 rounded-lg space-y-3">
+          <div>
+            <h3 className="font-semibold mb-2">Um réttindi stjórnenda</h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Stjórnendur hafa öll réttindi leiðtoga</li>
+              <li>• Stjórnendur geta búið til smakkanir</li>
+              <li>• Stjórnendur geta stjórnað öllum notendum</li>
+              <li>• Allir sem heita &quot;skúli&quot; eru sjálfkrafa stjórnendur</li>
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-2">Um réttindi leiðtoga</h3>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• Leiðtogar geta stjórnað smökkunum</li>
+              <li>• Leiðtogar geta bætt við, breytt og eytt bjórum</li>
+              <li>• Leiðtogar geta stjórnað flæði smökkunar (velja núverandi bjór, klára bjóra)</li>
+              <li>• Leiðtogar geta líka tekið þátt og gefið bjórum einkunnir</li>
+              <li>• Leiðtogastaða gildir fyrir allar smakkanir</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

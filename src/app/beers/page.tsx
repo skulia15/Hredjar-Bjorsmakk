@@ -42,7 +42,6 @@ export default function BeersPage() {
   const [groupByBrewery, setGroupByBrewery] = useState(true)
   const [updatingImages, setUpdatingImages] = useState(false)
   const [imageStats, setImageStats] = useState<{ needingImages: number; withImages: number } | null>(null)
-  const [fetchingVinbudin, setFetchingVinbudin] = useState(false)
 
   useEffect(() => {
     loadBeers()
@@ -98,36 +97,6 @@ export default function BeersPage() {
     } finally {
       setUpdatingImages(false)
       setTimeout(() => setError(''), 5000)
-    }
-  }
-
-  const handleFetchVinbudin = async () => {
-    if (!confirm('Sækja bjóra frá Vínbúðin.is jólabjórasíðu?\n\nÞetta getur tekið allt að 30 sekúndur.')) return
-
-    setFetchingVinbudin(true)
-    setError('')
-    try {
-      const response = await fetch('/api/beers/fetch-vinbudin', {
-        method: 'POST'
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.details || 'Failed to fetch from Vínbúðin')
-      }
-
-      const data = await response.json()
-      setError(`Tókst! Fann ${data.found} bjóra, bætti við ${data.added} nýjum bjórum.`)
-
-      // Reload beers and image stats
-      await loadBeers()
-      await loadImageStats()
-    } catch (err: any) {
-      setError(err.message || 'Villa við að sækja bjóra frá Vínbúðinni')
-      console.error('Error fetching from Vínbúðin:', err)
-    } finally {
-      setFetchingVinbudin(false)
-      setTimeout(() => setError(''), 8000)
     }
   }
 
@@ -226,13 +195,6 @@ export default function BeersPage() {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h1 className="text-3xl font-bold">Bjórlisti</h1>
             <div className="flex items-center gap-3">
-              <button
-                onClick={handleFetchVinbudin}
-                disabled={fetchingVinbudin}
-                className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors text-sm font-medium"
-              >
-                {fetchingVinbudin ? 'Sækir...' : 'Sækja frá Vínbúðinni'}
-              </button>
               {imageStats && imageStats.needingImages > 0 && (
                 <button
                   onClick={handleUpdateImages}

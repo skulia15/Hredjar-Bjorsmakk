@@ -1,6 +1,25 @@
 import { prisma } from './prisma';
 
 /**
+ * Check if a user is an admin by their name
+ */
+export async function isAdmin(userName: string): Promise<boolean> {
+  const normalizedName = userName.toLowerCase().trim();
+
+  // Anyone named "skúli" is automatically an admin
+  if (normalizedName === 'skúli') {
+    return true;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { name: normalizedName },
+    select: { isAdmin: true }
+  });
+
+  return user?.isAdmin ?? false;
+}
+
+/**
  * Check if a user is a leader by their name
  */
 export async function isLeader(userName: string): Promise<boolean> {
@@ -19,7 +38,7 @@ export async function isLeader(userName: string): Promise<boolean> {
 export async function requireLeader(userName: string): Promise<void> {
   // Admin users automatically have leader privileges
   const normalizedName = userName.toLowerCase().trim();
-  if (normalizedName === 'admin') {
+  if (normalizedName === 'admin' || await isAdmin(userName)) {
     return;
   }
 
@@ -96,16 +115,19 @@ export async function generateUniqueParticipantCode(tastingId: string): Promise<
 
 /**
  * Get or create user by name (case-insensitive)
+ * Automatically sets isAdmin for users named "skúli"
  */
 export async function getOrCreateUser(name: string) {
   const normalizedName = name.toLowerCase().trim();
+  const autoAdmin = normalizedName === 'skúli';
 
   const user = await prisma.user.upsert({
     where: { name: normalizedName },
-    update: {}, // Don't update anything if user exists
+    update: autoAdmin ? { isAdmin: true } : {}, // Update to admin if name is "skúli"
     create: {
       name: normalizedName,
-      isLeader: false
+      isLeader: false,
+      isAdmin: autoAdmin
     }
   });
 

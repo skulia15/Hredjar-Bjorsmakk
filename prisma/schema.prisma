@@ -15,6 +15,7 @@ model User {
   id             String        @id @default(uuid())
   name           String        @unique  // Case-insensitive in queries
   isLeader       Boolean       @default(false)
+  isAdmin        Boolean       @default(false)
   createdAt      DateTime      @default(now())
 
   participations Participant[]

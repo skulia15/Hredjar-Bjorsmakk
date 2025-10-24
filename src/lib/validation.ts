@@ -66,7 +66,10 @@ export const adminAuthSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  isLeader: z.boolean()
+  isLeader: z.boolean().optional(),
+  isAdmin: z.boolean().optional()
+}).refine((data) => data.isLeader !== undefined || data.isAdmin !== undefined, {
+  message: "At least one field (isLeader or isAdmin) must be provided"
 });
 
 // Helper to validate and return parsed data or error

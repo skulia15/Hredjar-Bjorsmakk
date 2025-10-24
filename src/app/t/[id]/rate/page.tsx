@@ -264,7 +264,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         throw new Error(data.error || 'Failed to submit rating')
       }
 
-      setMessage('Rating submitted!')
+      setMessage('Einkunn hefur verið skráð!')
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Error submitting rating')

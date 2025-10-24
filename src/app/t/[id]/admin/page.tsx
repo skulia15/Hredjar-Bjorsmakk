@@ -453,14 +453,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
               <Users className="w-4 h-4" />
-              ← Þátttakandasýn
+                Þátttakandasýn
             </Link>
             <Link
               href={`/t/${params.id}/scores`}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
               <Trophy className="w-4 h-4" />
-              Skoða stigatöflu →
+                Skoða stigatöflu
             </Link>
             {isAdmin && (
               <Link
