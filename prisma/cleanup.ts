@@ -22,13 +22,30 @@ async function cleanup() {
     const deletedTastings = await prisma.tasting.deleteMany({})
     console.log(`✓ Deleted ${deletedTastings.count} tastings`)
 
-    // Delete all users (except admins if you want to keep them)
-    const deletedUsers = await prisma.user.deleteMany({
-      where: {
-        isAdmin: false
+    // Delete all users (except admins and leaders)
+    try {
+      const deletedUsers = await prisma.user.deleteMany({
+        where: {
+          AND: [
+            { isAdmin: false },
+            { isLeader: false }
+          ]
+        }
+      })
+      console.log(`✓ Deleted ${deletedUsers.count} users (kept admins and leaders)`)
+    } catch (error: any) {
+      // Handle case where isAdmin column doesn't exist (older schema)
+      if (error.code === 'P2022') {
+        const deletedUsers = await prisma.user.deleteMany({
+          where: {
+            isLeader: false
+          }
+        })
+        console.log(`✓ Deleted ${deletedUsers.count} users (kept leaders)`)
+      } else {
+        throw error
       }
-    })
-    console.log(`✓ Deleted ${deletedUsers.count} users (kept admins)`)
+    }
 
     // Optionally delete all beers from catalog
     // Uncomment if you want to clear the beer catalog too
