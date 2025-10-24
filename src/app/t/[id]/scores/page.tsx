@@ -80,8 +80,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
   const [scores, setScores] = useState<ScoresData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isClient, setIsClient] = useState(false)
 
   useEffect(() => {
+    setIsClient(true)
     loadData()
     // Refresh scores every 5 seconds during active tasting
     const interval = setInterval(loadData, 5000)
@@ -199,7 +201,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         )}
 
         {/* Charts and Analytics */}
-        {analytics && scores.beers.length > 0 && (
+        {isClient && analytics && scores.beers.length > 0 && (
           <div className="mt-8 space-y-8">
             {/* Rating Distribution Chart */}
             {analytics.ratingDistribution && Object.keys(analytics.ratingDistribution).length > 0 && (
