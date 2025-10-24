@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminAuthSchema, validateInput } from '@/lib/validation';
 import { validateAdmin } from '@/lib/auth';
-import { createAdminSession } from '@/lib/session';
+
+const ADMIN_COOKIE_NAME = 'bt_admin';
+const ADMIN_MAX_AGE = 86400; // 24 hours
 
 // POST /api/admin/auth - Admin authentication
 export async function POST(request: NextRequest) {
@@ -28,12 +30,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create admin session
-    await createAdminSession();
-
-    return NextResponse.json({
+    // Create response with admin session cookie
+    const response = NextResponse.json({
       success: true
     });
+
+    // Set admin cookie directly on response
+    response.cookies.set(ADMIN_COOKIE_NAME, 'true', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: ADMIN_MAX_AGE,
+      path: '/',
+    });
+
+    return response;
 
   } catch (error) {
     console.error('Error authenticating admin:', error);
