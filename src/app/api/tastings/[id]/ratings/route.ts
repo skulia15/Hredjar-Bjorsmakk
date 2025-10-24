@@ -6,9 +6,10 @@ import { broadcastVersionUpdate } from '@/lib/sse';
 // POST /api/tastings/[id]/ratings - Submit or update rating
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const body = await request.json();
     const validation = validateInput(ratingSchema, body);
 
@@ -66,7 +67,7 @@ export async function POST(
         updatedAt: new Date()
       },
       create: {
-        tastingId: params.id,
+        tastingId: id,
         tastingBeerId,
         participantId,
         score
@@ -74,7 +75,7 @@ export async function POST(
     });
 
     // Broadcast update via SSE (don't increment version for ratings)
-    broadcastVersionUpdate(params.id, 0); // Version 0 = just scores updated
+    broadcastVersionUpdate(id, 0); // Version 0 = just scores updated
 
     return NextResponse.json({
       id: rating.id,

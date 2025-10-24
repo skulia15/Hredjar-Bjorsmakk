@@ -44,6 +44,14 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
 
       const data = await response.json()
 
+      // Store participant info in localStorage for rating submission
+      localStorage.setItem(`participant_${params.id}`, JSON.stringify({
+        participantId: data.participantId,
+        userId: data.userId,
+        rejoinToken: data.rejoinToken,
+        code: data.code
+      }))
+
       // Redirect based on role
       if (data.isLeader) {
         router.push(`/t/${params.id}/admin`)

@@ -140,7 +140,18 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!currentBeer || !participantId) return
+
+    if (!currentBeer) {
+      setMessage('No beer selected')
+      setTimeout(() => setMessage(''), 3000)
+      return
+    }
+
+    if (!participantId) {
+      setMessage('Please join the tasting first')
+      setTimeout(() => setMessage(''), 5000)
+      return
+    }
 
     setSubmitting(true)
     setMessage('')
@@ -156,12 +167,16 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         })
       })
 
-      if (!response.ok) throw new Error('Failed to submit rating')
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to submit rating')
+      }
 
       setMessage('Rating submitted!')
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
-      setMessage('Error submitting rating')
+      setMessage(error instanceof Error ? error.message : 'Error submitting rating')
+      setTimeout(() => setMessage(''), 5000)
     } finally {
       setSubmitting(false)
     }
