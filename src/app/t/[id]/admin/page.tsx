@@ -65,7 +65,10 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   useEffect(() => {
     fetch('/api/admin/check')
       .then(res => res.json())
-      .then(data => setIsAdmin(data.isAdmin || false))
+      .then(data => {
+        console.log('[Admin Check Response]', data)
+        setIsAdmin(data.isAdmin || false)
+      })
       .catch(err => console.error('Error checking admin status:', err))
   }, [])
 
