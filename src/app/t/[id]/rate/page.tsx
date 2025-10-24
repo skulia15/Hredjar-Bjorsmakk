@@ -297,6 +297,19 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     )
   }
 
+  // Redirect to scores page for closed tastings
+  if (tasting.status === 'closed') {
+    router.push(`/t/${params.id}/scores`)
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🍺</div>
+          <p className="text-muted-foreground">Loading results...</p>
+        </div>
+      </div>
+    )
+  }
+
   // Show leaderboard if no current beer and we've shown wrap-up before
   if (!currentBeer && (showLeaderboard || tasting.beers?.some(b => b.status === 'finished'))) {
     return <LeaderboardWaiting tastingId={params.id} />
