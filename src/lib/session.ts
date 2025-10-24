@@ -116,6 +116,25 @@ export async function isAdminSession(): Promise<boolean> {
 }
 
 /**
+ * Check if current user can create tastings (admin or leader)
+ */
+export async function canCreateTastings(): Promise<boolean> {
+  // First check if they have admin session
+  const hasAdminSession = await isAdminSession();
+  if (hasAdminSession) {
+    return true;
+  }
+
+  // Check if they're logged in as a leader
+  const participant = await getParticipantFromSession();
+  if (participant?.user && (participant.user.isLeader || participant.user.isAdmin)) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Clear admin session cookie
  */
 export async function clearAdminSession() {

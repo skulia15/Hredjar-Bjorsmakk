@@ -15,10 +15,22 @@ interface Tasting {
 export default function TastingsPage() {
   const [tastings, setTastings] = useState<Tasting[]>([])
   const [loading, setLoading] = useState(true)
+  const [canCreate, setCanCreate] = useState(false)
 
   useEffect(() => {
     loadTastings()
+    checkPermissions()
   }, [])
+
+  const checkPermissions = async () => {
+    try {
+      const response = await fetch('/api/session')
+      const data = await response.json()
+      setCanCreate(data.canCreateTastings || false)
+    } catch (error) {
+      console.error('Error checking permissions:', error)
+    }
+  }
 
   const loadTastings = async () => {
     try {
@@ -67,12 +79,14 @@ export default function TastingsPage() {
             <p className="text-muted-foreground">
               {tastings.length} smökkun{tastings.length !== 1 ? 'ar' : ''} tiltæk{tastings.length !== 1 ? 'ar' : ''}
             </p>
-            <Link
-              href="/create"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
-            >
-              Búa til nýja smökkun
-            </Link>
+            {canCreate && (
+              <Link
+                href="/create"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Búa til nýja smökkun
+              </Link>
+            )}
           </div>
         </div>
 
@@ -110,12 +124,14 @@ export default function TastingsPage() {
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🍺</div>
             <p className="text-muted-foreground mb-4">Engar smakkanir ennþá</p>
-            <Link
-              href="/create"
-              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
-            >
-              Búa til fyrstu smökkun
-            </Link>
+            {canCreate && (
+              <Link
+                href="/create"
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
+              >
+                Búa til fyrstu smökkun
+              </Link>
+            )}
           </div>
         )}
 

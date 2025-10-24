@@ -1,8 +1,9 @@
 import Link from 'next/link'
-import { isAdminSession } from '@/lib/session'
+import { isAdminSession, canCreateTastings } from '@/lib/session'
 
 export default async function HomePage() {
   const isAdmin = await isAdminSession();
+  const canCreate = await canCreateTastings();
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
@@ -12,7 +13,7 @@ export default async function HomePage() {
         </div>
 
         <div className="space-y-4">
-          {isAdmin && (
+          {canCreate && (
             <>
               <Link
                 href="/create"
