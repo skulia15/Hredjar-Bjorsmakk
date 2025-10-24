@@ -65,7 +65,7 @@ export function WrapUpOverlay({
             {average.toFixed(2)}
           </div>
           <div className="text-sm text-muted-foreground">
-            Meðaleinkunn frá {count} þátttakand{count !== 1 ? 'i' : 'a'}
+            Meðaleinkunn frá {count} þátttakand{count !== 1 ? 'um' : 'a'}
           </div>
         </div>
 
@@ -84,19 +84,18 @@ export function WrapUpOverlay({
         </div>
 
         {/* Countdown */}
-        {timeRemaining > 0 && (
-          <div className="text-center text-sm text-muted-foreground">
+        <div className="text-center space-y-2">
+          <div className="text-sm text-muted-foreground">
             Næsti bjór eftir {timeRemaining} sekúnd{timeRemaining !== 1 ? 'ur' : 'u'}...
           </div>
-        )}
-
-        {/* Skip Button */}
-        <button
-          onClick={onComplete}
-          className="w-full px-4 py-2 border rounded hover:bg-accent text-sm"
-        >
-          Halda áfram →
-        </button>
+          {/* Progress bar */}
+          <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-primary h-full transition-all duration-1000 ease-linear"
+              style={{ width: `${((minDuration / 1000 - timeRemaining) / (minDuration / 1000)) * 100}%` }}
+            />
+          </div>
+        </div>
       </div>
     </div>
   )
