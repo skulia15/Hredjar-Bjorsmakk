@@ -27,22 +27,18 @@ export function WrapUpOverlay({
       setTimeRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval)
+          // Call onComplete when we reach 0
+          onComplete()
           return 0
         }
         return prev - 1
       })
     }, 1000)
 
-    // Auto-complete after minDuration
-    const timer = setTimeout(() => {
-      onComplete()
-    }, minDuration)
-
     return () => {
       clearInterval(countdownInterval)
-      clearTimeout(timer)
     }
-  }, [minDuration, onComplete])
+  }, [onComplete])
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">

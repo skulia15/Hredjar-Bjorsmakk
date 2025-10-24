@@ -185,7 +185,15 @@ export function StarRating({
             step="0.5"
             value={value || ''}
             onChange={(e) => {
-              const newValue = parseFloat(e.target.value);
+              const inputValue = e.target.value;
+
+              // Allow empty string (clearing the field)
+              if (inputValue === '') {
+                onChange(0);
+                return;
+              }
+
+              const newValue = parseFloat(inputValue);
               if (!isNaN(newValue) && newValue >= 1 && newValue <= max) {
                 onChange(newValue);
               }
