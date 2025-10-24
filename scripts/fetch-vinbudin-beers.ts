@@ -18,7 +18,7 @@ interface VinbudinBeer {
   abv?: number
   containerSize?: number
   containerType?: string
-  style?: string
+  styles?: string[]
   imageUrl?: string
   description?: string
   country?: string
@@ -87,22 +87,24 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
         }
       }
 
-      // Extract beer style from taste classification
+      // Extract beer styles from taste classification as array
       const tasteEl = document.querySelector('.taste')
       if (tasteEl) {
         // Get all text spans within taste element
         const textSpans = tasteEl.querySelectorAll('.text')
-        const styleparts: string[] = []
+        const styles: string[] = []
 
         textSpans.forEach(span => {
           const text = span.textContent?.trim()
           if (text && text.startsWith('- ')) {
-            styleparts.push(text.substring(2).trim())
+            // Split on commas to separate multiple styles in one span
+            const styleParts = text.substring(2).split(',').map(s => s.trim()).filter(s => s)
+            styles.push(...styleParts)
           }
         })
 
-        if (styleparts.length > 0) {
-          result.style = styleparts.join(' - ')
+        if (styles.length > 0) {
+          result.styles = styles
         }
       }
 
@@ -294,7 +296,7 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
         if (details.abv !== undefined) beer.abv = details.abv
         if (details.containerSize !== undefined) beer.containerSize = details.containerSize
         if (details.containerType !== undefined) beer.containerType = details.containerType
-        if (details.style) beer.style = details.style
+        if (details.styles) beer.styles = details.styles
         if (details.description) beer.description = details.description
         if (details.country) beer.country = details.country
 
@@ -372,7 +374,7 @@ async function importBeers(beers: VinbudinBeer[]) {
           abv: beer.abv || null,
           containerSize: beer.containerSize || null,
           containerType: beer.containerType || null,
-          style: beer.style || null,
+          styles: beer.styles || [],
           imageUrl: beer.imageUrl || null,
           description: beer.description || null,
           country: beer.country || 'Iceland'
@@ -475,7 +477,7 @@ async function dryRunImport(beers: VinbudinBeer[]) {
         console.log(`   Umbúðir: ${beer.containerSize}ml ${beer.containerType}`)
       }
       if (beer.country) console.log(`   Land: ${beer.country}`)
-      if (beer.style) console.log(`   Stíll: ${beer.style}`)
+      if (beer.styles && beer.styles.length > 0) console.log(`   Stílar: ${beer.styles.join(', ')}`)
       if (beer.description) console.log(`   Lýsing: ${beer.description.substring(0, 100)}${beer.description.length > 100 ? '...' : ''}`)
       console.log(`   URL: ${beer.vinbudinUrl}`)
       if (beer.imageUrl) console.log(`   Mynd: ${beer.imageUrl}`)

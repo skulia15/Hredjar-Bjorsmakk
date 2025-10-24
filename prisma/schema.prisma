@@ -51,7 +51,7 @@ model Beer {
   id            String   @id @default(uuid())
   name          String
   brewery       String
-  style         String?
+  styles        String[] // Array of beer styles for statistics (e.g., ["Ljós lager", "Amber", "Vínar", "Classic"])
   abv           Float?
   country       String?
   imageUrl      String?
