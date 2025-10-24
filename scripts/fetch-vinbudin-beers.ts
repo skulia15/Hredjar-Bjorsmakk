@@ -34,13 +34,27 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
     const details = await page.evaluate(() => {
       const result: any = {}
 
-      // Try to find ABV in various locations
+      // Get page text for fallback searches
       const detailsText = document.body.innerText
-      const abvMatch = detailsText.match(/(\d+[,.]\d+)\s*%\s*vol/i) ||
-                       detailsText.match(/Alcohol.*?(\d+[,.]\d+)\s*%/i) ||
-                       detailsText.match(/(\d+[,.]\d+)\s*%/i)
-      if (abvMatch) {
-        result.abv = parseFloat(abvMatch[1].replace(',', '.'))
+
+      // Try to find ABV from the "Styrkleiki" (Strength) element
+      const abvEl = document.querySelector('#ctl00_ctl01_Label_ProductAlchoholVolume')
+      if (abvEl && abvEl.textContent) {
+        const abvText = abvEl.textContent.trim()
+        const abvValue = parseFloat(abvText.replace(',', '.'))
+        if (!isNaN(abvValue)) {
+          result.abv = abvValue
+        }
+      }
+
+      // Fallback: try to find ABV in general text if not found above
+      if (!result.abv) {
+        const abvMatch = detailsText.match(/(\d+[,.]\d+)\s*%\s*vol/i) ||
+                         detailsText.match(/Alcohol.*?(\d+[,.]\d+)\s*%/i) ||
+                         detailsText.match(/Styrkleiki[:\s]+(\d+[,.]\d+)/i)
+        if (abvMatch) {
+          result.abv = parseFloat(abvMatch[1].replace(',', '.'))
+        }
       }
 
       // Find container size and type
