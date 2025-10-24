@@ -56,3 +56,43 @@ export async function PATCH(
     );
   }
 }
+
+// DELETE /api/admin/users/[userId] - Delete user (ratings are preserved)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ userId: string }> }
+) {
+  try {
+    const { userId } = await params;
+
+    // Verify admin session
+    await requireAdminSession();
+
+    // Delete the user
+    // Due to onDelete: SetNull on Participant.userId,
+    // the participant records will remain but with userId = null
+    // Ratings remain connected to participants
+    await prisma.user.delete({
+      where: { id: userId }
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: 'User deleted successfully. Ratings have been preserved.'
+    });
+
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Admin access required') {
+      return NextResponse.json(
+        { error: 'Admin access required' },
+        { status: 403 }
+      );
+    }
+
+    console.error('Error deleting user:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete user' },
+      { status: 500 }
+    );
+  }
+}

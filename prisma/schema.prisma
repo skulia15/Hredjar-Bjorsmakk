@@ -28,8 +28,8 @@ model Participant {
   tastingId     String
   tasting       Tasting  @relation(fields: [tastingId], references: [id], onDelete: Cascade)
 
-  userId        String
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   code          String   // 4-char alphanumeric, unique per tasting
   rejoinToken   String   @unique

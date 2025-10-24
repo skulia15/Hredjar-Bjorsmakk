@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { chromium } from 'playwright'
+import * as cheerio from 'cheerio'
 
 interface VinbudinBeer {
   name: string
@@ -23,103 +23,98 @@ export async function POST() {
   try {
     console.log('🔍 Fetching beers from Vínbúðin...')
 
-    const browser = await chromium.launch()
-    const page = await browser.newPage()
-
-    // Navigate to the Vínbúðin Christmas beer page
-    await page.goto('https://www.vinbudin.is/heim/vorur/vorur?season=J%C3%93L&category=beer', {
-      waitUntil: 'networkidle'
+    // Fetch the page HTML
+    const response = await fetch('https://www.vinbudin.is/heim/vorur/vorur?season=J%C3%93L&category=beer', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
     })
 
-    // Wait for products to load
-    await page.waitForSelector('.product-item, .product, [data-product]', { timeout: 10000 })
+    if (!response.ok) {
+      throw new Error(`Failed to fetch: ${response.status} ${response.statusText}`)
+    }
 
-    // Extract beer data from the page
-    const beers = await page.evaluate(() => {
-      const products: VinbudinBeer[] = []
+    const html = await response.text()
+    const $ = cheerio.load(html)
 
-      // Try multiple selectors for product items
-      const productElements = document.querySelectorAll('.product-item, .product, [data-product], .productbox')
+    const beers: VinbudinBeer[] = []
 
-      productElements.forEach((element) => {
-        try {
-          // Extract product data - adjust selectors based on actual page structure
-          const nameEl = element.querySelector('.product-name, .productname, h3, h4, .title')
-          const priceEl = element.querySelector('.price, .productprice, .product-price')
-          const linkEl = element.querySelector('a[href*="productid"], a[href*="/product/"]')
-          const imageEl = element.querySelector('img')
+    // Try multiple selectors for product items
+    $('.product-item, .product, [data-product], .productbox').each((_, element) => {
+      try {
+        const $el = $(element)
 
-          if (!nameEl || !priceEl) return
+        // Extract product data
+        const nameEl = $el.find('.product-name, .productname, h3, h4, .title').first()
+        const priceEl = $el.find('.price, .productprice, .product-price').first()
+        const linkEl = $el.find('a[href*="productid"], a[href*="/product/"]').first()
+        const imageEl = $el.find('img').first()
 
-          const name = nameEl.textContent?.trim() || ''
-          const priceText = priceEl.textContent?.trim() || '0'
-          const price = parseFloat(priceText.replace(/[^\d,]/g, '').replace(',', '.'))
-          const url = linkEl?.getAttribute('href') || ''
-          const imageUrl = imageEl?.getAttribute('src') || imageEl?.getAttribute('data-src') || ''
+        if (!nameEl.length || !priceEl.length) return
 
-          // Extract product number from URL or data attribute
-          const productNumberMatch = url.match(/productid[=/](\d+)/i) ||
-                                    element.getAttribute('data-product-id')?.match(/(\d+)/)
-          const productNumber = productNumberMatch?.[1] || ''
+        const name = nameEl.text().trim()
+        const priceText = priceEl.text().trim()
+        const price = parseFloat(priceText.replace(/[^\d,]/g, '').replace(',', '.'))
+        const url = linkEl.attr('href') || ''
+        const imageUrl = imageEl.attr('src') || imageEl.attr('data-src') || ''
 
-          // Try to parse brewery and beer name
-          // Common formats: "Brewery - Beer Name" or just "Beer Name"
-          let brewery = 'Vínbúðin'
-          let beerName = name
+        // Extract product number from URL or data attribute
+        const productNumberMatch = url.match(/productid[=/](\d+)/i) ||
+                                  $el.attr('data-product-id')?.match(/(\d+)/)
+        const productNumber = productNumberMatch?.[1] || ''
 
-          if (name.includes('-')) {
-            const parts = name.split('-').map(p => p.trim())
-            if (parts.length >= 2) {
-              brewery = parts[0]
-              beerName = parts.slice(1).join(' - ')
-            }
-          } else if (name.includes(',')) {
-            const parts = name.split(',').map(p => p.trim())
-            if (parts.length >= 2) {
-              beerName = parts[0]
-              brewery = parts[1]
-            }
+        // Try to parse brewery and beer name
+        let brewery = 'Vínbúðin'
+        let beerName = name
+
+        if (name.includes('-')) {
+          const parts = name.split('-').map(p => p.trim())
+          if (parts.length >= 2) {
+            brewery = parts[0]
+            beerName = parts.slice(1).join(' - ')
           }
-
-          // Try to extract ABV from name or description
-          const abvMatch = name.match(/(\d+(?:[,.]\d+)?)\s*%/)
-          const abv = abvMatch ? parseFloat(abvMatch[1].replace(',', '.')) : undefined
-
-          // Try to extract container size
-          const sizeMatch = name.match(/(\d+)\s*ml/i) || name.match(/(\d+)\s*cl/i)
-          const containerSize = sizeMatch ? parseInt(sizeMatch[1]) : undefined
-
-          // Determine container type
-          let containerType: string | undefined
-          if (name.toLowerCase().includes('dós') || name.toLowerCase().includes('can')) {
-            containerType = 'Can'
-          } else if (name.toLowerCase().includes('flaska') || name.toLowerCase().includes('bottle')) {
-            containerType = 'Bottle'
+        } else if (name.includes(',')) {
+          const parts = name.split(',').map(p => p.trim())
+          if (parts.length >= 2) {
+            beerName = parts[0]
+            brewery = parts[1]
           }
-
-          if (beerName && price > 0) {
-            products.push({
-              name: beerName,
-              brewery,
-              productNumber,
-              priceISK: price,
-              vinbudinUrl: url.startsWith('http') ? url : `https://www.vinbudin.is${url}`,
-              abv,
-              containerSize,
-              containerType,
-              imageUrl: imageUrl.startsWith('http') ? imageUrl : imageUrl ? `https://www.vinbudin.is${imageUrl}` : undefined,
-              style: name.toLowerCase().includes('jól') || name.toLowerCase().includes('christmas') ? 'Christmas Beer' : undefined
-            })
-          }
-        } catch (err) {
-          console.error('Error parsing product:', err)
         }
-      })
 
-      return products
+        // Try to extract ABV from name
+        const abvMatch = name.match(/(\d+(?:[,.]\d+)?)\s*%/)
+        const abv = abvMatch ? parseFloat(abvMatch[1].replace(',', '.')) : undefined
+
+        // Try to extract container size
+        const sizeMatch = name.match(/(\d+)\s*ml/i) || name.match(/(\d+)\s*cl/i)
+        const containerSize = sizeMatch ? parseInt(sizeMatch[1]) : undefined
+
+        // Determine container type
+        let containerType: string | undefined
+        if (name.toLowerCase().includes('dós') || name.toLowerCase().includes('can')) {
+          containerType = 'Can'
+        } else if (name.toLowerCase().includes('flaska') || name.toLowerCase().includes('bottle')) {
+          containerType = 'Bottle'
+        }
+
+        if (beerName && price > 0) {
+          beers.push({
+            name: beerName,
+            brewery,
+            productNumber,
+            priceISK: price,
+            vinbudinUrl: url.startsWith('http') ? url : `https://www.vinbudin.is${url}`,
+            abv,
+            containerSize,
+            containerType,
+            imageUrl: imageUrl.startsWith('http') ? imageUrl : imageUrl ? `https://www.vinbudin.is${imageUrl}` : undefined,
+            style: name.toLowerCase().includes('jól') || name.toLowerCase().includes('christmas') ? 'Christmas Beer' : undefined
+          })
+        }
+      } catch (err) {
+        console.error('Error parsing product:', err)
+      }
     })
-
-    await browser.close()
 
     console.log(`✓ Found ${beers.length} beers on Vínbúðin`)
 

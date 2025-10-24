@@ -58,6 +58,31 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleDeleteUser = async (userId: string, userName: string, ratingCount: number) => {
+    const confirmMessage = ratingCount > 0
+      ? `Ertu viss um að þú viljir eyða notandanum "${userName}"?\n\nÞetta mun EKKI eyða ${ratingCount} einkunn${ratingCount !== 1 ? 'um' : ''} frá þessum notanda.`
+      : `Ertu viss um að þú viljir eyða notandanum "${userName}"?`
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE'
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to delete user')
+      }
+
+      setMessage(`Notandi "${userName}" hefur verið eytt`)
+      setTimeout(() => setMessage(''), 3000)
+      loadUsers()
+    } catch (error: any) {
+      setMessage(`Villa við að eyða notanda: ${error.message}`)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -150,16 +175,25 @@ export default function AdminUsersPage() {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => handleToggleLeader(user.id, user.isLeader)}
-                    className={`px-4 py-2 rounded font-medium transition-colors ${
-                      user.isLeader
-                        ? 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20'
-                        : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
-                    }`}
-                  >
-                    {user.isLeader ? 'Gera að Þátttakanda' : 'Gera að leiðtoga'}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleLeader(user.id, user.isLeader)}
+                      className={`px-4 py-2 rounded font-medium transition-colors ${
+                        user.isLeader
+                          ? 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20'
+                          : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+                      }`}
+                    >
+                      {user.isLeader ? 'Gera að Þátttakanda' : 'Gera að leiðtoga'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteUser(user.id, user.name, user.ratingCount)}
+                      className="px-4 py-2 rounded font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                      title="Eyða notanda (einkunnir verða geymdar)"
+                    >
+                      Eyða
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
