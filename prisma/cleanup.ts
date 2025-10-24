@@ -47,12 +47,50 @@ async function cleanup() {
       }
     }
 
-    // Optionally delete all beers from catalog
-    // Uncomment if you want to clear the beer catalog too
-    // const deletedBeers = await prisma.beer.deleteMany({})
-    // console.log(`✓ Deleted ${deletedBeers.count} beers from catalog`)
+    // Ensure required users exist
+    console.log('\n📝 Ensuring required users exist...')
+
+    // Ensure "admin" user exists with admin and leader privileges
+    const adminUser = await prisma.user.upsert({
+      where: { name: 'admin' },
+      update: {
+        isAdmin: true,
+        isLeader: true
+      },
+      create: {
+        name: 'admin',
+        isAdmin: true,
+        isLeader: true
+      }
+    })
+    console.log(`✓ Admin user ensured: ${adminUser.name}`)
+
+    // Ensure "skuli" user exists with admin and leader privileges
+    const skuliUser = await prisma.user.upsert({
+      where: { name: 'skuli' },
+      update: {
+        isAdmin: true,
+        isLeader: true
+      },
+      create: {
+        name: 'skuli',
+        isAdmin: true,
+        isLeader: true
+      }
+    })
+    console.log(`✓ Skuli user ensured: ${skuliUser.name}`)
+
+    // Count preserved records
+    const beerCount = await prisma.beer.count()
+    const userCount = await prisma.user.count()
+
+    console.log('\n📊 Preserved records:')
+    console.log(`  • ${beerCount} beers in catalog`)
+    console.log(`  • ${userCount} users (admins/leaders)`)
 
     console.log('\n✅ Database cleanup completed successfully!')
+    console.log('💡 Note: Beer catalog and admin/leader users are preserved')
+    console.log('    To delete beers, use: npm run seed:beers:cleanup')
 
   } catch (error) {
     console.error('❌ Error during cleanup:', error)
