@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Edit, ArrowUpDown, Grid, List } from 'lucide-react'
+import { Edit, ArrowUpDown, Grid, List, Trash2 } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 
 interface Beer {
@@ -123,6 +123,33 @@ export default function BeersPage() {
       console.error('Error saving beer:', err)
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDeleteBeer = async (beer: Beer) => {
+    const confirmMessage = `Ertu viss um að þú viljir eyða "${beer.name}" frá ${beer.brewery}?\n\nÞetta er óafturkræft.`
+
+    if (!confirm(confirmMessage)) return
+
+    try {
+      const response = await fetch(`/api/beers/${beer.id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete beer')
+      }
+
+      setError(`Bjór eytt: ${beer.name}`)
+      setTimeout(() => setError(''), 3000)
+      await loadBeers()
+      await loadImageStats()
+    } catch (err: any) {
+      setError(err.message || 'Villa við að eyða bjór')
+      console.error('Error deleting beer:', err)
+      setTimeout(() => setError(''), 5000)
     }
   }
 
@@ -309,14 +336,23 @@ export default function BeersPage() {
                       key={beer.id}
                       className="bg-card p-6 rounded-lg border hover:border-primary transition-colors space-y-3 relative"
                     >
-                      {/* Edit Button */}
-                      <button
-                        className="absolute top-4 right-4 p-2 rounded-md hover:bg-accent transition-colors"
-                        onClick={() => setEditingBeer(beer)}
-                        title="Breyta bjór"
-                      >
-                        <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                      </button>
+                      {/* Action Buttons */}
+                      <div className="absolute top-4 right-4 flex gap-2">
+                        <button
+                          className="p-2 rounded-md hover:bg-accent transition-colors"
+                          onClick={() => setEditingBeer(beer)}
+                          title="Breyta bjór"
+                        >
+                          <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                        </button>
+                        <button
+                          className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
+                          onClick={() => handleDeleteBeer(beer)}
+                          title="Eyða bjór"
+                        >
+                          <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                        </button>
+                      </div>
 
                       {/* Beer Image */}
                       <div className="mb-4 flex justify-center">
@@ -431,14 +467,23 @@ export default function BeersPage() {
                 key={beer.id}
                 className="bg-card p-6 rounded-lg border hover:border-primary transition-colors space-y-3 relative"
               >
-                {/* Edit Button */}
-                <button
-                  className="absolute top-4 right-4 p-2 rounded-md hover:bg-accent transition-colors"
-                  onClick={() => setEditingBeer(beer)}
-                  title="Breyta bjór"
-                >
-                  <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                </button>
+                {/* Action Buttons */}
+                <div className="absolute top-4 right-4 flex gap-2">
+                  <button
+                    className="p-2 rounded-md hover:bg-accent transition-colors"
+                    onClick={() => setEditingBeer(beer)}
+                    title="Breyta bjór"
+                  >
+                    <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                  </button>
+                  <button
+                    className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
+                    onClick={() => handleDeleteBeer(beer)}
+                    title="Eyða bjór"
+                  >
+                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                  </button>
+                </div>
 
                 {/* Beer Image */}
                 <div className="mb-4 flex justify-center">
@@ -712,21 +757,35 @@ export default function BeersPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 justify-end pt-4 border-t">
+              <div className="flex gap-3 justify-between pt-4 border-t">
                 <button
                   type="button"
-                  onClick={() => setEditingBeer(null)}
-                  className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
+                  onClick={() => {
+                    if (editingBeer) {
+                      setEditingBeer(null)
+                      handleDeleteBeer(editingBeer)
+                    }
+                  }}
+                  className="px-4 py-2 border border-destructive text-destructive rounded-md hover:bg-destructive/10 transition-colors"
                 >
-                  Hætta við
+                  Eyða bjór
                 </button>
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                >
-                  {saving ? 'Vistar...' : 'Vista breytingar'}
-                </button>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setEditingBeer(null)}
+                    className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
+                  >
+                    Hætta við
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? 'Vistar...' : 'Vista breytingar'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

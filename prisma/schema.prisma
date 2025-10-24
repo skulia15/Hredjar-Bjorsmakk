@@ -71,7 +71,7 @@ model Beer {
   // Relations
   tastingBeers  TastingBeer[]
 
-  @@unique([name, brewery])  // Prevent duplicate beers
+  @@unique([name, brewery, containerSize, containerType])  // Prevent duplicate packaging variants
   @@index([name])
   @@index([brewery])
   @@index([productNumber])
