@@ -234,9 +234,11 @@ async function seedBeers() {
     try {
       await prisma.beer.upsert({
         where: {
-          name_brewery: {
+          name_brewery_containerSize_containerType: {
             name: beerData.name,
-            brewery: beerData.brewery
+            brewery: beerData.brewery,
+            containerSize: beerData.containerSize,
+            containerType: beerData.containerType
           }
         },
         update: {
