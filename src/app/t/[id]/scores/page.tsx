@@ -21,6 +21,8 @@ interface BeerScore {
   average: number
   count: number
   rank: number
+  containerSize?: number
+  containerType?: string
 }
 
 interface ScoresData {
@@ -194,6 +196,13 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     <p className="text-sm text-muted-foreground truncate">
                       {beer.brewery}
                     </p>
+                    {(beer.containerSize || beer.containerType) && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {beer.containerSize && beer.containerType && (
+                          <span>{beer.containerSize}ml {beer.containerType}</span>
+                        )}
+                      </p>
+                    )}
                   </div>
                   <div className="text-right flex-shrink-0">
                     <div className="text-3xl font-bold text-primary">

@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-// Enable static generation with revalidation
-export const revalidate = 3600 // Revalidate every hour
+// Mark as dynamic since we use query parameters
+export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/beers
  * List all beers from global catalog
- * Cached for 1 hour (3600 seconds)
+ * Dynamic route with client-side caching
  *
  * Query params:
  * - search: Filter by name or brewery (optional)
@@ -17,11 +17,11 @@ export const revalidate = 3600 // Revalidate every hour
  */
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url)
-    const search = url.searchParams.get('search')
-    const style = url.searchParams.get('style')
-    const country = url.searchParams.get('country')
-    const limit = parseInt(url.searchParams.get('limit') || '100')
+    const { searchParams } = request.nextUrl
+    const search = searchParams.get('search')
+    const style = searchParams.get('style')
+    const country = searchParams.get('country')
+    const limit = parseInt(searchParams.get('limit') || '100')
 
     const where: any = {}
 

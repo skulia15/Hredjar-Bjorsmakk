@@ -53,6 +53,10 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     style?: string
     abv?: number
     country?: string
+    containerSize?: number
+    containerType?: string
+    priceISK?: number
+    imageUrl?: string
   }>>([])
 
   useEffect(() => {

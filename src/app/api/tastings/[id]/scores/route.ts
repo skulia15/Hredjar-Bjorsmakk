@@ -47,6 +47,8 @@ export async function GET(
         brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
         style: tb.beer?.style || tb.customStyle || null,
         abv: tb.beer?.abv || tb.customAbv || null,
+        containerSize: tb.beer?.containerSize || null,
+        containerType: tb.beer?.containerType || null,
         average: Number(average.toFixed(2)),
         count: ratings.length,
         status: tb.status,
