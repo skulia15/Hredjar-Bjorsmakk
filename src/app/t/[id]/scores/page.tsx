@@ -239,7 +239,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={8} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -287,7 +287,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="average" radius={[0, 8, 8, 0]}>
+                    <Bar dataKey="average" radius={8}>
                       {scores.beers.map((beer, index) => (
                         <Cell
                           key={`cell-${index}`}
@@ -338,7 +338,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="durationMinutes" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="durationMinutes" fill="hsl(var(--primary))" radius={8} />
                   </BarChart>
                 </ResponsiveContainer>
                 {analytics.overview.averageTimePerBeer && (
@@ -389,8 +389,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="averageRating" fill="hsl(var(--primary))" radius={[0, 8, 8, 0]} />
-                    <Bar dataKey="ratingsCount" fill="hsl(var(--muted))" radius={[0, 8, 8, 0]} />
+                    <Bar dataKey="averageRating" fill="hsl(var(--primary))" radius={8} />
+                    <Bar dataKey="ratingsCount" fill="hsl(var(--muted))" radius={8} />
                     <Legend
                       formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunnanna'}
                     />
