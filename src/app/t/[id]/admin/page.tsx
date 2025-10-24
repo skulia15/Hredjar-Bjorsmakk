@@ -43,6 +43,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const [loading, setLoading] = useState(true)
   const [userName] = useState('admin') // Admin user accessing admin page
   const [message, setMessage] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   // Beer catalog state
   const [catalogBeers, setCatalogBeers] = useState<Array<{
@@ -59,6 +60,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     const interval = setInterval(loadTasting, 5000)
     return () => clearInterval(interval)
   }, [params.id])
+
+  // Check if user is admin
+  useEffect(() => {
+    fetch('/api/admin/check')
+      .then(res => res.json())
+      .then(data => setIsAdmin(data.isAdmin || false))
+      .catch(err => console.error('Error checking admin status:', err))
+  }, [])
 
   // Load beer catalog
   useEffect(() => {
@@ -393,13 +402,15 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               <Trophy className="w-4 h-4" />
               Leaderboard
             </Link>
-            <Link
-              href="/admin/users"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
-            >
-              <Users className="w-4 h-4" />
-              Manage Users
-            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin/users"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
+              >
+                <Users className="w-4 h-4" />
+                Manage Users
+              </Link>
+            )}
           </div>
         </div>
 
