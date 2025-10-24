@@ -28,28 +28,38 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
   const browser = await chromium.launch({ headless: true })
   const page = await browser.newPage()
 
-  // Navigate to Christmas beer page
-  console.log('📄 Opna síðu: https://www.vinbudin.is/heim/vorur/vorur?season=JÓL&category=beer')
-  await page.goto('https://www.vinbudin.is/heim/vorur/vorur?season=J%C3%93L&category=beer', {
-    waitUntil: 'networkidle',
-    timeout: 60000
-  })
+  const allBeers: VinbudinBeer[] = []
+  let currentPage = 1
+  let hasMorePages = true
 
-  // Wait for products to load - try multiple selectors
-  console.log('⏳ Bíð eftir að vörur hlaðist...')
-  try {
-    await page.waitForSelector('.product-item, .product, [data-product], .productbox, .item', {
-      timeout: 30000
+  while (hasMorePages) {
+    // Navigate to page
+    const url = currentPage === 1
+      ? 'https://www.vinbudin.is/heim/vorur/vorur?season=J%C3%93L&category=beer'
+      : `https://www.vinbudin.is/heim/vorur/vorur?season=J%C3%93L&category=beer&page=${currentPage}`
+
+    console.log(`📄 Opna síðu ${currentPage}: ${url}`)
+    await page.goto(url, {
+      waitUntil: 'networkidle',
+      timeout: 60000
     })
-  } catch (e) {
-    console.log('⚠️  Gat ekki fundið vöruval með venjulegum selectors')
-    // Take screenshot for debugging
-    await page.screenshot({ path: '/tmp/vinbudin-debug.png' })
-    console.log('📸 Screenshot vistuð í /tmp/vinbudin-debug.png')
-  }
 
-  // Extract beer data
-  const beers = await page.evaluate(() => {
+    // Wait for products to load
+    console.log('⏳ Bíð eftir að vörur hlaðist...')
+    try {
+      await page.waitForSelector('.product-item, .product, [data-product], .productbox, .item', {
+        timeout: 30000
+      })
+    } catch (e) {
+      console.log('⚠️  Gat ekki fundið vöruval með venjulegum selectors')
+      // Take screenshot for debugging
+      await page.screenshot({ path: `/tmp/vinbudin-debug-page${currentPage}.png` })
+      console.log(`📸 Screenshot vistuð í /tmp/vinbudin-debug-page${currentPage}.png`)
+      break
+    }
+
+    // Extract beer data from current page
+    const pageBeers = await page.evaluate(() => {
     const products: any[] = []
 
     // Try multiple selector patterns
@@ -154,10 +164,23 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
     return products
   })
 
+    console.log(`  ✓ Fann ${pageBeers.length} bjóra á síðu ${currentPage}`)
+    allBeers.push(...pageBeers)
+
+    // If no beers found on this page, we've reached the end
+    if (pageBeers.length === 0) {
+      console.log('  ℹ️  Engar fleiri vörur - náðum enda')
+      hasMorePages = false
+    } else {
+      // Try next page
+      currentPage++
+    }
+  }
+
   await browser.close()
 
-  console.log(`✅ Fann ${beers.length} bjóra á Vínbúðinni`)
-  return beers
+  console.log(`\n✅ Fann ${allBeers.length} bjóra samtals á ${currentPage} síðu${currentPage > 1 ? 'm' : ''}`)
+  return allBeers
 }
 
 async function importBeers(beers: VinbudinBeer[]) {
