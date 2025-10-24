@@ -553,11 +553,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             setShowWrapUp(false)
             setWrapUpData(null)
 
-            // Only show leaderboard if there's no new current beer
-            // If there's a new current beer, it will be displayed automatically
-            if (!tasting?.currentBeerId) {
-              setShowLeaderboard(true)
-            }
+            // Force immediate reload to get latest tasting state
+            loadTasting(false).then(() => {
+              // This will trigger a re-render with fresh tasting data
+              // The component will automatically show either the new current beer or leaderboard
+            })
           }}
           minDuration={5000}
         />
