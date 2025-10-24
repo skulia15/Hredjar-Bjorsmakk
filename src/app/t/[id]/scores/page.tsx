@@ -38,12 +38,12 @@ interface ParticipantStats {
   possibleRatings: number
   engagementRate: number
   averageRating: number
-  topBeer: {
+  topBeers: Array<{
     beerId: string
     name: string
     brewery: string
     score: number
-  } | null
+  }>
   favoriteStyle: {
     style: string
     average: number
@@ -249,27 +249,35 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       </div>
                     </div>
 
-                    {/* Top beer and favorite style */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      {participant.topBeer && (
-                        <div className="p-2 rounded bg-muted/50">
-                          <div className="font-semibold text-muted-foreground mb-1">Besti bjórinn</div>
-                          <div className="font-medium">{participant.topBeer.name}</div>
-                          <div className="text-xs text-muted-foreground">{participant.topBeer.brewery}</div>
-                          <div className="text-primary font-bold mt-1">{participant.topBeer.score.toFixed(2)}</div>
+                    {/* Top 3 beers */}
+                    {participant.topBeers && participant.topBeers.length > 0 && (
+                      <div className="space-y-2">
+                        <div className="font-semibold text-muted-foreground text-sm">Bestu bjórarnir</div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                          {participant.topBeers.map((beer, index) => (
+                            <div key={beer.beerId} className="p-3 rounded bg-muted/50 relative">
+                              <div className="absolute top-2 right-2 text-2xl opacity-50">
+                                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                              </div>
+                              <div className="font-medium text-sm pr-8">{beer.name}</div>
+                              <div className="text-xs text-muted-foreground">{beer.brewery}</div>
+                              <div className="text-primary font-bold mt-1">{beer.score.toFixed(2)}</div>
+                            </div>
+                          ))}
                         </div>
-                      )}
-                      {participant.favoriteStyle && (
-                        <div className="p-2 rounded bg-muted/50">
-                          <div className="font-semibold text-muted-foreground mb-1">Uppáhalds stíll</div>
-                          <div className="font-medium">{participant.favoriteStyle.style}</div>
-                          <div className="text-xs text-muted-foreground">
-                            {participant.favoriteStyle.count} bjór{participant.favoriteStyle.count !== 1 ? 'ar' : ''}
-                          </div>
-                          <div className="text-primary font-bold mt-1">{participant.favoriteStyle.average.toFixed(2)} meðaltal</div>
+                      </div>
+                    )}
+
+                    {/* Favorite style */}
+                    {participant.favoriteStyle && (
+                      <div className="p-3 rounded bg-muted/50">
+                        <div className="font-semibold text-muted-foreground mb-1 text-sm">Uppáhalds stíll</div>
+                        <div className="font-medium">{participant.favoriteStyle.style}</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {participant.favoriteStyle.count} bjór{participant.favoriteStyle.count !== 1 ? 'ar' : ''} • Meðaleinkunn: <span className="text-primary font-semibold">{participant.favoriteStyle.average.toFixed(2)}</span>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
 
                     {/* Rating consistency */}
                     {participant.ratingVariance > 0 && (

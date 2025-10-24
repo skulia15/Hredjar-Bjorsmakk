@@ -155,12 +155,18 @@ export async function GET(
         ? userRatings.reduce((sum, r) => sum + r.score, 0) / ratingsCount
         : 0;
 
-      // Find user's top beer (highest rated)
-      const topBeer = ratingsCount > 0
-        ? userRatings.reduce((top, current) =>
-            current.score > top.score ? current : top
-          )
-        : null;
+      // Find user's top 3 beers (highest rated)
+      const topBeers = ratingsCount > 0
+        ? userRatings
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 3)
+            .map(rating => ({
+              beerId: rating.beerId,
+              name: rating.beerName,
+              brewery: rating.brewery,
+              score: Number(rating.score.toFixed(2))
+            }))
+        : [];
 
       // Calculate favorite style (style with highest average rating)
       const styleRatings = userRatings
@@ -196,12 +202,7 @@ export async function GET(
         possibleRatings,
         engagementRate: Math.round(engagementRate * 10) / 10,
         averageRating: Number(userAverage.toFixed(2)),
-        topBeer: topBeer ? {
-          beerId: topBeer.beerId,
-          name: topBeer.beerName,
-          brewery: topBeer.brewery,
-          score: Number(topBeer.score.toFixed(2))
-        } : null,
+        topBeers,
         favoriteStyle: favoriteStyle ? {
           style: favoriteStyle.style,
           average: Number(favoriteStyle.average.toFixed(2)),
