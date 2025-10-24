@@ -20,6 +20,81 @@ interface VinbudinBeer {
   containerType?: string
   style?: string
   imageUrl?: string
+  description?: string
+  country?: string
+}
+
+/**
+ * Fetch detailed beer information from individual product page
+ */
+async function fetchBeerDetails(page: any, productUrl: string, productNumber: string) {
+  try {
+    await page.goto(productUrl, { waitUntil: 'networkidle', timeout: 30000 })
+
+    const details = await page.evaluate(() => {
+      const result: any = {}
+
+      // Try to find ABV in various locations
+      const detailsText = document.body.innerText
+      const abvMatch = detailsText.match(/(\d+[,.]\d+)\s*%\s*vol/i) ||
+                       detailsText.match(/Alcohol.*?(\d+[,.]\d+)\s*%/i) ||
+                       detailsText.match(/(\d+[,.]\d+)\s*%/i)
+      if (abvMatch) {
+        result.abv = parseFloat(abvMatch[1].replace(',', '.'))
+      }
+
+      // Find container size and type
+      const sizeMatch = detailsText.match(/(\d+)\s*ml/i) || detailsText.match(/(\d+)\s*cl/i)
+      if (sizeMatch) {
+        let size = parseInt(sizeMatch[1])
+        // Convert cl to ml if needed
+        if (detailsText.match(/\d+\s*cl/i)) {
+          size = size * 10
+        }
+        result.containerSize = size
+      }
+
+      // Determine container type from text
+      const textLower = detailsText.toLowerCase()
+      if (textLower.includes('dós') || textLower.includes('can')) {
+        result.containerType = 'Can'
+      } else if (textLower.includes('flaska') || textLower.includes('bottle') || textLower.includes('fl.')) {
+        result.containerType = 'Bottle'
+      }
+
+      // Extract description
+      const descSelectors = [
+        '.product-description',
+        '.description',
+        '[class*="description"]',
+        'p[class*="text"]'
+      ]
+
+      for (const selector of descSelectors) {
+        const descEl = document.querySelector(selector)
+        if (descEl && descEl.textContent && descEl.textContent.trim().length > 20) {
+          result.description = descEl.textContent.trim()
+          break
+        }
+      }
+
+      // Extract country
+      const countryMatch = detailsText.match(/Land[:\s]+([A-ZÁ-Ý][a-zá-ý]+)/i) ||
+                          detailsText.match(/Country[:\s]+([A-Z][a-z]+)/i) ||
+                          detailsText.match(/Upprunaland[:\s]+([A-ZÁ-Ý][a-zá-ý]+)/i)
+      if (countryMatch) {
+        result.country = countryMatch[1].trim()
+      }
+
+      return result
+    })
+
+    console.log(`    Detailed info for #${productNumber}: ABV=${details.abv || 'N/A'}, Size=${details.containerSize || 'N/A'}ml, Type=${details.containerType || 'N/A'}`)
+    return details
+  } catch (error) {
+    console.error(`    ⚠️  Failed to fetch details for product ${productNumber}:`, error)
+    return {}
+  }
 }
 
 async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
@@ -165,6 +240,25 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
   })
 
     console.log(`  ✓ Fann ${pageBeers.length} bjóra á síðu ${currentPage}`)
+
+    // Fetch detailed information for each beer
+    console.log(`  📋 Sæki nákvæmar upplýsingar fyrir ${pageBeers.length} bjóra...`)
+    for (const beer of pageBeers) {
+      if (beer.productNumber && beer.vinbudinUrl) {
+        const details = await fetchBeerDetails(page, beer.vinbudinUrl, beer.productNumber)
+
+        // Merge detailed info, prioritizing scraped details over name parsing
+        if (details.abv !== undefined) beer.abv = details.abv
+        if (details.containerSize !== undefined) beer.containerSize = details.containerSize
+        if (details.containerType !== undefined) beer.containerType = details.containerType
+        if (details.description) beer.description = details.description
+        if (details.country) beer.country = details.country
+
+        // Small delay to avoid hammering the server
+        await new Promise(resolve => setTimeout(resolve, 500))
+      }
+    }
+
     allBeers.push(...pageBeers)
 
     // If no beers found on this page, we've reached the end
@@ -191,23 +285,28 @@ async function importBeers(beers: VinbudinBeer[]) {
     select: {
       name: true,
       brewery: true,
+      containerSize: true,
+      containerType: true,
       productNumber: true
     }
   })
 
+  // Create unique key including packaging details
   const existingSet = new Set(
-    existingBeers.map(b => `${b.name.toLowerCase()}|${b.brewery.toLowerCase()}`)
+    existingBeers.map(b =>
+      `${b.name.toLowerCase()}|${b.brewery.toLowerCase()}|${b.containerSize || 'null'}|${b.containerType || 'null'}`
+    )
   )
   const existingProductNumbers = new Set(
     existingBeers.map(b => b.productNumber).filter(Boolean)
   )
 
   const newBeers = beers.filter(beer => {
-    const key = `${beer.name.toLowerCase()}|${beer.brewery.toLowerCase()}`
-    const existsByName = existingSet.has(key)
+    const key = `${beer.name.toLowerCase()}|${beer.brewery.toLowerCase()}|${beer.containerSize || 'null'}|${beer.containerType || 'null'}`
+    const existsByPackaging = existingSet.has(key)
     const existsByProductNumber = beer.productNumber && existingProductNumbers.has(beer.productNumber)
 
-    return !existsByName && !existsByProductNumber
+    return !existsByPackaging && !existsByProductNumber
   })
 
   console.log(`ℹ️  ${beers.length} bjórar samtals`)
@@ -231,7 +330,8 @@ async function importBeers(beers: VinbudinBeer[]) {
           containerType: beer.containerType || null,
           style: beer.style || null,
           imageUrl: beer.imageUrl || null,
-          country: 'Iceland'
+          description: beer.description || null,
+          country: beer.country || 'Iceland'
         }
       })
       added++
@@ -291,23 +391,28 @@ async function dryRunImport(beers: VinbudinBeer[]) {
     select: {
       name: true,
       brewery: true,
+      containerSize: true,
+      containerType: true,
       productNumber: true
     }
   })
 
+  // Create unique key including packaging details
   const existingSet = new Set(
-    existingBeers.map(b => `${b.name.toLowerCase()}|${b.brewery.toLowerCase()}`)
+    existingBeers.map(b =>
+      `${b.name.toLowerCase()}|${b.brewery.toLowerCase()}|${b.containerSize || 'null'}|${b.containerType || 'null'}`
+    )
   )
   const existingProductNumbers = new Set(
     existingBeers.map(b => b.productNumber).filter(Boolean)
   )
 
   const newBeers = beers.filter(beer => {
-    const key = `${beer.name.toLowerCase()}|${beer.brewery.toLowerCase()}`
-    const existsByName = existingSet.has(key)
+    const key = `${beer.name.toLowerCase()}|${beer.brewery.toLowerCase()}|${beer.containerSize || 'null'}|${beer.containerType || 'null'}`
+    const existsByPackaging = existingSet.has(key)
     const existsByProductNumber = beer.productNumber && existingProductNumbers.has(beer.productNumber)
 
-    return !existsByName && !existsByProductNumber
+    return !existsByPackaging && !existsByProductNumber
   })
 
   console.log(`📈 Samantekt:`)
@@ -325,6 +430,9 @@ async function dryRunImport(beers: VinbudinBeer[]) {
       if (beer.containerSize && beer.containerType) {
         console.log(`   Umbúðir: ${beer.containerSize}ml ${beer.containerType}`)
       }
+      if (beer.country) console.log(`   Land: ${beer.country}`)
+      if (beer.style) console.log(`   Stíll: ${beer.style}`)
+      if (beer.description) console.log(`   Lýsing: ${beer.description.substring(0, 100)}${beer.description.length > 100 ? '...' : ''}`)
       console.log(`   URL: ${beer.vinbudinUrl}`)
       if (beer.imageUrl) console.log(`   Mynd: ${beer.imageUrl}`)
       console.log('')
