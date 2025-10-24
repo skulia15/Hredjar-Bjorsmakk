@@ -239,7 +239,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="count" fill="hsl(var(--primary))" radius={8} />
+                    <Bar dataKey="count" fill="#3b82f6" radius={8} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -291,7 +291,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       {scores.beers.map((beer, index) => (
                         <Cell
                           key={`cell-${index}`}
-                          fill={beer.rank === 1 ? '#FFD700' : beer.rank === 2 ? '#C0C0C0' : beer.rank === 3 ? '#CD7F32' : 'hsl(var(--primary))'}
+                          fill={beer.rank === 1 ? '#FFD700' : beer.rank === 2 ? '#C0C0C0' : beer.rank === 3 ? '#CD7F32' : '#3b82f6'}
                         />
                       ))}
                     </Bar>
@@ -338,7 +338,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="durationMinutes" fill="hsl(var(--primary))" radius={8} />
+                    <Bar dataKey="durationMinutes" fill="#3b82f6" radius={8} />
                   </BarChart>
                 </ResponsiveContainer>
                 {analytics.overview.averageTimePerBeer && (
@@ -389,8 +389,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="averageRating" fill="hsl(var(--primary))" radius={8} />
-                    <Bar dataKey="ratingsCount" fill="hsl(var(--muted))" radius={8} />
+                    <Bar dataKey="averageRating" fill="#3b82f6" radius={8} />
+                    <Bar dataKey="ratingsCount" fill="#94a3b8" radius={8} />
                     <Legend
                       formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunnanna'}
                     />
