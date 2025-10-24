@@ -39,9 +39,12 @@ export default function BeersPage() {
   const [editingBeer, setEditingBeer] = useState<Beer | null>(null)
   const [saving, setSaving] = useState(false)
   const [groupByBrewery, setGroupByBrewery] = useState(true)
+  const [updatingImages, setUpdatingImages] = useState(false)
+  const [imageStats, setImageStats] = useState<{ needingImages: number; withImages: number } | null>(null)
 
   useEffect(() => {
     loadBeers()
+    loadImageStats()
   }, [])
 
   const loadBeers = async () => {
@@ -55,6 +58,44 @@ export default function BeersPage() {
       console.error('Error loading beers:', err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadImageStats = async () => {
+    try {
+      const response = await fetch('/api/beers/update-images')
+      if (!response.ok) return
+      const data = await response.json()
+      setImageStats(data)
+    } catch (err) {
+      console.error('Error loading image stats:', err)
+    }
+  }
+
+  const handleUpdateImages = async () => {
+    if (!confirm(`Update images for ${imageStats?.needingImages || 0} beers from Vínbúðin?`)) return
+
+    setUpdatingImages(true)
+    setError('')
+    try {
+      const response = await fetch('/api/beers/update-images', {
+        method: 'POST'
+      })
+
+      if (!response.ok) throw new Error('Failed to update images')
+
+      const data = await response.json()
+      setError(`Successfully updated ${data.updated} beer images!`)
+
+      // Reload beers and image stats
+      await loadBeers()
+      await loadImageStats()
+    } catch (err) {
+      setError('Failed to update beer images')
+      console.error('Error updating images:', err)
+    } finally {
+      setUpdatingImages(false)
+      setTimeout(() => setError(''), 5000)
     }
   }
 
@@ -150,19 +191,41 @@ export default function BeersPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             <h1 className="text-3xl font-bold">Bjórlisti</h1>
-            <Link href="/" className="text-sm text-primary hover:underline">
-              ← Forsíða
-            </Link>
+            <div className="flex items-center gap-3">
+              {imageStats && imageStats.needingImages > 0 && (
+                <button
+                  onClick={handleUpdateImages}
+                  disabled={updatingImages}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors text-sm font-medium"
+                >
+                  {updatingImages ? 'Uppfærir...' : `Uppfæra ${imageStats.needingImages} myndir`}
+                </button>
+              )}
+              <Link href="/" className="text-sm text-primary hover:underline">
+                ← Forsíða
+              </Link>
+            </div>
           </div>
-          <p className="text-muted-foreground">
-            Skoða listann af {beers.length} bjórum
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-muted-foreground">
+              Skoða listann af {beers.length} bjórum
+            </p>
+            {imageStats && (
+              <p className="text-xs text-muted-foreground">
+                {imageStats.withImages} með myndum • {imageStats.needingImages} án mynda
+              </p>
+            )}
+          </div>
         </div>
 
         {error && (
-          <div className="p-4 bg-destructive/10 border border-destructive text-destructive rounded-md">
+          <div className={`p-4 border rounded-md ${
+            error.toLowerCase().includes('success')
+              ? 'bg-green-500/10 border-green-500 text-green-600'
+              : 'bg-destructive/10 border-destructive text-destructive'
+          }`}>
             {error}
           </div>
         )}
@@ -253,6 +316,21 @@ export default function BeersPage() {
                       >
                         <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                       </button>
+
+                      {/* Beer Image */}
+                      {beer.imageUrl && (
+                        <div className="mb-4 flex justify-center">
+                          <img
+                            src={beer.imageUrl}
+                            alt={beer.name}
+                            className="h-32 w-auto object-contain"
+                            onError={(e) => {
+                              // Hide image if it fails to load
+                              e.currentTarget.style.display = 'none'
+                            }}
+                          />
+                        </div>
+                      )}
 
                       {/* Beer Header */}
                       <div className="space-y-1 pr-8">
@@ -350,6 +428,21 @@ export default function BeersPage() {
                 >
                   <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                 </button>
+
+                {/* Beer Image */}
+                {beer.imageUrl && (
+                  <div className="mb-4 flex justify-center">
+                    <img
+                      src={beer.imageUrl}
+                      alt={beer.name}
+                      className="h-32 w-auto object-contain"
+                      onError={(e) => {
+                        // Hide image if it fails to load
+                        e.currentTarget.style.display = 'none'
+                      }}
+                    />
+                  </div>
+                )}
 
                 {/* Beer Header */}
                 <div className="space-y-1 pr-8">

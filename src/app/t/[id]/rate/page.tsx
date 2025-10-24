@@ -219,13 +219,13 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     e.preventDefault()
 
     if (!currentBeer) {
-      setMessage('No beer selected')
+      setMessage('Enginn bjór valinn')
       setTimeout(() => setMessage(''), 3000)
       return
     }
 
     if (!participantId) {
-      setMessage('Please join the tasting first')
+      setMessage('Vinsamlegast taktu þátt í smökkuninni fyrst')
       setTimeout(() => setMessage(''), 5000)
       return
     }
@@ -264,7 +264,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Hleður...</p>
         </div>
       </div>
     )
@@ -274,9 +274,9 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Tasting Not Found</h2>
+          <h2 className="text-2xl font-bold mb-2">Smökkun fannst ekki</h2>
           <Link href="/" className="text-primary hover:underline">
-            Return Home
+            Aftur á forsíðu
           </Link>
         </div>
       </div>
@@ -289,7 +289,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold mb-2">{tasting.title}</h2>
           <p className="text-muted-foreground mb-4">
-            This tasting hasn&apos;t started yet. Please wait for the organizer to begin.
+            Þessi smökkun er ekki byrjuð enn. Vinsamlegast bíddu eftir að skipuleggjandi byrji.
           </p>
           <div className="text-6xl mb-4">⏳</div>
         </div>
@@ -304,7 +304,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading results...</p>
+          <p className="text-muted-foreground">Hleður niðurstöðum...</p>
         </div>
       </div>
     )
@@ -322,14 +322,14 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold mb-2">{tasting.title}</h2>
           <p className="text-muted-foreground mb-4">
-            Waiting for the next beer...
+            Bíður eftir næsta bjór...
           </p>
           <div className="text-6xl mb-4">🍺</div>
           <Link
             href={`/t/${params.id}/scores`}
             className="text-primary hover:underline"
           >
-            View Scores
+            Skoða einkunnir
           </Link>
         </div>
       </div>
@@ -350,7 +350,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              Switch to leader View
+              Skipta yfir í leiðtogasýn
             </Link>
           </div>
         )}
@@ -358,7 +358,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">{tasting.title}</h1>
-          <p className="text-sm text-muted-foreground">Rate the current beer</p>
+          <p className="text-sm text-muted-foreground">Gefðu núverandi bjór einkunn</p>
         </div>
 
         {/* Current Beer Card */}
@@ -399,7 +399,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label className="block text-sm font-medium text-center">
-                Your Rating (1.0 - 10.0)
+                Þín einkunn (1.0 - 10.0)
               </label>
               <div className="flex justify-center">
                 <StarRating
@@ -427,7 +427,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               disabled={submitting}
               className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {submitting ? 'Submitting...' : 'Submit Rating'}
+              {submitting ? 'Skrái...' : 'Skrá einkunn'}
             </button>
           </form>
         </div>
@@ -436,7 +436,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         {ratingStats && (
           <div className="bg-card p-4 rounded-lg border space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-medium">Participant Progress</span>
+              <span className="font-medium">Framvinda þátttakenda</span>
               <span className="text-muted-foreground">
                 {ratingStats.ratedCount} / {ratingStats.totalParticipants} gefin einkunn
               </span>
@@ -459,14 +459,14 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               <p className="text-xs text-muted-foreground text-center">
                 {ratingStats.pendingCount <= 3 && ratingStats.pending.length > 0 ? (
                   <>
-                    Waiting for{' '}
+                    Bíður eftir{' '}
                     {ratingStats.pending.map((p, idx) => {
                       const isLast = idx === ratingStats.pending.length - 1
                       const isSecondToLast = idx === ratingStats.pending.length - 2
                       return (
                         <span key={p.participantId}>
                           {p.name}
-                          {!isLast && (isSecondToLast ? ' and ' : ', ')}
+                          {!isLast && (isSecondToLast ? ' og ' : ', ')}
                         </span>
                       )
                     })}

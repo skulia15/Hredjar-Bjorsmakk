@@ -74,7 +74,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         }
       })
       .catch(() => {
-        setError('Tasting not found')
+        setError('Smökkun fannst ekki')
         setCheckingSession(false)
       })
   }, [params.id, router])
@@ -124,7 +124,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Checking session...</p>
+          <p className="text-muted-foreground">Athuga auðkenningu...</p>
         </div>
       </div>
     )

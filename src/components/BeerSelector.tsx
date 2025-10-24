@@ -13,13 +13,14 @@ interface Beer {
   containerSize?: number
   containerType?: string
   priceISK?: number
+  imageUrl?: string
 }
 
 interface BeerSelectorProps {
   beers: Beer[]
   onSelectBeer: (beerId: string) => void
   onSelectMultipleBeers?: (beerIds: string[]) => void
-  onCreateCustom: (data: { name: string; brewery: string; style?: string; abv?: number }) => void
+  onCreateCustom: (data: { name: string; brewery: string; style?: string; abv?: number; productNumber?: string }) => void
 }
 
 export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCreateCustom }: BeerSelectorProps) {
@@ -32,6 +33,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
   const [customBrewery, setCustomBrewery] = useState('')
   const [customStyle, setCustomStyle] = useState('')
   const [customAbv, setCustomAbv] = useState('')
+  const [customProductNumber, setCustomProductNumber] = useState('')
 
   const filteredBeers = useMemo(() => {
     if (!searchTerm) return beers
@@ -76,13 +78,15 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
           name: customName,
           brewery: customBrewery,
           style: customStyle || undefined,
-          abv: customAbv ? parseFloat(customAbv) : undefined
+          abv: customAbv ? parseFloat(customAbv) : undefined,
+          productNumber: customProductNumber || undefined
         })
         // Reset
         setCustomName('')
         setCustomBrewery('')
         setCustomStyle('')
         setCustomAbv('')
+        setCustomProductNumber('')
       }
     }
   }
@@ -144,6 +148,20 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
+                          {/* Beer Image */}
+                          {beer.imageUrl && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={beer.imageUrl}
+                                alt={beer.name}
+                                className="h-16 w-auto object-contain"
+                                onError={(e) => {
+                                  // Hide image if it fails to load
+                                  e.currentTarget.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          )}
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <div className="font-medium text-sm truncate">{beer.name}</div>
@@ -304,6 +322,23 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                   max="100"
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="customProductNumber" className="block text-sm font-medium mb-1.5">
+                  Vínbúðin Product Number (optional)
+                </label>
+                <input
+                  id="customProductNumber"
+                  type="text"
+                  placeholder="e.g., 20821"
+                  value={customProductNumber}
+                  onChange={(e) => setCustomProductNumber(e.target.value)}
+                  className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Auto-generates image from Vínbúðin if provided
+                </p>
               </div>
             </div>
 

@@ -65,7 +65,7 @@ export default function TastingsPage() {
           <h1 className="text-3xl font-bold">Allar smakkanir</h1>
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
-              {tastings.length} tasting{tastings.length !== 1 ? 's' : ''} available
+              {tastings.length} smökkun{tastings.length !== 1 ? 'ar' : ''} tiltæk{tastings.length !== 1 ? 'ar' : ''}
             </p>
             <Link
               href="/create"
@@ -92,9 +92,9 @@ export default function TastingsPage() {
                       {getStatusBadge(tasting.status)}
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span>{tasting.beerCount} beer{tasting.beerCount !== 1 ? 's' : ''}</span>
+                      <span>{tasting.beerCount} bjór{tasting.beerCount !== 1 ? 'ar' : ''}</span>
                       <span>•</span>
-                      <span>{tasting.participantCount} participant{tasting.participantCount !== 1 ? 's' : ''}</span>
+                      <span>{tasting.participantCount} þátttakend{tasting.participantCount !== 1 ? 'ur' : 'i'}</span>
                       <span>•</span>
                       <span>{new Date(tasting.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -114,7 +114,7 @@ export default function TastingsPage() {
               href="/create"
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
             >
-              Create Your First Tasting
+              Búa til fyrstu smökkun
             </Link>
           </div>
         )}

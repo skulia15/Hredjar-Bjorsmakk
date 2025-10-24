@@ -185,7 +185,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Tölfræði þátttakenda</h2>
               <p className="text-sm text-muted-foreground">
-                Overall average: {analytics.overview.overallAverage.toFixed(2)} • {analytics.overview.totalRatings} total ratings
+                Meðaleinkunn: {analytics.overview.overallAverage.toFixed(2)} • {analytics.overview.totalRatings} einkunnir samtals
               </p>
             </div>
 
@@ -201,7 +201,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       <div className="flex-1 min-w-0">
                         <h3 className="font-bold text-lg">{participant.userName}</h3>
                         <p className="text-sm text-muted-foreground">
-                          {participant.ratingsCount} of {participant.possibleRatings} beers rated ({participant.engagementRate}%)
+                          {participant.ratingsCount} af {participant.possibleRatings} bjórum gefin einkunn ({participant.engagementRate}%)
                         </p>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -209,7 +209,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                           {participant.averageRating.toFixed(2)}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          avg rating
+                          meðaleinkunn
                         </div>
                       </div>
                     </div>
@@ -218,7 +218,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                       {participant.topBeer && (
                         <div className="p-2 rounded bg-muted/50">
-                          <div className="font-semibold text-muted-foreground mb-1">Top Beer</div>
+                          <div className="font-semibold text-muted-foreground mb-1">Besti bjórinn</div>
                           <div className="font-medium">{participant.topBeer.name}</div>
                           <div className="text-xs text-muted-foreground">{participant.topBeer.brewery}</div>
                           <div className="text-primary font-bold mt-1">{participant.topBeer.score.toFixed(2)}</div>
@@ -226,12 +226,12 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       )}
                       {participant.favoriteStyle && (
                         <div className="p-2 rounded bg-muted/50">
-                          <div className="font-semibold text-muted-foreground mb-1">Favorite Style</div>
+                          <div className="font-semibold text-muted-foreground mb-1">Uppáhalds stíll</div>
                           <div className="font-medium">{participant.favoriteStyle.style}</div>
                           <div className="text-xs text-muted-foreground">
-                            {participant.favoriteStyle.count} beer{participant.favoriteStyle.count !== 1 ? 's' : ''}
+                            {participant.favoriteStyle.count} bjór{participant.favoriteStyle.count !== 1 ? 'ar' : ''}
                           </div>
-                          <div className="text-primary font-bold mt-1">{participant.favoriteStyle.average.toFixed(2)} avg</div>
+                          <div className="text-primary font-bold mt-1">{participant.favoriteStyle.average.toFixed(2)} meðaltal</div>
                         </div>
                       )}
                     </div>
@@ -239,7 +239,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     {/* Rating consistency */}
                     {participant.ratingVariance > 0 && (
                       <div className="text-xs text-muted-foreground">
-                        Rating consistency: {participant.ratingVariance < 1.5 ? 'Very consistent' : participant.ratingVariance < 2.5 ? 'Moderate' : 'Varied'} (σ = {participant.ratingVariance})
+                        Samræmi einkunnanna: {participant.ratingVariance < 1.5 ? 'Mjög samræmi' : participant.ratingVariance < 2.5 ? 'Í meðallagi' : 'Misjafnt'} (σ = {participant.ratingVariance})
                       </div>
                     )}
                   </div>
@@ -255,7 +255,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
             href={`/t/${params.id}/rate`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Back to Rating
+            ← Til baka í einkunnagjöf
           </Link>
         </div>
       </div>

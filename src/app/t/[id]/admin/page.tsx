@@ -144,7 +144,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
-  const handleCreateCustom = async (data: { name: string; brewery: string; style?: string; abv?: number }) => {
+  const handleCreateCustom = async (data: { name: string; brewery: string; style?: string; abv?: number; productNumber?: string }) => {
     setMessage('')
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers`, {

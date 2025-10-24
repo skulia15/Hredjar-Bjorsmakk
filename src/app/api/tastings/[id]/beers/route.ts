@@ -15,7 +15,7 @@ export async function POST(
     const { id } = await params;
 
     const body = await request.json();
-    const { beerId, name, brewery, style, abv, userName } = body;
+    const { beerId, name, brewery, style, abv, productNumber, userName } = body;
 
     if (!userName) {
       return NextResponse.json(
@@ -47,12 +47,19 @@ export async function POST(
     // If custom beer (no beerId provided), create a catalog entry first
     let finalBeerId = beerId;
     if (!beerId && name && brewery) {
+      // Auto-generate image URL if product number is provided
+      const imageUrl = productNumber
+        ? `https://www.vinbudin.is/Portaldata/1/Resources/vorumyndir/medium/${productNumber}_r.jpg`
+        : null;
+
       const newBeer = await prisma.beer.create({
         data: {
           name,
           brewery,
           style: style || null,
-          abv: abv || null
+          abv: abv || null,
+          productNumber: productNumber || null,
+          imageUrl
         }
       });
       finalBeerId = newBeer.id;

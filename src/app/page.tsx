@@ -52,7 +52,7 @@ export default async function HomePage() {
             href="/admin"
             className="block w-full px-4 py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
-            Admin Login →
+            Innskráning Stjórnanda →
           </Link>
         </div>
 
