@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (style) {
-      where.style = { contains: style, mode: 'insensitive' }
+      where.styles = { has: style }
     }
 
     if (country) {
@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
         id: true,
         name: true,
         brewery: true,
-        style: true,
+        styles: true,
         abv: true,
         country: true,
         imageUrl: true,
@@ -67,12 +67,12 @@ export async function GET(request: NextRequest) {
     // Get unique styles and countries for filtering
     const allBeers = await prisma.beer.findMany({
       select: {
-        style: true,
+        styles: true,
         country: true
       }
     })
 
-    const styles = [...new Set(allBeers.map(b => b.style).filter(Boolean))].sort()
+    const styles = [...new Set(allBeers.flatMap(b => b.styles || []))].sort()
     const countries = [...new Set(allBeers.map(b => b.country).filter(Boolean))].sort()
 
     const response = NextResponse.json({

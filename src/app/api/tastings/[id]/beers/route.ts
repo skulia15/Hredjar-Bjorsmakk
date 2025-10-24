@@ -56,7 +56,7 @@ export async function POST(
         data: {
           name,
           brewery,
-          style: style || null,
+          styles: style ? [style] : [],
           abv: abv || null,
           productNumber: productNumber || null,
           imageUrl
@@ -83,7 +83,7 @@ export async function POST(
       id: tastingBeer.id,
       name: tastingBeer.beer?.name,
       brewery: tastingBeer.beer?.brewery,
-      style: tastingBeer.beer?.style,
+      styles: tastingBeer.beer?.styles,
       abv: tastingBeer.beer?.abv,
       status: tastingBeer.status,
       orderIndex: tastingBeer.orderIndex,

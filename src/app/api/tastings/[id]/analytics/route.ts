@@ -140,7 +140,7 @@ export async function GET(
           beerId: beer.id,
           beerName: beer.beer?.name || beer.customName || 'Unknown',
           brewery: beer.beer?.brewery || beer.customBrewery || 'Unknown',
-          style: beer.beer?.style || beer.customStyle || null,
+          styles: beer.beer?.styles || (beer.customStyle ? [beer.customStyle] : []),
         }))
       );
 
@@ -170,13 +170,13 @@ export async function GET(
 
       // Calculate favorite style (style with highest average rating)
       const styleRatings = userRatings
-        .filter(r => r.style)
-        .reduce((acc, r) => {
-          if (!acc[r.style!]) {
-            acc[r.style!] = { scores: [], count: 0 };
+        .flatMap(r => r.styles.map(style => ({ style, score: r.score })))
+        .reduce((acc, { style, score }) => {
+          if (!acc[style]) {
+            acc[style] = { scores: [], count: 0 };
           }
-          acc[r.style!].scores.push(r.score);
-          acc[r.style!].count++;
+          acc[style].scores.push(score);
+          acc[style].count++;
           return acc;
         }, {} as Record<string, { scores: number[], count: number }>);
 

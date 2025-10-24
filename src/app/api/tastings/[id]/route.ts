@@ -72,7 +72,7 @@ export async function GET(
       // Get beer details from catalog or custom fields
       const name = tastingBeer.beer?.name || tastingBeer.customName || 'Unknown';
       const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
-      const style = tastingBeer.beer?.style || tastingBeer.customStyle || null;
+      const styles = tastingBeer.beer?.styles || (tastingBeer.customStyle ? [tastingBeer.customStyle] : []);
       const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
       const containerSize = tastingBeer.beer?.containerSize || null;
       const containerType = tastingBeer.beer?.containerType || null;
@@ -82,7 +82,7 @@ export async function GET(
         id: tastingBeer.id,
         name,
         brewery,
-        style,
+        styles,
         abv,
         containerSize,
         containerType,
