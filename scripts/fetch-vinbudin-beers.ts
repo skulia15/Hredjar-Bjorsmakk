@@ -49,9 +49,9 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
 
       // Fallback: try to find ABV in general text if not found above
       if (!result.abv) {
-        const abvMatch = detailsText.match(/(\d+[,.]\d+)\s*%\s*vol/i) ||
-                         detailsText.match(/Alcohol.*?(\d+[,.]\d+)\s*%/i) ||
-                         detailsText.match(/Styrkleiki[:\s]+(\d+[,.]\d+)/i)
+        const abvMatch = detailsText.match(/(\d+(?:[,.]\d+)?)\s*%\s*vol/i) ||
+                         detailsText.match(/Alcohol.*?(\d+(?:[,.]\d+)?)\s*%/i) ||
+                         detailsText.match(/Styrkleiki[:\s]+(\d+(?:[,.]\d+)?)/i)
         if (abvMatch) {
           result.abv = parseFloat(abvMatch[1].replace(',', '.'))
         }
