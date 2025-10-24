@@ -483,7 +483,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         {/* Tabs */}
         <div className="border-b">
           <div className="flex gap-4">
-            {(['manage', 'analytics', 'participation', 'scores'] as TabType[]).map((tab) => {
+            {(['manage', 'participation', 'analytics', 'scores'] as TabType[]).map((tab) => {
               const tabLabels = {
                 manage: 'Stjórna',
                 analytics: 'Tölfræði',
