@@ -441,7 +441,7 @@ export default function BeersPage() {
                           </a>
                         ) : beer.productNumber && (
                           <a
-                            href={`https://www.vinbudin.is/english/home/products/stoek-vara.aspx/?productid=${beer.productNumber}/`}
+                            href={`https://www.vinbudin.is/heim/vorur/stoek-vara.aspx/?productid=${beer.productNumber}/`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline"
@@ -564,7 +564,7 @@ export default function BeersPage() {
                     </a>
                   ) : beer.productNumber && (
                     <a
-                      href={`https://www.vinbudin.is/english/home/products/stoek-vara.aspx/?productid=${beer.productNumber}/`}
+                      href={`https://www.vinbudin.is/heim/vorur/stoek-vara.aspx/?productid=${beer.productNumber}/`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:underline"
