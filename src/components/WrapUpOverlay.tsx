@@ -84,13 +84,11 @@ export function WrapUpOverlay({
         </div>
 
         {/* Countdown */}
-        <div className="text-center text-sm text-muted-foreground">
-          {timeRemaining > 0 ? (
-            <>Next beer in {timeRemaining} second{timeRemaining !== 1 ? 's' : ''}...</>
-          ) : (
-            <>Loading next beer...</>
-          )}
-        </div>
+        {timeRemaining > 0 && (
+          <div className="text-center text-sm text-muted-foreground">
+            Next beer in {timeRemaining} second{timeRemaining !== 1 ? 's' : ''}...
+          </div>
+        )}
 
         {/* Skip Button */}
         <button

@@ -507,10 +507,15 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           average={wrapUpData.average}
           count={wrapUpData.count}
           onComplete={() => {
-            // After wrap-up completes, show leaderboard
+            // After wrap-up completes, hide wrap-up
             setShowWrapUp(false)
             setWrapUpData(null)
-            setShowLeaderboard(true)
+
+            // Only show leaderboard if there's no new current beer
+            // If there's a new current beer, it will be displayed automatically
+            if (!tasting?.currentBeerId) {
+              setShowLeaderboard(true)
+            }
           }}
           minDuration={5000}
         />
