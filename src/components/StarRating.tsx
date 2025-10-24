@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Star } from 'lucide-react';
 
 interface StarRatingProps {
@@ -21,6 +21,8 @@ export function StarRating({
   showNumeric = true
 }: StarRatingProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLongPress, setIsLongPress] = useState(false);
 
   const handleStarClick = (starIndex: number, isHalf: boolean) => {
     if (disabled) return;
@@ -37,6 +39,58 @@ export function StarRating({
   const handleMouseLeave = () => {
     setHoverValue(null);
   };
+
+  const handleTouchStart = (starIndex: number) => {
+    if (disabled) return;
+    setIsLongPress(false);
+
+    const timer = setTimeout(() => {
+      setIsLongPress(true);
+      // Long press detected - set half star
+      const newValue = starIndex + 0.5;
+      onChange(newValue);
+      // Haptic feedback if available
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }, 500);
+
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = (starIndex: number) => {
+    if (disabled) return;
+
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+
+    // If it wasn't a long press, it's a quick tap - set full star
+    if (!isLongPress) {
+      const newValue = starIndex + 1;
+      onChange(newValue);
+    }
+
+    setIsLongPress(false);
+  };
+
+  const handleTouchCancel = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    setIsLongPress(false);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+      }
+    };
+  }, [longPressTimer]);
 
   const displayValue = hoverValue ?? value;
 
@@ -64,10 +118,13 @@ export function StarRating({
           return (
             <div
               key={i}
-              className="relative"
+              className="relative touch-none select-none"
               style={{ width: size, height: size }}
+              onTouchStart={() => handleTouchStart(i)}
+              onTouchEnd={() => handleTouchEnd(i)}
+              onTouchCancel={handleTouchCancel}
             >
-              {/* Left half (for half-star clicks) */}
+              {/* Left half (for half-star clicks on desktop) */}
               <div
                 className={`absolute left-0 top-0 w-1/2 h-full z-10 ${
                   disabled ? 'cursor-default' : 'cursor-pointer'
@@ -76,7 +133,7 @@ export function StarRating({
                 onMouseEnter={() => handleStarHover(i, true)}
               />
 
-              {/* Right half (for full-star clicks) */}
+              {/* Right half (for full-star clicks on desktop) */}
               <div
                 className={`absolute right-0 top-0 w-1/2 h-full z-10 ${
                   disabled ? 'cursor-default' : 'cursor-pointer'
