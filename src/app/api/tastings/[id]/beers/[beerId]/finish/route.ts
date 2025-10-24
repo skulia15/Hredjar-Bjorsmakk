@@ -7,9 +7,11 @@ import { broadcastBeerFinished } from '@/lib/sse';
 // POST /api/tastings/[id]/beers/[beerId]/finish - Mark beer as finished
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string; beerId: string } }
+  { params }: { params: Promise<{ id: string; beerId: string }> }
 ) {
   try {
+    const { id, beerId } = await params;
+
     const body = await request.json();
     const validation = validateInput(finishBeerSchema, body);
 
@@ -27,7 +29,7 @@ export async function POST(
 
     // Verify beer is current
     const tastingBeer = await prisma.tastingBeer.findUnique({
-      where: { id: params.beerId }
+      where: { id: beerId }
     });
 
     if (!tastingBeer) {
@@ -46,7 +48,7 @@ export async function POST(
 
     // Get ratings to calculate average
     const ratings = await prisma.rating.findMany({
-      where: { tastingBeerId: params.beerId },
+      where: { tastingBeerId: beerId },
       select: { score: true }
     });
 
@@ -58,7 +60,7 @@ export async function POST(
     const result = await prisma.$transaction(async (tx) => {
       // Mark beer as finished and record when it was finished
       await tx.tastingBeer.update({
-        where: { id: params.beerId },
+        where: { id: beerId },
         data: {
           status: 'finished',
           finishedAt: new Date()
@@ -67,7 +69,7 @@ export async function POST(
 
       // Clear current beer from tasting and increment version
       const tasting = await tx.tasting.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           currentTastingBeerId: null,
           version: { increment: 1 }
@@ -79,15 +81,15 @@ export async function POST(
 
     // Broadcast finish via SSE
     broadcastBeerFinished(
-      params.id,
-      params.beerId,
+      id,
+      beerId,
       Number(average.toFixed(2)),
       ratings.length,
       result.version
     );
 
     return NextResponse.json({
-      tastingBeerId: params.beerId,
+      tastingBeerId: beerId,
       status: 'finished',
       average: Number(average.toFixed(2)),
       count: ratings.length,

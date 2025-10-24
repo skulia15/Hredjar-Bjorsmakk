@@ -150,6 +150,9 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     return () => clearInterval(interval)
   }, [params.id, loadTasting, loadRatingStats, router])
 
+  // Derive current beer from tasting state
+  const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
+
   // Load rating stats when current beer changes
   useEffect(() => {
     if (currentBeer) {
@@ -192,8 +195,6 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       setPreviousBeerId(currentBeerId || null)
     }
   }, [tasting, previousBeerId])
-
-  const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -323,16 +324,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         )}
 
         {/* User Info */}
-        {participantInfo && (
+        {participantInfo?.code && (
           <div className="bg-muted/50 px-4 py-2 rounded-lg border text-center">
             <div className="text-sm">
-              <span className="text-muted-foreground">Logged in as: </span>
-              <span className="font-semibold">{participantInfo.name}</span>
-              {participantInfo.code && (
-                <span className="text-muted-foreground ml-2">
-                  (Code: {participantInfo.code})
-                </span>
-              )}
+              <span className="text-muted-foreground">Your code: </span>
+              <span className="font-semibold">{participantInfo.code}</span>
             </div>
           </div>
         )}

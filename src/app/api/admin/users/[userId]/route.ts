@@ -6,9 +6,11 @@ import { requireAdminSession } from '@/lib/session';
 // PATCH /api/admin/users/[userId] - Update user (promote/demote leader)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
+
     // Verify admin session
     await requireAdminSession();
 
@@ -26,7 +28,7 @@ export async function PATCH(
 
     // Update user
     const user = await prisma.user.update({
-      where: { id: params.userId },
+      where: { id: userId },
       data: { isLeader }
     });
 

@@ -6,9 +6,11 @@ import { requireLeader } from '@/lib/auth';
 // GET /api/tastings/[id]/export?format=csv|xlsx - Export tasting results
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Get format from query params
     const searchParams = request.nextUrl.searchParams;
     const format = (searchParams.get('format') || 'xlsx') as ExportFormat;
@@ -34,7 +36,7 @@ export async function GET(
 
     // Get tasting to verify it exists and get title
     const tasting = await prisma.tasting.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: { title: true }
     });
 
@@ -46,12 +48,12 @@ export async function GET(
     }
 
     // Generate export file
-    const buffer = await generateTastingExport(params.id, format);
+    const buffer = await generateTastingExport(id, format);
     const filename = getExportFilename(tasting.title, format);
     const contentType = getExportContentType(format);
 
     // Return file as download
-    return new NextResponse(buffer, {
+    return new NextResponse(Buffer.from(buffer), {
       status: 200,
       headers: {
         'Content-Type': contentType,

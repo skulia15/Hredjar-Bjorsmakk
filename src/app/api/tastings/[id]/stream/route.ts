@@ -4,19 +4,20 @@ import { sseManager } from '@/lib/sse';
 // GET /api/tastings/[id]/stream - SSE stream for real-time updates
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream({
     start(controller) {
       // Add connection to SSE manager
-      sseManager.addConnection(params.id, controller);
+      sseManager.addConnection(id, controller);
 
       // Send initial connection message
       const connectMessage = `event: connected\ndata: ${JSON.stringify({
         type: 'connected',
-        tastingId: params.id,
+        tastingId: id,
         timestamp: new Date().toISOString()
       })}\n\n`;
       controller.enqueue(encoder.encode(connectMessage));
@@ -33,9 +34,9 @@ export async function GET(
 
       // Cleanup on connection close
       request.signal.addEventListener('abort', () => {
-        console.log(`[SSE] Client disconnected from tasting ${params.id}`);
+        console.log(`[SSE] Client disconnected from tasting ${id}`);
         clearInterval(pingInterval);
-        sseManager.removeConnection(params.id, controller);
+        sseManager.removeConnection(id, controller);
         try {
           controller.close();
         } catch (error) {

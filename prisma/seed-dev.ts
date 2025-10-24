@@ -101,73 +101,73 @@ async function main() {
   });
 
   // Create beers for active tasting
-  const beer1 = await prisma.beer.create({
+  const beer1 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'IPA Sample',
-      brewery: 'Brewery A',
-      style: 'IPA',
-      abv: 6.5,
+      customName: 'IPA Sample',
+      customBrewery: 'Brewery A',
+      customStyle: 'IPA',
+      customAbv: 6.5,
       orderIndex: 0,
       status: 'finished',
     },
   });
 
-  const beer2 = await prisma.beer.create({
+  const beer2 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'Stout Special',
-      brewery: 'Brewery B',
-      style: 'Stout',
-      abv: 8.0,
+      customName: 'Stout Special',
+      customBrewery: 'Brewery B',
+      customStyle: 'Stout',
+      customAbv: 8.0,
       orderIndex: 1,
       status: 'current',
     },
   });
 
-  const beer3 = await prisma.beer.create({
+  const beer3 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'Lager Light',
-      brewery: 'Brewery C',
-      style: 'Lager',
-      abv: 4.5,
+      customName: 'Lager Light',
+      customBrewery: 'Brewery C',
+      customStyle: 'Lager',
+      customAbv: 4.5,
       orderIndex: 2,
       status: 'untasted',
     },
   });
 
-  const beer4 = await prisma.beer.create({
+  const beer4 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'Pilsner Gold',
-      brewery: 'Brewery D',
-      style: 'Pilsner',
-      abv: 5.2,
+      customName: 'Pilsner Gold',
+      customBrewery: 'Brewery D',
+      customStyle: 'Pilsner',
+      customAbv: 5.2,
       orderIndex: 3,
       status: 'untasted',
     },
   });
 
-  const beer5 = await prisma.beer.create({
+  const beer5 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'Wheat Wonder',
-      brewery: 'Brewery E',
-      style: 'Wheat Beer',
-      abv: 5.5,
+      customName: 'Wheat Wonder',
+      customBrewery: 'Brewery E',
+      customStyle: 'Wheat Beer',
+      customAbv: 5.5,
       orderIndex: 4,
       status: 'untasted',
     },
   });
 
-  const beer6 = await prisma.beer.create({
+  const beer6 = await prisma.tastingBeer.create({
     data: {
       tastingId: activeTasting.id,
-      name: 'Amber Ale',
-      brewery: 'Brewery F',
-      style: 'Amber Ale',
-      abv: 6.0,
+      customName: 'Amber Ale',
+      customBrewery: 'Brewery F',
+      customStyle: 'Amber Ale',
+      customAbv: 6.0,
       orderIndex: 5,
       status: 'untasted',
     },
@@ -175,7 +175,7 @@ async function main() {
 
   await prisma.tasting.update({
     where: { id: activeTasting.id },
-    data: { currentBeerId: beer2.id },
+    data: { currentTastingBeerId: beer2.id },
   });
 
   console.log('✅ Created active tasting with 6 beers');
@@ -204,7 +204,7 @@ async function main() {
     await prisma.rating.create({
       data: {
         tastingId: activeTasting.id,
-        beerId: beer1.id,
+        tastingBeerId: beer1.id,
         participantId: participants[i].id,
         score: scores[i],
       },
@@ -217,7 +217,7 @@ async function main() {
     await prisma.rating.create({
       data: {
         tastingId: activeTasting.id,
-        beerId: beer2.id,
+        tastingBeerId: beer2.id,
         participantId: participants[i].id,
         score: currentScores[i],
       },
@@ -238,11 +238,11 @@ async function main() {
 
   // Create beers for closed tasting
   for (let i = 0; i < 8; i++) {
-    await prisma.beer.create({
+    await prisma.tastingBeer.create({
       data: {
         tastingId: closedTasting.id,
-        name: `Beer ${i + 1}`,
-        brewery: `Brewery ${String.fromCharCode(65 + i)}`,
+        customName: `Beer ${i + 1}`,
+        customBrewery: `Brewery ${String.fromCharCode(65 + i)}`,
         orderIndex: i,
         status: 'finished',
       },

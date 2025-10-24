@@ -9,18 +9,21 @@ import { prisma } from '@/lib/prisma'
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     // Get tasting with finished beers
     const tasting = await prisma.tasting.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
-        beers: {
+        tastingBeers: {
           where: {
             status: 'finished'
           },
           include: {
+            beer: true,
             ratings: {
               select: {
                 score: true
@@ -42,17 +45,20 @@ export async function GET(
     }
 
     // Calculate averages and build leaderboard
-    const beers = tasting.beers
-      .map(beer => {
-        const scores = beer.ratings.map(r => r.score)
+    const beers = tasting.tastingBeers
+      .map(tb => {
+        const scores = tb.ratings.map(r => r.score)
         const average = scores.length > 0
           ? scores.reduce((sum, score) => sum + score, 0) / scores.length
           : 0
 
+        const name = tb.beer?.name || tb.customName || 'Unknown'
+        const brewery = tb.beer?.brewery || tb.customBrewery || 'Unknown'
+
         return {
-          beerId: beer.id,
-          name: beer.name,
-          brewery: beer.brewery,
+          beerId: tb.id,
+          name,
+          brewery,
           average: parseFloat(average.toFixed(2)),
           count: scores.length
         }
@@ -65,7 +71,7 @@ export async function GET(
       }))
 
     return NextResponse.json({
-      tastingId: params.id,
+      tastingId: id,
       beers
     })
 

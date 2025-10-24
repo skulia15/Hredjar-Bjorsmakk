@@ -8,9 +8,11 @@ import { randomUUID } from 'crypto';
 // POST /api/tastings/[id]/join - Join tasting as participant
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const body = await request.json();
     const validation = validateInput(joinTastingSchema, body);
 
@@ -25,7 +27,7 @@ export async function POST(
 
     // Verify tasting exists
     const tasting = await prisma.tasting.findUnique({
-      where: { id: params.id }
+      where: { id }
     });
 
     if (!tasting) {
@@ -42,7 +44,7 @@ export async function POST(
     let participant = await prisma.participant.findUnique({
       where: {
         tastingId_userId: {
-          tastingId: params.id,
+          tastingId: id,
           userId: user.id
         }
       }
@@ -56,12 +58,12 @@ export async function POST(
       });
     } else {
       // Create new participant
-      const code = await generateUniqueParticipantCode(params.id);
+      const code = await generateUniqueParticipantCode(id);
       const rejoinToken = randomUUID();
 
       participant = await prisma.participant.create({
         data: {
-          tastingId: params.id,
+          tastingId: id,
           userId: user.id,
           code,
           rejoinToken

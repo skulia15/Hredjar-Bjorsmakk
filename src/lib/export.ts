@@ -1,6 +1,6 @@
 import ExcelJS from 'exceljs';
 import { prisma } from './prisma';
-import { format } from 'date-fns';
+import { format as formatDate } from 'date-fns';
 
 export type ExportFormat = 'csv' | 'xlsx';
 
@@ -70,7 +70,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
         participant: rating.participant.user.name,
         code: rating.participant.code,
         rating: rating.score,
-        timestamp: format(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),
+        timestamp: formatDate(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),
       });
     });
   });
@@ -152,8 +152,8 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   infoSheet.addRow({ property: 'Status', value: tasting.status });
   infoSheet.addRow({ property: 'Total Beers', value: tasting.tastingBeers.length });
   infoSheet.addRow({ property: 'Total Ratings', value: tasting.tastingBeers.reduce((sum, tb) => sum + tb.ratings.length, 0) });
-  infoSheet.addRow({ property: 'Created', value: format(tasting.createdAt, 'yyyy-MM-dd HH:mm:ss') });
-  infoSheet.addRow({ property: 'Exported', value: format(new Date(), 'yyyy-MM-dd HH:mm:ss') });
+  infoSheet.addRow({ property: 'Created', value: formatDate(tasting.createdAt, 'yyyy-MM-dd HH:mm:ss') });
+  infoSheet.addRow({ property: 'Exported', value: formatDate(new Date(), 'yyyy-MM-dd HH:mm:ss') });
 
   // Generate file based on format
   if (formatType === 'csv') {
@@ -183,7 +183,7 @@ export function getExportFilename(tastingTitle: string, format: ExportFormat): s
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
-  const timestamp = format(new Date(), 'yyyy-MM-dd');
+  const timestamp = formatDate(new Date(), 'yyyy-MM-dd');
 
   return `${sanitized}-${timestamp}.${format}`;
 }

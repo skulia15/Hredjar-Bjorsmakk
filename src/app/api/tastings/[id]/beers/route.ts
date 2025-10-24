@@ -8,9 +8,11 @@ import { requireLeader } from '@/lib/auth';
 // 2. Custom beer: { name: "...", brewery: "...", style?: "...", abv?: 6.5, userName: "admin" }
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const body = await request.json();
     const { beerId, name, brewery, style, abv, userName } = body;
 
@@ -34,7 +36,7 @@ export async function POST(
 
     // Get current max orderIndex
     const maxOrder = await prisma.tastingBeer.findFirst({
-      where: { tastingId: params.id },
+      where: { tastingId: id },
       orderBy: { orderIndex: 'desc' },
       select: { orderIndex: true }
     });
@@ -44,7 +46,7 @@ export async function POST(
     // Create tasting beer
     const tastingBeer = await prisma.tastingBeer.create({
       data: {
-        tastingId: params.id,
+        tastingId: id,
         beerId: beerId || null, // Reference catalog beer if provided
         customName: beerId ? null : name,
         customBrewery: beerId ? null : brewery,

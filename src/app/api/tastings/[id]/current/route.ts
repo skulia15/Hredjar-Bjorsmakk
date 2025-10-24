@@ -7,9 +7,11 @@ import { broadcastCurrentBeerChanged } from '@/lib/sse';
 // PATCH /api/tastings/[id]/current - Set current beer
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const body = await request.json();
     const validation = validateInput(setCurrentBeerSchema, body);
 
@@ -50,7 +52,7 @@ export async function PATCH(
       // Find and update old current beer if exists
       const oldCurrent = await tx.tastingBeer.findFirst({
         where: {
-          tastingId: params.id,
+          tastingId: id,
           status: 'current'
         }
       });
@@ -73,7 +75,7 @@ export async function PATCH(
 
       // Update tasting with new current beer and increment version
       const tasting = await tx.tasting.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           currentTastingBeerId: tastingBeerId,
           version: { increment: 1 }
@@ -84,10 +86,10 @@ export async function PATCH(
     });
 
     // Broadcast change via SSE
-    broadcastCurrentBeerChanged(params.id, tastingBeerId, result.version);
+    broadcastCurrentBeerChanged(id, tastingBeerId, result.version);
 
     return NextResponse.json({
-      tastingId: params.id,
+      tastingId: id,
       currentBeerId: tastingBeerId, // Return as currentBeerId for backwards compatibility
       version: result.version
     });
