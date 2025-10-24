@@ -12,6 +12,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 
 - 🎯 **Real-time synchronization** — everyone sees the same current beer (≤1s latency)
 - 👥 **Global user system** — users identified by name, leaders have global privileges
+- 🍺 **Beer catalog** — global catalog with Vínbúðin integration, styles, pricing, and images
 - 📊 **Live leaderboard** — see top beers as ratings come in
 - 📱 **Mobile-first** — responsive design for iOS/Android browsers
 - 📤 **Export results** — CSV/XLSX with individual ratings and summaries
@@ -22,9 +23,11 @@ A mobile-first web application for synchronized beer tastings where groups can r
 
 | Role | Access | Capabilities |
 |------|--------|--------------|
-| **Admin** | `/admin` (name: "admin") | Manage users, promote/demote leaders, view all tastings |
+| **Admin** | `/admin` (name: "admin" or "skúli") | Manage users, promote/demote leaders and admins, manage beer catalog, view all tastings |
 | **Leader** | Global flag (`User.isLeader`) | Create tastings, manage beers, see pending raters, export, **also rate** |
 | **Participant** | Join via link | Rate beers, view scores |
+
+**Note:** Anyone named "skúli" is automatically granted admin privileges. Admins can also promote other users to admin status via the user management interface.
 
 ## 🏗️ Tech Stack
 
@@ -107,7 +110,10 @@ DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts
 **Features:**
 - ✅ Fetches all pages of Christmas beers automatically
 - ✅ Extracts beer details (name, brewery, price, ABV, images, product numbers)
-- ✅ Avoids duplicates by checking existing beers
+- ✅ Handles beer styles as arrays (e.g., ["Ljós lager", "Amber", "Vínar"])
+- ✅ Properly detects container types (Bottle vs Can) from Umbúðir label
+- ✅ Extracts ABV for both decimal (5.7%) and whole number (5%) values
+- ✅ Avoids duplicates by checking existing beers (name + brewery + container variant)
 - ✅ Dry-run mode to preview changes before importing
 - ✅ Works locally only (requires Playwright browser)
 - ✅ Handles pagination (currently ~43 beers across 2 pages)
@@ -116,9 +122,11 @@ DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts
 - Beer name and brewery
 - Vínbúðin product ID (numeric)
 - Price in ISK
-- ABV percentage
-- Container size and type
+- ABV percentage (including whole numbers)
+- Container size and type (Bottle/Can distinction)
+- Beer styles as array (multiple styles per beer)
 - Product images
+- Beer description
 - Direct link to Vínbúðin product page
 
 See [`scripts/README.md`](scripts/README.md) for detailed documentation in Icelandic and English.
@@ -156,6 +164,7 @@ See [`.env.example`](.env.example) for complete configuration.
 User (global)
   ├── name (unique, case-insensitive)
   ├── isLeader (boolean)
+  ├── isAdmin (boolean, auto-true for "skúli")
   └── participations (many Participants)
 
 Participant (per-tasting)
@@ -173,11 +182,21 @@ Tasting
   ├── beers (many)
   └── ratings (many)
 
-Beer
+TastingBeer (instance in a tasting)
   ├── tastingId → Tasting
+  ├── beerId → Beer (optional, can be custom)
   ├── name, brewery
   ├── status (untasted | current | finished)
   └── orderIndex
+
+Beer (global catalog)
+  ├── name, brewery
+  ├── styles (array, e.g., ["Ljós lager", "Amber"])
+  ├── abv, country
+  ├── containerSize, containerType
+  ├── productNumber, vinbudinUrl, priceISK
+  ├── imageUrl, description
+  └── @@unique([name, brewery, containerSize, containerType])
 
 Rating
   ├── beerId → Beer
@@ -188,14 +207,22 @@ Rating
 
 ## 🔑 Key Workflows
 
-### Admin: Promote User to Leader
+### Admin: Manage Users & Beer Catalog
 
 ```typescript
-// 1. Admin authenticates at /admin
+// User Management (/admin/users)
+// 1. Admin authenticates at /admin (name: "admin" or "skúli")
 // 2. Navigate to /admin/users
-// 3. Click "Promote to Leader" on any user
-// 4. User.isLeader = true
-// 5. Next time they join any tasting, they see leader controls
+// 3. Toggle "Leader" or "Admin" status on any user
+// 4. User.isLeader = true or User.isAdmin = true
+// 5. Next time they join any tasting, they see appropriate controls
+
+// Beer Catalog Management (/beers)
+// 1. Navigate to /beers
+// 2. Add beers manually or fetch from Vínbúðin
+// 3. Edit beer details (name, styles, ABV, price, etc.)
+// 4. Delete beers from catalog (caution: affects tastings using them)
+// 5. Search and filter by name, brewery, style, or price
 ```
 
 ### Leader: Create & Manage Tasting
@@ -411,6 +438,10 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 
 ### MVP (Current)
 - ✅ Global admin + leader system
+- ✅ Admin user management (promote to admin/leader)
+- ✅ Beer catalog with Vínbúðin integration
+- ✅ Beer styles as arrays for statistics
+- ✅ Beer catalog CRUD operations
 - ✅ Real-time synchronization
 - ✅ Session persistence
 - ✅ CSV/XLSX export
@@ -422,13 +453,14 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 - [ ] QR code join links
 - [ ] Email admin recovery
 - [ ] PWA offline support
+- [ ] Beer style statistics and analytics
 
 ### v2.0 (Future)
 - [ ] Beer catalog with vintages
 - [ ] Live median/distribution stats
 - [ ] WebSocket instead of SSE
 - [ ] Multi-language support (Icelandic)
-- [ ] Advanced analytics
+- [ ] Advanced analytics per style/brewery
 
 ## 🤝 Contributing
 
