@@ -83,6 +83,48 @@ npm run dev
 
 Visit `http://localhost:3000`
 
+## 🛠️ Scripts & Tools
+
+### Vínbúðin Beer Fetching
+
+Automatically fetch Christmas beers from Vínbúðin (Icelandic state liquor store) and add them to your beer catalog.
+
+```bash
+# Install Playwright browser (one time setup)
+npx playwright install chromium
+
+# Dry run - preview what will be imported (recommended first)
+npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
+
+# Import beers to database
+npx tsx scripts/fetch-vinbudin-beers.ts
+
+# Use with production database
+DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts --dry-run
+DATABASE_URL="postgresql://..." npx tsx scripts/fetch-vinbudin-beers.ts
+```
+
+**Features:**
+- ✅ Fetches all pages of Christmas beers automatically
+- ✅ Extracts beer details (name, brewery, price, ABV, images, product numbers)
+- ✅ Avoids duplicates by checking existing beers
+- ✅ Dry-run mode to preview changes before importing
+- ✅ Works locally only (requires Playwright browser)
+- ✅ Handles pagination (currently ~43 beers across 2 pages)
+
+**Collected Data:**
+- Beer name and brewery
+- Vínbúðin product ID (numeric)
+- Price in ISK
+- ABV percentage
+- Container size and type
+- Product images
+- Direct link to Vínbúðin product page
+
+See [`scripts/README.md`](scripts/README.md) for detailed documentation in Icelandic and English.
+
+**Note:** This script uses Playwright to handle JavaScript-rendered content and only works in local development. The web API endpoint `/api/beers/fetch-vinbudin` is disabled in production.
+
 ### Environment Setup
 
 Required environment variables:
