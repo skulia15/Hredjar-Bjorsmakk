@@ -128,14 +128,24 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Bar dataKey="average">
-                {scores.beers.map((beer, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={beer.rank === 1 ? '#FFD700' : beer.rank === 2 ? '#C0C0C0' : beer.rank === 3 ? '#CD7F32' : '#3b82f6'}
-                  />
-                ))}
-              </Bar>
+              <Bar
+                dataKey="average"
+                fill="#3b82f6"
+                shape={(props: any) => {
+                  const { x, y, width, height, index } = props
+                  const beer = scores.beers[scores.beers.length - 1 - index]
+                  const fill = beer?.rank === 1 ? '#FFD700' : beer?.rank === 2 ? '#C0C0C0' : beer?.rank === 3 ? '#CD7F32' : '#3b82f6'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
