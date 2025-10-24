@@ -74,7 +74,7 @@ export default function AdminTastingsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading tastings...</p>
+          <p className="text-muted-foreground">Hleður smökkunum...</p>
         </div>
       </div>
     )
@@ -85,13 +85,13 @@ export default function AdminTastingsPage() {
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Admin: All Tastings</h1>
+          <h1 className="text-3xl font-bold">Admin: Allar smakkanir</h1>
           <div className="flex items-center gap-4">
             <Link
               href="/admin/users"
               className="text-sm text-primary hover:underline"
             >
-              ← Back to Users
+              ← Aftur á notendastjórnun
             </Link>
           </div>
         </div>
@@ -100,19 +100,19 @@ export default function AdminTastingsPage() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold text-primary">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">Total Tastings</div>
+            <div className="text-sm text-muted-foreground">Fjöldi smakkana</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold text-green-600">{stats.active}</div>
-            <div className="text-sm text-muted-foreground">Active</div>
+            <div className="text-sm text-muted-foreground">Virkar</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold text-blue-600">{stats.closed}</div>
-            <div className="text-sm text-muted-foreground">Closed</div>
+            <div className="text-sm text-muted-foreground">Búnar</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold text-gray-600">{stats.draft}</div>
-            <div className="text-sm text-muted-foreground">Draft</div>
+            <div className="text-sm text-muted-foreground">Drög</div>
           </div>
         </div>
 
@@ -123,12 +123,12 @@ export default function AdminTastingsPage() {
               <table className="w-full">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Creator</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Stats</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Created</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Nafn</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Staða</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Búið til af</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Tölfræði</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Búið til</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium">Aðgerðir</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y">
@@ -145,9 +145,9 @@ export default function AdminTastingsPage() {
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
                         <div className="space-y-1">
-                          <div>{tasting.participantCount} participants</div>
-                          <div>{tasting.beerCount} beers ({tasting.finishedBeerCount} finished)</div>
-                          <div>{tasting.ratingCount} ratings</div>
+                          <div>{tasting.participantCount} Þátttakendur</div>
+                          <div>{tasting.beerCount} bjórar ({tasting.finishedBeerCount} smakkaðir)</div>
+                          <div>{tasting.ratingCount} einkunnir</div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">
@@ -178,7 +178,7 @@ export default function AdminTastingsPage() {
         ) : (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🍺</div>
-            <p className="text-muted-foreground">No tastings found</p>
+            <p className="text-muted-foreground">Engar smakkanir fundust</p>
           </div>
         )}
       </div>

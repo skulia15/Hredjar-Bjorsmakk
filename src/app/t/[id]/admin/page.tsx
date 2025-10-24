@@ -336,7 +336,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">Hleður...</p>
         </div>
       </div>
     )
@@ -346,9 +346,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Tasting Not Found</h2>
+          <h2 className="text-2xl font-bold mb-2">Smökkun fannst ekki</h2>
           <Link href="/" className="text-primary hover:underline">
-            Return Home
+            Aftur á forsíðu
           </Link>
         </div>
       </div>
@@ -380,8 +380,8 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           </div>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-primary/10 rounded">{tasting.status}</span>
-            <span>{tasting.participantCount} participants</span>
-            <span>{tasting.beers.length} beers</span>
+            <span>{tasting.participantCount} þátttakendur</span>
+            <span>{tasting.beers.length} bjórar</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Link
@@ -389,21 +389,21 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
               <Home className="w-4 h-4" />
-              Home
+              Forsíða
             </Link>
             <Link
               href={`/t/${params.id}/rate`}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
               <Users className="w-4 h-4" />
-              Participant View
+              Þátttakandasýn
             </Link>
             <Link
               href={`/t/${params.id}/scores`}
               className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
             >
               <Trophy className="w-4 h-4" />
-              Leaderboard
+              Stigatafla
             </Link>
             {isAdmin && (
               <Link
@@ -411,7 +411,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                 className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
               >
                 <Users className="w-4 h-4" />
-                Manage Users
+                Notendastjórnun
               </Link>
             )}
           </div>
@@ -419,7 +419,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
         {/* Share Link */}
         <div className="bg-card p-4 rounded-lg border">
-          <p className="text-sm font-medium mb-2">Share this link with participants:</p>
+          <p className="text-sm font-medium mb-2">Deila tengli með þátttakendum:</p>
           <div className="flex gap-2">
             <input
               type="text"
@@ -528,7 +528,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Untasted Beers */}
               {untastedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold text-blue-600 dark:text-blue-400">⏳ Untasted Beers ({untastedBeers.length})</h3>
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400">⏳ Ósmakkaðir bjórar ({untastedBeers.length})</h3>
                   <div className="space-y-2">
                     {untastedBeers.map((beer) => (
                       <div key={beer.id} className="flex items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800 rounded-md hover:border-blue-400 transition-colors">
@@ -540,17 +540,17 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                           <button
                             onClick={() => handleDeleteBeer(beer.id)}
                             className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
-                            title="Remove beer"
+                            title="Fjarlægja bjór"
                           >
                             <Trash2 className="w-4 h-4" />
-                            Remove
+                            Fjarlægja
                           </button>
                           <button
                             onClick={() => handleSetCurrent(beer.id)}
                             disabled={tasting.status !== 'active' || !!currentBeer}
                             className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                           >
-                            Set Current
+                            Setja sem núverandi bjór
                           </button>
                         </div>
                       </div>
@@ -570,7 +570,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Finished Beers */}
               {finishedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold text-gray-600 dark:text-gray-400">✓ Finished Beers ({finishedBeers.length})</h3>
+                  <h3 className="font-semibold text-gray-600 dark:text-gray-400">✓ Smakkaðir bjórar ({finishedBeers.length})</h3>
                   <div className="space-y-2">
                     {finishedBeers.map((beer) => (
                       <div key={beer.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-md opacity-75">
@@ -583,7 +583,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                             {beer.averageRating?.toFixed(2) || 'N/A'}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {beer.ratingCount || 0} ratings
+                            {beer.ratingCount || 0} einkunnir
                           </div>
                         </div>
                       </div>
@@ -594,10 +594,10 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
               {/* Tasting Controls */}
               <div className="bg-card p-4 rounded-lg border space-y-3">
-                <h3 className="font-semibold">Tasting Controls</h3>
+                <h3 className="font-semibold">Smökkunastjórnun</h3>
                 {tasting.status === 'draft' && tasting.beers.length === 0 && (
                   <p className="text-sm text-muted-foreground">
-                    Add at least one beer above to start the tasting
+                    Bæta við að minnsta kosti einum bjór til að byrja smökkuna
                   </p>
                 )}
                 <div className="flex gap-2 flex-wrap">
@@ -608,7 +608,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       title={tasting.beers.length === 0 ? 'Add beers first' : 'Start the tasting'}
                     >
-                      Start Tasting
+                      Byrja smökkun
                     </button>
                   )}
                   {tasting.status === 'active' && (
@@ -616,7 +616,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       onClick={handleCompleteTasting}
                       className="px-4 py-2 bg-red-600 text-white rounded hover:bg-orange-700"
                     >
-                      End Tasting
+                      Enda smökkun
                     </button>
                   )}
                   <a

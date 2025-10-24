@@ -8,10 +8,7 @@ export default async function HomePage() {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-5xl font-bold">🍺</h1>
-          <h2 className="text-3xl font-bold tracking-tight">Beer Tasting</h2>
-          <p className="text-muted-foreground">
-            Rate beers together in real-time
-          </p>
+          <h2 className="text-3xl font-bold tracking-tight">Hreðjar Bjórsmakk</h2>
         </div>
 
         <div className="space-y-4">
@@ -21,7 +18,7 @@ export default async function HomePage() {
                 href="/create"
                 className="block w-full px-4 py-3 text-center bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition-colors"
               >
-                Create New Tasting
+                Búa til nýja smökkun
               </Link>
 
               <div className="relative">
@@ -30,7 +27,7 @@ export default async function HomePage() {
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
                   <span className="bg-background px-2 text-muted-foreground">
-                    Or
+                    eða
                   </span>
                 </div>
               </div>
@@ -41,14 +38,14 @@ export default async function HomePage() {
             href="/tastings"
             className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Browse Tastings
+            Skoða Smakkanir
           </Link>
 
           <Link
             href="/beers"
             className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            View Beer Catalog
+            Skoða Bjórlistann
           </Link>
 
           <Link
@@ -59,9 +56,6 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        <div className="text-center text-xs text-muted-foreground pt-4">
-          <p>No accounts required • Mobile-first • Real-time sync</p>
-        </div>
       </div>
     </div>
   )

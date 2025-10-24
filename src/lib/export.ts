@@ -34,7 +34,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   }
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = 'Beer Tasting App';
+  workbook.creator = 'Hreðjar Bjórsmakk App';
   workbook.created = new Date();
 
   // Sheet 1: Individual Ratings

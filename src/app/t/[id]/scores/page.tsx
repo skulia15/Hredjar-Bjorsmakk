@@ -123,10 +123,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         {/* Header */}
         <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold">{scores.title}</h1>
-          <p className="text-muted-foreground">Leaderboard</p>
+          <p className="text-muted-foreground">Stigatafla </p>
           {scores.status === 'active' && (
             <p className="text-sm text-muted-foreground">
-              Live updates • {scores.beers.length} beers rated
+              Uppfærslur í beinni • {scores.beers.length} bjórum gefin einkunn
             </p>
           )}
         </div>
@@ -136,7 +136,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🍺</div>
             <p className="text-muted-foreground">
-              No beers have been rated yet
+              Engir bjórar hafa fengið einkunn ennþá
             </p>
           </div>
         ) : (
@@ -170,7 +170,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       {beer.average.toFixed(2)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {beer.count} rating{beer.count !== 1 ? 's' : ''}
+                      {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
                     </div>
                   </div>
                 </div>
@@ -183,7 +183,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         {scores.status === 'closed' && analytics && analytics.participantStats.length > 0 && (
           <div className="mt-8 space-y-4">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Participant Statistics</h2>
+              <h2 className="text-2xl font-bold mb-2">Tölfræði þátttakenda</h2>
               <p className="text-sm text-muted-foreground">
                 Overall average: {analytics.overview.overallAverage.toFixed(2)} • {analytics.overview.totalRatings} total ratings
               </p>

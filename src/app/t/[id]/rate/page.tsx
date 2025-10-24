@@ -448,7 +448,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             <div className="flex items-center justify-between text-sm">
               <span className="font-medium">Participant Progress</span>
               <span className="text-muted-foreground">
-                {ratingStats.ratedCount} / {ratingStats.totalParticipants} rated
+                {ratingStats.ratedCount} / {ratingStats.totalParticipants} gefin einkunn
               </span>
             </div>
 
@@ -482,12 +482,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
                     })}
                   </>
                 ) : (
-                  <>Waiting for {ratingStats.pendingCount} {ratingStats.pendingCount === 1 ? 'person' : 'people'}</>
+                  <>Bíður eftir {ratingStats.pendingCount} {ratingStats.pendingCount === 1 ? 'aðila' : 'aðilum'}</>
                 )}
               </p>
             ) : (
               <p className="text-xs text-green-600 text-center font-medium">
-                🎉 Everyone has rated!
+                🎉 Allir hafa gefið einkunn!
               </p>
             )}
           </div>
@@ -500,14 +500,14 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               href={`/t/${params.id}/admin`}
               className="text-sm text-muted-foreground hover:text-foreground"
             >
-              ← Leader View
+              ← Leiðtogasýn
             </Link>
           )}
           <Link
             href={`/t/${params.id}/scores`}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            View Scores →
+            Skoða stigatöflu →
           </Link>
         </div>
       </div>

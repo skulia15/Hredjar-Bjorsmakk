@@ -7,8 +7,8 @@ import { ReturnToTastingButton } from '@/components/ReturnToTastingButton'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Beer Tasting App - hreðjar bjórsmakk',
-  description: 'Synchronized beer tasting ratings for groups',
+  title: 'Hreðjar Bjórsmakk',
+  description: 'Synchronized beer tasting ratings for groups of friends',
 }
 
 export default function RootLayout({

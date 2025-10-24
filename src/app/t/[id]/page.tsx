@@ -74,29 +74,29 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
           <h1 className="text-4xl font-bold">🍺</h1>
-          <h2 className="text-2xl font-bold">{tastingTitle || 'Join Tasting'}</h2>
+          <h2 className="text-2xl font-bold">{tastingTitle || 'Taka þátt í smökkunni'}</h2>
           <p className="text-muted-foreground">
-            Enter your name to join the tasting
+            Sláðu inn nafn til að taka þátt í smökkunni
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg border">
           <div className="space-y-2">
             <label htmlFor="name" className="block text-sm font-medium">
-              Your Name
+              Þitt nafn
             </label>
             <input
               id="name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Enter your name"
+              placeholder="Sláðu inn nafn"
               required
               autoFocus
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground">
-              If you&apos;ve joined before, use the same name
+              Ef þú hefur takið þátt áður, notaðu sama nafn
             </p>
           </div>
 
@@ -111,7 +111,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
             disabled={loading}
             className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Joining...' : 'Join Tasting'}
+            {loading ? 'Hleypir inn...' : 'Taka þátt'}
           </button>
         </form>
       </div>

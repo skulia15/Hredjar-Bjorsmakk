@@ -151,13 +151,13 @@ export default function BeersPage() {
         {/* Header */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-bold">Beer Catalog</h1>
+            <h1 className="text-3xl font-bold">Bjórlisti</h1>
             <Link href="/" className="text-sm text-primary hover:underline">
-              ← Home
+              ← Forsíða
             </Link>
           </div>
           <p className="text-muted-foreground">
-            Browse our collection of {beers.length} craft beers
+            Skoða listann af {beers.length} bjórum
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default function BeersPage() {
           <div className="flex flex-col md:flex-row gap-3">
             <input
               type="text"
-              placeholder="Search by name, brewery, style, or country..."
+              placeholder="Leita eftir nafni, brugghúsi, stíl eða landi..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-1 px-4 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
@@ -184,14 +184,14 @@ export default function BeersPage() {
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
                 className="flex-1 px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
-                <option value="brewery-asc">Brewery (A-Z)</option>
-                <option value="brewery-desc">Brewery (Z-A)</option>
-                <option value="name-asc">Name (A-Z)</option>
-                <option value="name-desc">Name (Z-A)</option>
-                <option value="price-asc">Price (Low to High)</option>
-                <option value="price-desc">Price (High to Low)</option>
-                <option value="abv-asc">ABV (Low to High)</option>
-                <option value="abv-desc">ABV (High to Low)</option>
+                <option value="brewery-asc">Brugghús (A-Z)</option>
+                <option value="brewery-desc">Brugghús (Z-A)</option>
+                <option value="name-asc">Nafn (A-Z)</option>
+                <option value="name-desc">Nafn (Z-A)</option>
+                <option value="price-asc">Verð (Lágt til hátt)</option>
+                <option value="price-desc">Verð (Hátt til lágt)</option>
+                <option value="abv-asc">ABV (Lágt til hátt)</option>
+                <option value="abv-desc">ABV (Hátt til lágt)</option>
               </select>
             </div>
           </div>
@@ -207,7 +207,7 @@ export default function BeersPage() {
               }`}
             >
               {groupByBrewery ? <List className="w-4 h-4" /> : <Grid className="w-4 h-4" />}
-              {groupByBrewery ? 'Grouped by Brewery' : 'Show All'}
+              {groupByBrewery ? 'Sýna allt' : 'Flokkað eftir brugghúsi' }
             </button>
           </div>
         </div>
@@ -215,7 +215,7 @@ export default function BeersPage() {
         {/* Stats */}
         <div className="flex gap-4 text-sm text-muted-foreground">
           <span>
-            Showing {filteredBeers.length} of {beers.length} beers
+            Sýnir {filteredBeers.length} af {beers.length} bjórum
           </span>
         </div>
 
@@ -223,7 +223,7 @@ export default function BeersPage() {
         {filteredBeers.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-4xl mb-4">🔍</div>
-            <p className="text-muted-foreground">No beers found matching your search</p>
+            <p className="text-muted-foreground">Engir bjór fundust sem passa við leitarskilyrðin</p>
           </div>
         ) : groupByBrewery ? (
           /* Grouped by Brewery */
@@ -234,7 +234,7 @@ export default function BeersPage() {
                 <div className="flex items-center gap-3 pb-2 border-b">
                   <h2 className="text-2xl font-bold">{brewery}</h2>
                   <span className="text-sm text-muted-foreground">
-                    ({groupedBeers[brewery].length} beer{groupedBeers[brewery].length !== 1 ? 's' : ''})
+                    ({groupedBeers[brewery].length} bjór{groupedBeers[brewery].length !== 1 ? 'ar' : ''})
                   </span>
                 </div>
 
@@ -249,7 +249,7 @@ export default function BeersPage() {
                       <button
                         className="absolute top-4 right-4 p-2 rounded-md hover:bg-accent transition-colors"
                         onClick={() => setEditingBeer(beer)}
-                        title="Edit beer"
+                        title="Breyta bjór"
                       >
                         <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                       </button>
@@ -310,7 +310,7 @@ export default function BeersPage() {
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline"
                           >
-                            View on Vinbudin →
+                            Sjá á Vinbudin.is →
                           </a>
                         )}
                         {beer.productNumber && (
@@ -337,7 +337,7 @@ export default function BeersPage() {
                 <button
                   className="absolute top-4 right-4 p-2 rounded-md hover:bg-accent transition-colors"
                   onClick={() => setEditingBeer(beer)}
-                  title="Edit beer"
+                  title="Breyta bjór"
                 >
                   <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
                 </button>
@@ -399,7 +399,7 @@ export default function BeersPage() {
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:underline"
                     >
-                      View on Vinbudin →
+                      Sjá á Vínbúðin.is →
                     </a>
                   )}
                   {beer.productNumber && (
@@ -419,7 +419,7 @@ export default function BeersPage() {
             href="/"
             className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 inline-block"
           >
-            Return Home
+            Aftur á forsíðu
           </Link>
         </div>
       </div>
@@ -431,7 +431,7 @@ export default function BeersPage() {
             <form onSubmit={handleSaveBeer} className="p-6 space-y-4">
               {/* Modal Header */}
               <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Edit Beer</h2>
+                <h2 className="text-2xl font-bold">Breyta bjór</h2>
                 <button
                   type="button"
                   onClick={() => setEditingBeer(null)}
@@ -446,7 +446,7 @@ export default function BeersPage() {
                 {/* Name */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Name <span className="text-destructive">*</span>
+                    Nafn <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
@@ -460,7 +460,7 @@ export default function BeersPage() {
                 {/* Brewery */}
                 <div>
                   <label className="block text-sm font-medium mb-1">
-                    Brewery <span className="text-destructive">*</span>
+                    Brugghús <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
@@ -473,7 +473,7 @@ export default function BeersPage() {
 
                 {/* Style */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Style</label>
+                  <label className="block text-sm font-medium mb-1">Stíll</label>
                   <input
                     type="text"
                     value={editingBeer.style || ''}
@@ -498,7 +498,7 @@ export default function BeersPage() {
 
                 {/* Country */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Country</label>
+                  <label className="block text-sm font-medium mb-1">Land</label>
                   <input
                     type="text"
                     value={editingBeer.country || ''}
@@ -509,7 +509,7 @@ export default function BeersPage() {
 
                 {/* Price ISK */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Price (ISK)</label>
+                  <label className="block text-sm font-medium mb-1">Verð (ISK)</label>
                   <input
                     type="number"
                     min="0"
@@ -521,7 +521,7 @@ export default function BeersPage() {
 
                 {/* Container Size */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Container Size (ml)</label>
+                  <label className="block text-sm font-medium mb-1">Umbúðastærð (ml)</label>
                   <input
                     type="number"
                     min="0"
@@ -533,22 +533,21 @@ export default function BeersPage() {
 
                 {/* Container Type */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Container Type</label>
+                  <label className="block text-sm font-medium mb-1">Umbúðategund</label>
                   <select
                     value={editingBeer.containerType || ''}
                     onChange={(e) => setEditingBeer({ ...editingBeer, containerType: e.target.value })}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <option value="">Select...</option>
-                    <option value="Can">Can</option>
-                    <option value="Bottle">Bottle</option>
-                    <option value="Keg">Keg</option>
+                    <option value="">Velja...</option>
+                    <option value="Can">Dós</option>
+                    <option value="Bottle">Flaska</option>
                   </select>
                 </div>
 
                 {/* Product Number */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Product Number</label>
+                  <label className="block text-sm font-medium mb-1">Vörunúmer</label>
                   <input
                     type="text"
                     value={editingBeer.productNumber || ''}
@@ -559,7 +558,7 @@ export default function BeersPage() {
 
                 {/* Vinbudin URL */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Vinbudin URL</label>
+                  <label className="block text-sm font-medium mb-1">Vínbúðin URL</label>
                   <input
                     type="url"
                     value={editingBeer.vinbudinUrl || ''}
@@ -571,7 +570,7 @@ export default function BeersPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <label className="block text-sm font-medium mb-1">Lýsing</label>
                 <textarea
                   rows={3}
                   value={editingBeer.description || ''}
@@ -587,14 +586,14 @@ export default function BeersPage() {
                   onClick={() => setEditingBeer(null)}
                   className="px-4 py-2 border rounded-md hover:bg-accent transition-colors"
                 >
-                  Cancel
+                  Hætta við
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50 transition-colors"
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? 'Vistar...' : 'Vista breytingar'}
                 </button>
               </div>
             </form>

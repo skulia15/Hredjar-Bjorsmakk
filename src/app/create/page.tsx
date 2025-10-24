@@ -44,23 +44,23 @@ export default function CreateTastingPage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <h1 className="text-4xl font-bold">Create New Tasting</h1>
+          <h1 className="text-4xl font-bold">Búa til nýja smökkun</h1>
           <p className="mt-2 text-muted-foreground">
-            Set up a new beer tasting session
+            Setja upp nýja smökkun
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg border">
           <div className="space-y-2">
             <label htmlFor="title" className="block text-sm font-medium">
-              Tasting Name
+              Nafn smökkunnar
             </label>
             <input
               id="title"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Friday Night Beers"
+              placeholder="Jólabjórsmökkun 2014"
               required
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -77,7 +77,7 @@ export default function CreateTastingPage() {
             disabled={loading}
             className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Creating...' : 'Create Tasting'}
+            {loading ? 'Bý til...' : 'Búa til smökkun'}
           </button>
         </form>
 
@@ -86,7 +86,7 @@ export default function CreateTastingPage() {
             onClick={() => router.push('/')}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Back to Home
+            ← aftur á forsíðu
           </button>
         </div>
       </div>

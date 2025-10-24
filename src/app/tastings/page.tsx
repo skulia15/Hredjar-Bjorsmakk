@@ -51,7 +51,7 @@ export default function TastingsPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading tastings...</p>
+          <p className="text-muted-foreground">Hleður smökkunum...</p>
         </div>
       </div>
     )
@@ -62,7 +62,7 @@ export default function TastingsPage() {
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">All Tastings</h1>
+          <h1 className="text-3xl font-bold">Allar smakkanir</h1>
           <div className="flex items-center justify-between">
             <p className="text-muted-foreground">
               {tastings.length} tasting{tastings.length !== 1 ? 's' : ''} available
@@ -71,7 +71,7 @@ export default function TastingsPage() {
               href="/create"
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
             >
-              Create New Tasting
+              Búa til nýja smökkun
             </Link>
           </div>
         </div>
@@ -109,7 +109,7 @@ export default function TastingsPage() {
         ) : (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🍺</div>
-            <p className="text-muted-foreground mb-4">No tastings yet</p>
+            <p className="text-muted-foreground mb-4">Engar smakkanir ennþá</p>
             <Link
               href="/create"
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
@@ -125,7 +125,7 @@ export default function TastingsPage() {
             href="/"
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Back to Home
+            ← Aftur á forsíðu
           </Link>
         </div>
       </div>

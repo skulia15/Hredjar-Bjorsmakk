@@ -74,21 +74,21 @@ export default function AdminUsersPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">User Management</h1>
-            <p className="text-muted-foreground">Manage users and leader permissions</p>
+            <h1 className="text-3xl font-bold">Notendastjórnun</h1>
+            <p className="text-muted-foreground">Stjórna notendum og leiðtogum</p>
           </div>
           <div className="flex gap-2">
             <Link
               href="/admin/tastings"
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
             >
-              View Tastings
+              Skoða Smakkanir
             </Link>
             <Link
               href="/"
               className="px-4 py-2 border rounded hover:bg-accent"
             >
-              ← Home
+              ← Forsíða
             </Link>
           </div>
         </div>
@@ -97,15 +97,15 @@ export default function AdminUsersPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold">{users.length}</div>
-            <div className="text-sm text-muted-foreground">Total Users</div>
+            <div className="text-sm text-muted-foreground">Fjöldi notenda</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold">{users.filter(u => u.isLeader).length}</div>
-            <div className="text-sm text-muted-foreground">Leaders</div>
+            <div className="text-sm text-muted-foreground">Leiðtogar</div>
           </div>
           <div className="bg-card p-4 rounded-lg border">
             <div className="text-2xl font-bold">{users.filter(u => !u.isLeader).length}</div>
-            <div className="text-sm text-muted-foreground">Participants</div>
+            <div className="text-sm text-muted-foreground">Þátttakendur</div>
           </div>
         </div>
 
@@ -121,11 +121,11 @@ export default function AdminUsersPage() {
 
         {/* Users List */}
         <div className="space-y-3">
-          <h2 className="text-xl font-semibold">All Users</h2>
+          <h2 className="text-xl font-semibold">Allir notendur</h2>
 
           {users.length === 0 ? (
             <div className="bg-card p-8 rounded-lg border text-center">
-              <p className="text-muted-foreground">No users found</p>
+              <p className="text-muted-foreground">Engir notendur fundust</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -139,14 +139,14 @@ export default function AdminUsersPage() {
                       <h3 className="font-semibold text-lg">{user.name}</h3>
                       {user.isLeader && (
                         <span className="px-2 py-1 bg-primary/10 text-primary text-xs font-medium rounded">
-                          Leader
+                          Leiðtogi
                         </span>
                       )}
                     </div>
                     <div className="flex gap-4 text-sm text-muted-foreground mt-1">
                       <span>{user.tastingCount} tasting{user.tastingCount !== 1 ? 's' : ''}</span>
                       <span>{user.ratingCount} rating{user.ratingCount !== 1 ? 's' : ''}</span>
-                      <span>Joined {new Date(user.createdAt).toLocaleDateString()}</span>
+                      <span>Skráður {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
 
@@ -158,7 +158,7 @@ export default function AdminUsersPage() {
                         : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
                     }`}
                   >
-                    {user.isLeader ? 'Demote' : 'Promote to Leader'}
+                    {user.isLeader ? 'Gera að Þátttakanda' : 'Gera að leiðtoga'}
                   </button>
                 </div>
               ))}
@@ -168,7 +168,7 @@ export default function AdminUsersPage() {
 
         {/* Info Box */}
         <div className="bg-muted p-4 rounded-lg">
-          <h3 className="font-semibold mb-2">About Leader Permissions</h3>
+          <h3 className="font-semibold mb-2">Um réttindi leiðtoga</h3>
           <ul className="text-sm text-muted-foreground space-y-1">
             <li>• Leaders can create and manage tastings</li>
             <li>• Leaders can add, edit, and delete beers</li>
