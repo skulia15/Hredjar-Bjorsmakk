@@ -288,7 +288,9 @@ npm run test:coverage
 4. Leader finishes beer → selects next
 5. Export CSV/XLSX
 
-## 📦 Database Migrations
+## 📦 Database Management
+
+### Migrations
 
 ```bash
 # Create new migration (after schema changes)
@@ -306,6 +308,40 @@ npx prisma generate
 # Open Prisma Studio (visual DB editor)
 npx prisma studio
 ```
+
+### Database Cleanup
+
+Remove test/development data while preserving beer catalog and admin users:
+
+```bash
+# Clean development database
+npm run db:cleanup
+
+# Clean production database (BE CAREFUL!)
+DATABASE_URL="postgresql://..." npm run db:cleanup
+```
+
+**What gets deleted:**
+- ✅ All ratings
+- ✅ All tasting beers
+- ✅ All participants
+- ✅ All tastings
+- ✅ All non-admin users
+
+**What is preserved:**
+- ✅ Beer catalog
+- ✅ Admin users
+- ✅ Admin authentication
+
+**To also delete beer catalog:**
+Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
+
+**⚠️ PRODUCTION WARNING:**
+- **ALWAYS backup production database first!**
+- Create backup: Use your database provider's backup tools (Neon, Supabase, etc.)
+- Verify DATABASE_URL before running cleanup
+- This operation is **irreversible**
+- Test with dry-run first if possible
 
 ## 🚢 Deployment
 
