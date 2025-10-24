@@ -73,6 +73,25 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
         }
       }
 
+      // Extract beer style from taste classification
+      const tasteEl = document.querySelector('.taste')
+      if (tasteEl) {
+        // Get all text spans within taste element
+        const textSpans = tasteEl.querySelectorAll('.text')
+        const styleparts: string[] = []
+
+        textSpans.forEach(span => {
+          const text = span.textContent?.trim()
+          if (text && text.startsWith('- ')) {
+            styleparts.push(text.substring(2).trim())
+          }
+        })
+
+        if (styleparts.length > 0) {
+          result.style = styleparts.join(' - ')
+        }
+      }
+
       // Extract description
       const descSelectors = [
         '.product-description',
@@ -238,8 +257,7 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
             abv,
             containerSize,
             containerType,
-            imageUrl: imageUrl.startsWith('http') ? imageUrl : imageUrl ? `https://www.vinbudin.is${imageUrl}` : undefined,
-            style: name.toLowerCase().includes('jól') || name.toLowerCase().includes('christmas') ? 'Christmas Beer' : undefined
+            imageUrl: imageUrl.startsWith('http') ? imageUrl : imageUrl ? `https://www.vinbudin.is${imageUrl}` : undefined
           })
         }
       } catch (err) {
@@ -262,6 +280,7 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
         if (details.abv !== undefined) beer.abv = details.abv
         if (details.containerSize !== undefined) beer.containerSize = details.containerSize
         if (details.containerType !== undefined) beer.containerType = details.containerType
+        if (details.style) beer.style = details.style
         if (details.description) beer.description = details.description
         if (details.country) beer.country = details.country
 
