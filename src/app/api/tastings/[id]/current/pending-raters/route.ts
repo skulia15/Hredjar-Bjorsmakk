@@ -1,37 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireLeader } from '@/lib/auth'
 
 /**
  * GET /api/tastings/{id}/current/pending-raters
  * Get pending raters for current beer
  *
- * Auth: Leader required
+ * Auth: Public (no authentication required)
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Get userName from query params for leader auth
-    const url = new URL(request.url)
-    const userName = url.searchParams.get('userName')
-
-    if (!userName) {
-      return NextResponse.json(
-        { error: 'userName query parameter required' },
-        { status: 400 }
-      )
-    }
-
-    // Verify leader access
-    await requireLeader(userName)
+    const { id } = await params
 
     // Get tasting with current beer
     const tasting = await prisma.tasting.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
-        currentBeerId: true,
+        currentTastingBeerId: true,
         participants: {
           include: {
             user: {
@@ -51,7 +38,7 @@ export async function GET(
       )
     }
 
-    if (!tasting.currentBeerId) {
+    if (!tasting.currentTastingBeerId) {
       return NextResponse.json(
         { error: 'No current beer set' },
         { status: 400 }
@@ -61,7 +48,7 @@ export async function GET(
     // Get all ratings for current beer
     const ratings = await prisma.rating.findMany({
       where: {
-        beerId: tasting.currentBeerId
+        tastingBeerId: tasting.currentTastingBeerId
       },
       include: {
         participant: {
@@ -101,7 +88,7 @@ export async function GET(
       .sort((a, b) => a.name.localeCompare(b.name))
 
     return NextResponse.json({
-      currentBeerId: tasting.currentBeerId,
+      currentBeerId: tasting.currentTastingBeerId,
       totalParticipants: tasting.participants.length,
       ratedCount: rated.length,
       pendingCount: pending.length,
@@ -111,15 +98,6 @@ export async function GET(
 
   } catch (error: unknown) {
     console.error('Error fetching pending raters:', error)
-
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-
-    if (errorMessage === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      )
-    }
 
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -47,11 +47,8 @@ export function PendingRaters({
 
   const loadData = async () => {
     try {
-      // Get userName from localStorage (assuming leader has it stored)
-      const userName = localStorage.getItem('userName') || 'skuli' // TODO: Get from proper session
-
       const response = await fetch(
-        `/api/tastings/${tastingId}/current/pending-raters?userName=${userName}`
+        `/api/tastings/${tastingId}/current/pending-raters`
       )
 
       if (!response.ok) {
