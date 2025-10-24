@@ -77,6 +77,7 @@ export async function GET(
       const containerSize = tastingBeer.beer?.containerSize || null;
       const containerType = tastingBeer.beer?.containerType || null;
       const priceISK = tastingBeer.beer?.priceISK || null;
+      const imageUrl = tastingBeer.beer?.imageUrl || null;
 
       return {
         id: tastingBeer.id,
@@ -87,6 +88,7 @@ export async function GET(
         containerSize,
         containerType,
         priceISK,
+        imageUrl,
         status: tastingBeer.status,
         orderIndex: tastingBeer.orderIndex,
         createdAt: tastingBeer.createdAt,
