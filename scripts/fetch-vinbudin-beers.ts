@@ -54,12 +54,23 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
         result.containerSize = size
       }
 
-      // Determine container type from text
-      const textLower = detailsText.toLowerCase()
-      if (textLower.includes('dós') || textLower.includes('can')) {
-        result.containerType = 'Can'
-      } else if (textLower.includes('flaska') || textLower.includes('bottle') || textLower.includes('fl.')) {
-        result.containerType = 'Bottle'
+      // Determine container type from text - look specifically for "Umbúðir" label
+      const containerMatch = detailsText.match(/Umbúðir[:\s]+([^\n\r]+)/i)
+      if (containerMatch) {
+        const containerText = containerMatch[1].toLowerCase()
+        if (containerText.includes('dós') || containerText.includes('áldós')) {
+          result.containerType = 'Can'
+        } else if (containerText.includes('flaska') || containerText.includes('glerflaska')) {
+          result.containerType = 'Bottle'
+        }
+      } else {
+        // Fallback to general text search
+        const textLower = detailsText.toLowerCase()
+        if (textLower.includes('áldós') || textLower.includes('dós')) {
+          result.containerType = 'Can'
+        } else if (textLower.includes('glerflaska') || textLower.includes('flaska')) {
+          result.containerType = 'Bottle'
+        }
       }
 
       // Extract description
