@@ -53,9 +53,9 @@ export function StarRating({
   };
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 w-full">
       <div
-        className="flex items-center gap-1"
+        className="flex items-center gap-0.5 sm:gap-1 justify-center flex-wrap"
         onMouseLeave={handleMouseLeave}
       >
         {Array.from({ length: max }, (_, i) => {
@@ -120,7 +120,7 @@ export function StarRating({
       </div>
 
       {showNumeric && (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 justify-center">
           <input
             type="number"
             min="1"
@@ -134,10 +134,10 @@ export function StarRating({
               }
             }}
             disabled={disabled}
-            className="w-20 px-3 py-2 border border-gray-300 rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+            className="w-20 px-3 py-2 border rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed bg-background"
             placeholder="0.0"
           />
-          <span className="text-sm text-gray-500">/ {max}.0</span>
+          <span className="text-sm text-muted-foreground">/ {max}.0</span>
         </div>
       )}
     </div>

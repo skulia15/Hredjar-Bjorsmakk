@@ -434,12 +434,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               <label className="block text-sm font-medium text-center">
                 Þín einkunn (1.0 - 10.0)
               </label>
-              <div className="flex justify-center">
+              <div className="flex justify-center w-full">
                 <StarRating
                   value={rating}
                   onChange={setRating}
                   max={10}
-                  size={36}
+                  size={28}
                   showNumeric={true}
                 />
               </div>
