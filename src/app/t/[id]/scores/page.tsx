@@ -239,7 +239,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="count" fill="#3b82f6" radius={8} />
+                    <Bar dataKey="count" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -287,7 +287,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="average" radius={8}>
+                    <Bar dataKey="average">
                       {scores.beers.map((beer, index) => (
                         <Cell
                           key={`cell-${index}`}
@@ -338,7 +338,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="durationMinutes" fill="#3b82f6" radius={8} />
+                    <Bar dataKey="durationMinutes" fill="#3b82f6" />
                   </BarChart>
                 </ResponsiveContainer>
                 {analytics.overview.averageTimePerBeer && (
@@ -389,8 +389,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         return null
                       }}
                     />
-                    <Bar dataKey="averageRating" fill="#3b82f6" radius={8} />
-                    <Bar dataKey="ratingsCount" fill="#94a3b8" radius={8} />
+                    <Bar dataKey="averageRating" fill="#3b82f6" />
+                    <Bar dataKey="ratingsCount" fill="#94a3b8" />
                     <Legend
                       formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunnanna'}
                     />
