@@ -192,7 +192,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                   </p>
                   {!searchTerm && (
                     <p className="text-xs text-muted-foreground">
-                      Click "Create Custom Beer" above to add a custom beer
+                      Click &quot;Create Custom Beer&quot; above to add a custom beer
                     </p>
                   )}
                 </div>
