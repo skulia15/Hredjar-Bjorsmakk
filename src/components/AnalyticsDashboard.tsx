@@ -79,7 +79,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
           <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground animate-pulse" />
-          <p className="text-muted-foreground">Loading analytics...</p>
+          <p className="text-muted-foreground">Hleður tölfræði...</p>
         </div>
       </div>
     );
@@ -88,7 +88,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
   if (!data) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        No analytics data available
+        Engin tölfræðigögn tiltæk
       </div>
     );
   }
@@ -105,7 +105,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Users className="h-4 w-4" />
-            <span className="text-sm">Participants</span>
+            <span className="text-sm">Þátttakendur</span>
           </div>
           <div className="text-2xl font-bold">{overview.totalParticipants}</div>
         </div>
@@ -113,7 +113,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Beer className="h-4 w-4" />
-            <span className="text-sm">Beers Tasted</span>
+            <span className="text-sm">Bjórar smakkaðir</span>
           </div>
           <div className="text-2xl font-bold">{overview.finishedBeers} / {overview.totalBeers}</div>
         </div>
@@ -121,7 +121,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <TrendingUp className="h-4 w-4" />
-            <span className="text-sm">Total Ratings</span>
+            <span className="text-sm">Fjöldi einkunnna</span>
           </div>
           <div className="text-2xl font-bold">{overview.totalRatings}</div>
         </div>
@@ -129,7 +129,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Award className="h-4 w-4" />
-            <span className="text-sm">Overall Average</span>
+            <span className="text-sm">Heildarmeðaltal</span>
           </div>
           <div className="text-2xl font-bold">{overview.overallAverage.toFixed(2)}</div>
         </div>
@@ -140,9 +140,9 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 mb-2">
             <Clock className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold">Average Time Per Beer</h3>
+            <h3 className="font-semibold">Meðaltími á hvern bjór</h3>
           </div>
-          <div className="text-3xl font-bold text-primary">{overview.averageTimePerBeer} minutes</div>
+          <div className="text-3xl font-bold text-primary">{overview.averageTimePerBeer} mínútur</div>
         </div>
       )}
 
@@ -151,7 +151,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Award className="h-5 w-5" />
-            Top Rated Beers
+            Bestu bjórarnir
           </h3>
           <div className="space-y-2">
             {topRatedBeers.slice(0, 5).map((beer, index) => (
@@ -167,7 +167,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
                 </div>
                 <div className="text-right">
                   <div className="text-lg font-bold text-primary">{beer.average}</div>
-                  <div className="text-xs text-muted-foreground">{beer.ratingsCount} ratings</div>
+                  <div className="text-xs text-muted-foreground">{beer.ratingsCount} einkunnir</div>
                 </div>
               </div>
             ))}
@@ -179,7 +179,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
       <div className="bg-card p-4 rounded-lg border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Rating Distribution
+          Dreifing einkunnanna
         </h3>
         <div className="space-y-1">
           {Object.entries(ratingDistribution)
@@ -209,7 +209,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
       {/* Beer Participation Rates */}
       {beerParticipation.length > 0 && (
         <div className="bg-card p-4 rounded-lg border">
-          <h3 className="font-semibold mb-3">Beer Participation Rates</h3>
+          <h3 className="font-semibold mb-3">Þátttökuhlutfall bjóra</h3>
           <div className="space-y-2">
             {beerParticipation.map((beer) => (
               <div key={beer.beerId} className="p-2 bg-muted/50 rounded">
@@ -242,19 +242,19 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Participant Engagement
+            Þátttaka
           </h3>
           <div className="space-y-2">
             {participantStats.map((participant) => (
               <div key={participant.participantId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                 <div>
                   <div className="font-medium text-sm">{participant.userName}</div>
-                  <div className="text-xs text-muted-foreground">Code: {participant.code}</div>
+                  <div className="text-xs text-muted-foreground">Kóði: {participant.code}</div>
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold">{participant.engagementRate}%</div>
                   <div className="text-xs text-muted-foreground">
-                    {participant.ratingsCount}/{participant.possibleRatings} rated
+                    {participant.ratingsCount}/{participant.possibleRatings} gefið einkunn
                   </div>
                 </div>
               </div>
@@ -268,13 +268,13 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
         <div className="bg-card p-4 rounded-lg border">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
             <Clock className="h-5 w-5" />
-            Time Spent Per Beer
+            Tími á hvern bjór
           </h3>
           <div className="space-y-2">
             {beerTimings.map((timing) => (
               <div key={timing.beerId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                 <div className="font-medium text-sm">{timing.name}</div>
-                <div className="text-sm font-semibold text-primary">{timing.durationMinutes} min</div>
+                <div className="text-sm font-semibold text-primary">{timing.durationMinutes} mín</div>
               </div>
             ))}
           </div>

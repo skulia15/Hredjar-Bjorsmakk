@@ -58,7 +58,7 @@ export function LeaderboardWaiting({
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading leaderboard...</p>
+          <p className="text-muted-foreground">Hleður stigatöflu...</p>
         </div>
       </div>
     )
@@ -69,9 +69,9 @@ export function LeaderboardWaiting({
       <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Top Beers So Far</h1>
+          <h1 className="text-2xl font-bold">Bestu bjórarnir hingað til</h1>
           <p className="text-sm text-muted-foreground">
-            Waiting for next beer... 🍺
+            Bíður eftir næsta bjór... 🍺
           </p>
         </div>
 
@@ -100,7 +100,7 @@ export function LeaderboardWaiting({
                       {beer.average.toFixed(2)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {beer.count} rating{beer.count !== 1 ? 's' : ''}
+                      {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
                     </div>
                   </div>
                 </div>
@@ -110,7 +110,7 @@ export function LeaderboardWaiting({
         ) : (
           <div className="text-center py-8">
             <div className="text-6xl mb-4">🍺</div>
-            <p className="text-muted-foreground">No beers finished yet</p>
+            <p className="text-muted-foreground">Engir bjórar kláraðir ennþá</p>
           </div>
         )}
 
@@ -120,7 +120,7 @@ export function LeaderboardWaiting({
             href={`/t/${tastingId}/scores`}
             className="text-sm text-primary hover:underline"
           >
-            View Full Scores →
+            Skoða allar einkunnir →
           </Link>
         </div>
       </div>

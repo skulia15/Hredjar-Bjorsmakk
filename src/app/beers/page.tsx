@@ -74,7 +74,7 @@ export default function BeersPage() {
   }
 
   const handleUpdateImages = async () => {
-    if (!confirm(`Update images for ${imageStats?.needingImages || 0} beers from Vínbúðin?`)) return
+    if (!confirm(`Uppfæra myndir fyrir ${imageStats?.needingImages || 0} bjóra frá Vínbúðinni?`)) return
 
     setUpdatingImages(true)
     setError('')
@@ -86,7 +86,7 @@ export default function BeersPage() {
       if (!response.ok) throw new Error('Failed to update images')
 
       const data = await response.json()
-      setError(`Successfully updated ${data.updated} beer images!`)
+      setError(`Tókst að uppfæra ${data.updated} bjórmyndir!`)
 
       // Reload beers and image stats
       await loadBeers()
@@ -181,7 +181,7 @@ export default function BeersPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading beer catalog...</p>
+          <p className="text-muted-foreground">Hleður bjórlista...</p>
         </div>
       </div>
     )

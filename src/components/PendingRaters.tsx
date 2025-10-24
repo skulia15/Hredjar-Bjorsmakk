@@ -69,8 +69,8 @@ export function PendingRaters({
   if (loading) {
     return (
       <div className="bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-3">Participant Status</h3>
-        <p className="text-sm text-muted-foreground">Loading...</p>
+        <h3 className="font-semibold mb-3">Staða þátttakenda</h3>
+        <p className="text-sm text-muted-foreground">Hleður...</p>
       </div>
     )
   }
@@ -78,8 +78,8 @@ export function PendingRaters({
   if (!data) {
     return (
       <div className="bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-3">Participant Status</h3>
-        <p className="text-sm text-muted-foreground">Unable to load data</p>
+        <h3 className="font-semibold mb-3">Staða þátttakenda</h3>
+        <p className="text-sm text-muted-foreground">Gat ekki hlaðið gögnum</p>
       </div>
     )
   }
@@ -87,9 +87,9 @@ export function PendingRaters({
   return (
     <div className="bg-card p-4 rounded-lg border space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-semibold">Participant Status</h3>
+        <h3 className="font-semibold">Staða þátttakenda</h3>
         <div className="text-sm text-muted-foreground">
-          {data.ratedCount} / {data.totalParticipants} rated
+          {data.ratedCount} / {data.totalParticipants} gefið einkunn
         </div>
       </div>
 
@@ -109,7 +109,7 @@ export function PendingRaters({
       {data.ratedCount > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-green-600">
-            ✓ Completed ({data.ratedCount})
+            ✓ Lokið ({data.ratedCount})
           </h4>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {data.rated.map((participant) => (
@@ -134,7 +134,7 @@ export function PendingRaters({
       {data.pendingCount > 0 && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-orange-600">
-            ⏳ Waiting ({data.pendingCount})
+            ⏳ Bíður ({data.pendingCount})
           </h4>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {data.pending.map((participant) => (
@@ -150,7 +150,7 @@ export function PendingRaters({
                   <button
                     onClick={() => onRemoveParticipant(participant.participantId)}
                     className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300 transition-colors p-1"
-                    title="Remove participant"
+                    title="Fjarlægja þátttakanda"
                   >
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +177,7 @@ export function PendingRaters({
         <div className="text-center py-4">
           <div className="text-4xl mb-2">🎉</div>
           <p className="text-sm font-medium text-green-600">
-            Everyone has rated!
+            Allir hafa gefið einkunn!
           </p>
         </div>
       )}
@@ -186,7 +186,7 @@ export function PendingRaters({
       {data.totalParticipants === 0 && (
         <div className="text-center py-4">
           <p className="text-sm text-muted-foreground">
-            No participants yet
+            Engir þátttakendur ennþá
           </p>
         </div>
       )}

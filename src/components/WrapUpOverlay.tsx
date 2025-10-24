@@ -50,7 +50,7 @@ export function WrapUpOverlay({
         {/* Beer Finished Header */}
         <div className="text-center space-y-2">
           <div className="text-6xl mb-4">🍺</div>
-          <h2 className="text-2xl font-bold">Beer Finished!</h2>
+          <h2 className="text-2xl font-bold">Bjór kláraður!</h2>
         </div>
 
         {/* Beer Details */}
@@ -65,7 +65,7 @@ export function WrapUpOverlay({
             {average.toFixed(2)}
           </div>
           <div className="text-sm text-muted-foreground">
-            Average rating from {count} participant{count !== 1 ? 's' : ''}
+            Meðaleinkunn frá {count} þátttakand{count !== 1 ? 'i' : 'a'}
           </div>
         </div>
 
@@ -86,7 +86,7 @@ export function WrapUpOverlay({
         {/* Countdown */}
         {timeRemaining > 0 && (
           <div className="text-center text-sm text-muted-foreground">
-            Next beer in {timeRemaining} second{timeRemaining !== 1 ? 's' : ''}...
+            Næsti bjór eftir {timeRemaining} sekúnd{timeRemaining !== 1 ? 'ur' : 'u'}...
           </div>
         )}
 
@@ -95,7 +95,7 @@ export function WrapUpOverlay({
           onClick={onComplete}
           className="w-full px-4 py-2 border rounded hover:bg-accent text-sm"
         >
-          Continue Now →
+          Halda áfram →
         </button>
       </div>
     </div>

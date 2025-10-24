@@ -159,13 +159,13 @@ export default function AdminTastingsPage() {
                             href={`/t/${tasting.id}/scores`}
                             className="text-sm text-primary hover:underline"
                           >
-                            Scores
+                            Einkunnir
                           </Link>
                           <Link
                             href={`/t/${tasting.id}/admin`}
                             className="text-sm text-primary hover:underline"
                           >
-                            Manage
+                            Stjórna
                           </Link>
                         </div>
                       </td>

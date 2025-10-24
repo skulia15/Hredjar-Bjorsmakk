@@ -30,11 +30,11 @@ export default function AdminUsersPage() {
       if (response.ok) {
         setUsers(data.users)
       } else {
-        setMessage('Error loading users - are you logged in as admin?')
+        setMessage('Villa við að hlaða notendum - ertu skráð/ur inn sem stjórnandi?')
       }
     } catch (error) {
       console.error('Error loading users:', error)
-      setMessage('Failed to load users')
+      setMessage('Gat ekki hlaðið notendum')
     } finally {
       setLoading(false)
     }
@@ -50,11 +50,11 @@ export default function AdminUsersPage() {
 
       if (!response.ok) throw new Error('Failed to update user')
 
-      setMessage(`User ${!currentStatus ? 'promoted to' : 'demoted from'} leader!`)
+      setMessage(`Notandi ${!currentStatus ? 'gerður að' : 'fjarlægður úr'} leiðtoga!`)
       setTimeout(() => setMessage(''), 3000)
       loadUsers()
     } catch (error) {
-      setMessage('Error updating user')
+      setMessage('Villa við að uppfæra notanda')
     }
   }
 
@@ -62,7 +62,7 @@ export default function AdminUsersPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-muted-foreground">Loading users...</p>
+          <p className="text-muted-foreground">Hleður notendum...</p>
         </div>
       </div>
     )
@@ -144,8 +144,8 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                     <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                      <span>{user.tastingCount} tasting{user.tastingCount !== 1 ? 's' : ''}</span>
-                      <span>{user.ratingCount} rating{user.ratingCount !== 1 ? 's' : ''}</span>
+                      <span>{user.tastingCount} smakkanir{user.tastingCount !== 1 ? 'ar' : ''}</span>
+                      <span>{user.ratingCount} einkunn{user.ratingCount !== 1 ? 'ir' : ''}</span>
                       <span>Skráður {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>
                   </div>
@@ -170,11 +170,11 @@ export default function AdminUsersPage() {
         <div className="bg-muted p-4 rounded-lg">
           <h3 className="font-semibold mb-2">Um réttindi leiðtoga</h3>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Leaders can create and manage tastings</li>
-            <li>• Leaders can add, edit, and delete beers</li>
-            <li>• Leaders can control the tasting flow (set current beer, finish beers)</li>
-            <li>• Leaders can also participate and rate beers</li>
-            <li>• Leader status applies globally to all tastings</li>
+            <li>• Leiðtogar geta búið til og stjórnað smökkunum</li>
+            <li>• Leiðtogar geta bætt við, breytt og eytt bjórum</li>
+            <li>• Leiðtogar geta stjórnað flæði smökkunar (velja núverandi bjór, klára bjóra)</li>
+            <li>• Leiðtogar geta líka tekið þátt og gefið bjórum einkunnir</li>
+            <li>• Leiðtogastaða gildir fyrir allar smakkanir</li>
           </ul>
         </div>
       </div>

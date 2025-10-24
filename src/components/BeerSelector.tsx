@@ -96,7 +96,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
     <div className="bg-card border rounded-lg overflow-hidden">
       {/* Header */}
       <div className="border-b bg-muted/50 px-4 py-3 flex items-center justify-between">
-        <h3 className="font-semibold text-lg">Add Beer</h3>
+        <h3 className="font-semibold text-lg">Bæta við bjór</h3>
         <button
           type="button"
           onClick={() => setMode(mode === 'catalog' ? 'custom' : 'catalog')}
@@ -105,12 +105,12 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
           {mode === 'catalog' ? (
             <>
               <Plus className="h-4 w-4" />
-              Create Custom Beer
+              Búa til nýjan bjór
             </>
           ) : (
             <>
               <ArrowLeft className="h-4 w-4" />
-              Select from Catalog
+              Velja úr lista
             </>
           )}
         </button>
@@ -126,7 +126,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search beers by name, brewery, or style..."
+                placeholder="Leita eftir nafni, brugghúsi eða stíl..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-background"
@@ -217,11 +217,11 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               ) : (
                 <div className="px-4 py-12 text-center space-y-2">
                   <p className="text-sm text-muted-foreground">
-                    {searchTerm ? 'No beers found matching your search' : 'All catalog beers have been added to this tasting'}
+                    {searchTerm ? 'Engir bjórar fundust sem passa við leitina' : 'Allir bjórar í listanum hafa verið bættir við þessa smökkun'}
                   </p>
                   {!searchTerm && (
                     <p className="text-xs text-muted-foreground">
-                      Click &quot;Create Custom Beer&quot; above to add a custom beer
+                      Smelltu á &quot;Búa til sérsniðinn bjór&quot; hér að ofan til að bæta við sérsniðnum bjór
                     </p>
                   )}
                 </div>
@@ -232,7 +232,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
             {selectedBeers.length > 0 && (
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg space-y-2">
                 <div className="text-sm font-medium text-muted-foreground mb-2">
-                  {selectedBeers.length} beer{selectedBeers.length !== 1 ? 's' : ''} selected:
+                  {selectedBeers.length} bjór{selectedBeers.length !== 1 ? 'ar' : ''} val{selectedBeers.length !== 1 ? 'dir' : 'inn'}:
                 </div>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
                   {selectedBeers.map(beer => (
@@ -248,7 +248,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                           toggleBeerSelection(beer.id)
                         }}
                         className="ml-2 text-muted-foreground hover:text-destructive"
-                        title="Remove"
+                        title="Fjarlægja"
                       >
                         ×
                       </button>
@@ -265,8 +265,8 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {selectedBeerIds.size > 0
-                ? `Add ${selectedBeerIds.size} Beer${selectedBeerIds.size !== 1 ? 's' : ''}`
-                : `Select beers to add (${filteredBeers.length} available)`
+                ? `Bæta við ${selectedBeerIds.size} bjór${selectedBeerIds.size !== 1 ? 'um' : ''}`
+                : `Veldu bjóra til að bæta við (${filteredBeers.length} tiltæk${filteredBeers.length !== 1 ? 'ir' : 'ur'})`
               }
             </button>
           </div>
@@ -276,12 +276,12 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
                 <label htmlFor="customName" className="block text-sm font-medium mb-1.5">
-                  Beer Name <span className="text-destructive">*</span>
+                  Nafn bjórs <span className="text-destructive">*</span>
                 </label>
                 <input
                   id="customName"
                   type="text"
-                  placeholder="e.g., Winter Warmer"
+                  placeholder="t.d., Winter Warmer"
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   required
@@ -291,12 +291,12 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
 
               <div>
                 <label htmlFor="customBrewery" className="block text-sm font-medium mb-1.5">
-                  Brewery <span className="text-destructive">*</span>
+                  Brugghús <span className="text-destructive">*</span>
                 </label>
                 <input
                   id="customBrewery"
                   type="text"
-                  placeholder="e.g., Local Brewery"
+                  placeholder="t.d., Staðbundið brugghús"
                   value={customBrewery}
                   onChange={(e) => setCustomBrewery(e.target.value)}
                   required
@@ -306,12 +306,12 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
 
               <div>
                 <label htmlFor="customStyle" className="block text-sm font-medium mb-1.5">
-                  Style (optional)
+                  Stíll (valfrjálst)
                 </label>
                 <input
                   id="customStyle"
                   type="text"
-                  placeholder="e.g., IPA, Stout"
+                  placeholder="t.d., IPA, Stout"
                   value={customStyle}
                   onChange={(e) => setCustomStyle(e.target.value)}
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -320,7 +320,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
 
               <div>
                 <label htmlFor="customAbv" className="block text-sm font-medium mb-1.5">
-                  ABV % (optional)
+                  ABV % (valfrjálst)
                 </label>
                 <input
                   id="customAbv"
@@ -337,7 +337,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
 
               <div>
                 <label htmlFor="customProductNumber" className="block text-sm font-medium mb-1.5">
-                  Vínbúðin Product Number (optional)
+                  Vínbúðin vörunúmer (valfrjálst)
                 </label>
                 <input
                   id="customProductNumber"
@@ -348,7 +348,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                   className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Auto-generates image from Vínbúðin if provided
+                  Býr til mynd sjálfkrafa frá Vínbúðinni ef gefið upp
                 </p>
               </div>
             </div>
@@ -358,7 +358,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               disabled={!customName || !customBrewery}
               className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              Add Custom Beer
+              Bæta við sérsniðnum bjór
             </button>
           </div>
         )}
