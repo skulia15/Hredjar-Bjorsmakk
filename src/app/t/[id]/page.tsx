@@ -19,11 +19,15 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         if (data.title) {
           setTastingTitle(data.title)
         }
+        // Redirect to scores if tasting is closed
+        if (data.status === 'closed') {
+          router.push(`/t/${params.id}/scores`)
+        }
       })
       .catch(() => {
         setError('Tasting not found')
       })
-  }, [params.id])
+  }, [params.id, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
