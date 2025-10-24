@@ -442,40 +442,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               Afrita
             </button>
           </div>
-
-          {/* Navigation buttons */}
-          <div className="flex gap-2 flex-wrap pt-3 border-t">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Forsíða
-            </Link>
-            <Link
-              href={`/t/${params.id}/rate`}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Users className="w-4 h-4" />
-                Þátttakandasýn
-            </Link>
-            <Link
-              href={`/t/${params.id}/scores`}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Trophy className="w-4 h-4" />
-                Skoða stigatöflu
-            </Link>
-            {isAdmin && (
-              <Link
-                href="/admin/users"
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
-              >
-                <Users className="w-4 h-4" />
-                Notendastjórnun
-              </Link>
-            )}
-          </div>
         </div>
 
         {message && (
