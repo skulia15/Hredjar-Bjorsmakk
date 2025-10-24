@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { ReturnToTastingButton } from '@/components/ReturnToTastingButton'
+import { UserDisplay } from '@/components/UserDisplay'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={inter.className} suppressHydrationWarning>
         <Providers>{children}</Providers>
         <ReturnToTastingButton />
+        <UserDisplay />
       </body>
     </html>
   )
