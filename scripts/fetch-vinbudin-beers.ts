@@ -73,17 +73,17 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
       if (containerMatch) {
         const containerText = containerMatch[1].toLowerCase()
         if (containerText.includes('dós') || containerText.includes('áldós')) {
-          result.containerType = 'Can'
+          result.containerType = 'Dós'
         } else if (containerText.includes('flaska') || containerText.includes('glerflaska')) {
-          result.containerType = 'Bottle'
+          result.containerType = 'Flaska'
         }
       } else {
         // Fallback to general text search
         const textLower = detailsText.toLowerCase()
         if (textLower.includes('áldós') || textLower.includes('dós')) {
-          result.containerType = 'Can'
+          result.containerType = 'Dós'
         } else if (textLower.includes('glerflaska') || textLower.includes('flaska')) {
-          result.containerType = 'Bottle'
+          result.containerType = 'Flaska'
         }
       }
 
@@ -258,9 +258,9 @@ async function fetchBeersFromVinbudin(): Promise<VinbudinBeer[]> {
         // Determine container type
         let containerType: string | undefined
         if (name.toLowerCase().includes('dós') || name.toLowerCase().includes('can')) {
-          containerType = 'Can'
+          containerType = 'Dós'
         } else if (name.toLowerCase().includes('flaska') || name.toLowerCase().includes('bottle')) {
-          containerType = 'Bottle'
+          containerType = 'Flaska'
         }
 
         if (beerName && price > 0) {
