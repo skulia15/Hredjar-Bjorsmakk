@@ -50,6 +50,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     code?: string
   } | null>(null)
   const [checkingAuth, setCheckingAuth] = useState(true)
+  const [isEmbedded, setIsEmbedded] = useState(false)
   const [ratingStats, setRatingStats] = useState<{
     totalParticipants: number
     ratedCount: number
@@ -76,6 +77,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   useEffect(() => {
     setActiveTasting(params.id)
   }, [params.id, setActiveTasting])
+
+  // Detect if page is embedded in an iframe
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top)
+  }, [])
 
   const loadTasting = useCallback(async (showLoadingSpinner = false) => {
     if (showLoadingSpinner) {
@@ -342,7 +348,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       <div className="max-w-md w-full space-y-6">
         {/* Leader Controls Access */}
-        {tasting.currentUserIsLeader && (
+        {!isEmbedded && tasting.currentUserIsLeader && (
           <div className="text-center">
             <Link
               href={`/t/${params.id}/admin`}
@@ -358,10 +364,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         )}
 
         {/* Header */}
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">{tasting.title}</h1>
-          <p className="text-sm text-muted-foreground">Gefðu núverandi bjór einkunn</p>
-        </div>
+        {!isEmbedded && (
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">{tasting.title}</h1>
+            <p className="text-sm text-muted-foreground">Gefðu núverandi bjór einkunn</p>
+          </div>
+        )}
 
         {/* Current Beer Card */}
         <div className="bg-card p-6 rounded-lg border space-y-4">
@@ -510,7 +518,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
         {/* Navigation */}
         <div className="flex justify-center gap-4">
-          {tasting.currentUserIsLeader && (
+          {!isEmbedded && tasting.currentUserIsLeader && (
             <Link
               href={`/t/${params.id}/admin`}
               className="text-sm text-muted-foreground hover:text-foreground"
