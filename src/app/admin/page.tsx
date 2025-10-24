@@ -62,7 +62,7 @@ export default function AdminLoginPage() {
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground">
-              Default: "admin"
+              Default: &quot;admin&quot;
             </p>
           </div>
 

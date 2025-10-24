@@ -92,7 +92,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <p className="text-xs text-muted-foreground">
-              If you've joined before, use the same name
+              If you&apos;ve joined before, use the same name
             </p>
           </div>
 

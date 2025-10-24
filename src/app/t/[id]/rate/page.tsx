@@ -270,7 +270,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
         <div className="text-center max-w-md">
           <h2 className="text-2xl font-bold mb-2">{tasting.title}</h2>
           <p className="text-muted-foreground mb-4">
-            This tasting hasn't started yet. Please wait for the organizer to begin.
+            This tasting hasn&apos;t started yet. Please wait for the organizer to begin.
           </p>
           <div className="text-6xl mb-4">⏳</div>
         </div>
