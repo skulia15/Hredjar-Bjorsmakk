@@ -160,6 +160,13 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     return () => clearInterval(interval)
   }, [params.id, loadTasting, loadRatingStats, router])
 
+  // Redirect to scores page when tasting is closed
+  useEffect(() => {
+    if (tasting?.status === 'closed') {
+      router.push(`/t/${params.id}/scores`)
+    }
+  }, [tasting?.status, params.id, router])
+
   // Derive current beer from tasting state
   const currentBeer = tasting?.beers?.find(b => b.id === tasting.currentBeerId)
 
@@ -305,9 +312,8 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     )
   }
 
-  // Redirect to scores page for closed tastings
+  // Show redirect message for closed tastings (actual redirect happens in useEffect)
   if (tasting.status === 'closed') {
-    router.push(`/t/${params.id}/scores`)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
