@@ -98,7 +98,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="text-4xl mb-4">🍺</div>
-          <p className="text-muted-foreground">Loading scores...</p>
+          <p className="text-muted-foreground">Hleður einkunnum...</p>
         </div>
       </div>
     )
@@ -108,9 +108,9 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Scores Not Available</h2>
+          <h2 className="text-2xl font-bold mb-2">Einkunnir ekki tiltækar</h2>
           <Link href={`/t/${params.id}`} className="text-primary hover:underline">
-            Return to Tasting
+            Til baka í smökkun
           </Link>
         </div>
       </div>
