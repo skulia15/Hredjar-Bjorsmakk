@@ -38,7 +38,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   const params = use(paramsPromise)
   const router = useRouter()
   const [tasting, setTasting] = useState<Tasting | null>(null)
-  const [rating, setRating] = useState<number>(5.0)
+  const [rating, setRating] = useState<number>(0)
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
@@ -52,6 +52,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     totalParticipants: number
     ratedCount: number
     pendingCount: number
+    pending: Array<{ participantId: string; name: string; code: string }>
   } | null>(null)
 
   // Wrap-up overlay state
@@ -107,7 +108,8 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       setRatingStats({
         totalParticipants: data.totalParticipants,
         ratedCount: data.ratedCount,
-        pendingCount: data.pendingCount
+        pendingCount: data.pendingCount,
+        pending: data.pending || []
       })
     } catch (error) {
       console.error('Error loading rating stats:', error)
@@ -435,7 +437,23 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             {/* Status message */}
             {ratingStats.pendingCount > 0 ? (
               <p className="text-xs text-muted-foreground text-center">
-                Waiting for {ratingStats.pendingCount} {ratingStats.pendingCount === 1 ? 'person' : 'people'}
+                {ratingStats.pendingCount <= 3 && ratingStats.pending.length > 0 ? (
+                  <>
+                    Waiting for{' '}
+                    {ratingStats.pending.map((p, idx) => {
+                      const isLast = idx === ratingStats.pending.length - 1
+                      const isSecondToLast = idx === ratingStats.pending.length - 2
+                      return (
+                        <span key={p.participantId}>
+                          {p.name}
+                          {!isLast && (isSecondToLast ? ' and ' : ', ')}
+                        </span>
+                      )
+                    })}
+                  </>
+                ) : (
+                  <>Waiting for {ratingStats.pendingCount} {ratingStats.pendingCount === 1 ? 'person' : 'people'}</>
+                )}
               </p>
             ) : (
               <p className="text-xs text-green-600 text-center font-medium">

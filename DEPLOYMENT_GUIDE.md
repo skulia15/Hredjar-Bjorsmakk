@@ -254,50 +254,6 @@ Route (app)                                Size     First Load JS
 4. Add beers from catalog
 5. Share link with test participant
 
-### Step 4: Enable Error Tracking (Optional)
-
-**Option 1: Sentry (Recommended)**
-
-```bash
-# Install Sentry
-npm install @sentry/nextjs
-
-# Initialize
-npx @sentry/wizard@latest -i nextjs
-
-# Follow prompts to configure
-```
-
-Add to `vercel.json`:
-```json
-{
-  "env": {
-    "SENTRY_DSN": "https://xxx@xxx.ingest.sentry.io/xxx"
-  }
-}
-```
-
-**Option 2: Vercel Speed Insights**
-
-```bash
-# Install Vercel Analytics
-npm install @vercel/analytics
-
-# Add to layout.tsx
-import { Analytics } from '@vercel/analytics/react'
-
-export default function RootLayout({ children }) {
-  return (
-    <html>
-      <body>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  )
-}
-```
-
 ---
 
 ## Testing & Verification
@@ -360,41 +316,6 @@ export default function RootLayout({ children }) {
 - [ ] Submit rating with star interface
 - [ ] Verify touch interactions work
 - [ ] Test navigation
-
-### Step 4: Load Testing (Optional)
-
-```bash
-# Install k6 (load testing tool)
-brew install k6
-
-# Create test script: load-test.js
-import http from 'k6/http';
-import { check, sleep } from 'k6';
-
-export let options = {
-  stages: [
-    { duration: '30s', target: 10 }, // Ramp up to 10 users
-    { duration: '1m', target: 10 },  // Stay at 10 users
-    { duration: '30s', target: 0 },  // Ramp down
-  ],
-};
-
-export default function () {
-  let res = http.get('https://your-app.vercel.app');
-  check(res, { 'status was 200': (r) => r.status === 200 });
-  sleep(1);
-}
-
-# Run test
-k6 run load-test.js
-```
-
-**Expected Results:**
-- All checks pass
-- Average response time < 500ms
-- No 500 errors
-
----
 
 ## Monitoring & Maintenance
 
