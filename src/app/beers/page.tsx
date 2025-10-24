@@ -303,14 +303,23 @@ export default function BeersPage() {
 
                       {/* Links */}
                       <div className="flex gap-2 pt-2">
-                        {beer.vinbudinUrl && (
+                        {beer.vinbudinUrl ? (
                           <a
                             href={beer.vinbudinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs text-primary hover:underline"
                           >
-                            Sjá á Vinbudin.is →
+                            Sjá á Vínbúðin.is →
+                          </a>
+                        ) : beer.productNumber && (
+                          <a
+                            href={`https://www.vinbudin.is/heim/vorur/stoek-vara.aspx/?productid=${beer.productNumber}/`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-primary hover:underline"
+                          >
+                            Sjá á Vínbúðin.is →
                           </a>
                         )}
                         {beer.productNumber && (
@@ -392,9 +401,18 @@ export default function BeersPage() {
 
                 {/* Links */}
                 <div className="flex gap-2 pt-2">
-                  {beer.vinbudinUrl && (
+                  {beer.vinbudinUrl ? (
                     <a
                       href={beer.vinbudinUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      Sjá á Vínbúðin.is →
+                    </a>
+                  ) : beer.productNumber && (
+                    <a
+                      href={`https://www.vinbudin.is/heim/vorur/stoek-vara.aspx/?productid=${beer.productNumber}/`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:underline"

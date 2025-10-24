@@ -355,16 +355,6 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           </div>
         )}
 
-        {/* User Info */}
-        {participantInfo?.code && (
-          <div className="bg-muted/50 px-4 py-2 rounded-lg border text-center">
-            <div className="text-sm">
-              <span className="text-muted-foreground">Your code: </span>
-              <span className="font-semibold">{participantInfo.code}</span>
-            </div>
-          </div>
-        )}
-
         {/* Header */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">{tasting.title}</h1>

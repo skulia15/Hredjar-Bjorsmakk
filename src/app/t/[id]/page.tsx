@@ -10,8 +10,54 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [tastingTitle, setTastingTitle] = useState('')
+  const [checkingSession, setCheckingSession] = useState(true)
 
   useEffect(() => {
+    const checkSessionAndJoin = async () => {
+      try {
+        // Check for existing session
+        const sessionResponse = await fetch('/api/session')
+        const sessionData = await sessionResponse.json()
+
+        if (sessionData.hasSession && sessionData.name) {
+          // User has a session, auto-join with their stored name
+          setName(sessionData.name)
+
+          // Auto-join the tasting
+          const joinResponse = await fetch(`/api/tastings/${params.id}/join`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: sessionData.name })
+          })
+
+          if (joinResponse.ok) {
+            const joinData = await joinResponse.json()
+
+            // Store participant info in localStorage
+            localStorage.setItem(`participant_${params.id}`, JSON.stringify({
+              participantId: joinData.participantId,
+              userId: joinData.userId,
+              rejoinToken: joinData.rejoinToken,
+              code: joinData.code
+            }))
+
+            // Redirect based on role
+            if (joinData.isLeader) {
+              router.push(`/t/${params.id}/admin`)
+            } else {
+              router.push(`/t/${params.id}/rate`)
+            }
+            return
+          }
+        }
+      } catch (err) {
+        console.error('Error checking session:', err)
+      }
+
+      // No session or auto-join failed, show the form
+      setCheckingSession(false)
+    }
+
     // Fetch tasting details
     fetch(`/api/tastings/${params.id}`)
       .then(res => res.json())
@@ -22,10 +68,14 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         // Redirect to scores if tasting is closed
         if (data.status === 'closed') {
           router.push(`/t/${params.id}/scores`)
+        } else {
+          // Only check session if tasting is not closed
+          checkSessionAndJoin()
         }
       })
       .catch(() => {
         setError('Tasting not found')
+        setCheckingSession(false)
       })
   }, [params.id, router])
 
@@ -67,6 +117,17 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     } finally {
       setLoading(false)
     }
+  }
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-4xl mb-4">🍺</div>
+          <p className="text-muted-foreground">Checking session...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

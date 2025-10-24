@@ -34,7 +34,7 @@ interface Tasting {
   participantCount: number
 }
 
-type TabType = 'manage' | 'rate' | 'scores' | 'analytics'
+type TabType = 'manage' | 'participation' | 'scores' | 'analytics'
 
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -420,7 +420,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         {/* Share Link */}
         <div className="bg-card p-4 rounded-lg border">
           <p className="text-sm font-medium mb-2">Deila tengli með þátttakendum:</p>
-          <div className="flex gap-2">
+          <div className="flex gap-2 mb-4">
             <input
               type="text"
               value={`${window.location.origin}/t/${params.id}`}
@@ -438,6 +438,40 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               Copy
             </button>
           </div>
+
+          {/* Navigation buttons */}
+          <div className="flex gap-2 flex-wrap pt-3 border-t">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              Forsíða
+            </Link>
+            <Link
+              href={`/t/${params.id}/rate`}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              ← Þátttakandasýn
+            </Link>
+            <Link
+              href={`/t/${params.id}/scores`}
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+            >
+              <Trophy className="w-4 h-4" />
+              Skoða stigatöflu →
+            </Link>
+            {isAdmin && (
+              <Link
+                href="/admin/users"
+                className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
+              >
+                <Users className="w-4 h-4" />
+                Notendastjórnun
+              </Link>
+            )}
+          </div>
         </div>
 
         {message && (
@@ -449,7 +483,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         {/* Tabs */}
         <div className="border-b">
           <div className="flex gap-4">
-            {(['manage', 'analytics', 'rate', 'scores'] as TabType[]).map((tab) => (
+            {(['manage', 'analytics', 'participation', 'scores'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -642,17 +676,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             <AnalyticsDashboard tastingId={params.id} />
           )}
 
-          {activeTab === 'rate' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                Rate beers just like participants
-              </p>
-              <Link
-                href={`/t/${params.id}/rate`}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
-              >
-                Go to Rating Page
-              </Link>
+          {activeTab === 'participation' && (
+            <div className="w-full">
+              <iframe
+                src={`/t/${params.id}/rate`}
+                className="w-full h-[80vh] border-0 rounded-lg"
+                title="Participation View"
+              />
             </div>
           )}
 

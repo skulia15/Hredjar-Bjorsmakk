@@ -6,6 +6,7 @@ import { requireLeader } from '@/lib/auth';
 // Supports two modes:
 // 1. From catalog: { beerId: "uuid", userName: "admin" }
 // 2. Custom beer: { name: "...", brewery: "...", style?: "...", abv?: 6.5, userName: "admin" }
+//    Note: Custom beers are automatically added to the beer catalog
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -43,15 +44,25 @@ export async function POST(
 
     const nextOrderIndex = (maxOrder?.orderIndex ?? -1) + 1;
 
+    // If custom beer (no beerId provided), create a catalog entry first
+    let finalBeerId = beerId;
+    if (!beerId && name && brewery) {
+      const newBeer = await prisma.beer.create({
+        data: {
+          name,
+          brewery,
+          style: style || null,
+          abv: abv || null
+        }
+      });
+      finalBeerId = newBeer.id;
+    }
+
     // Create tasting beer
     const tastingBeer = await prisma.tastingBeer.create({
       data: {
         tastingId: id,
-        beerId: beerId || null, // Reference catalog beer if provided
-        customName: beerId ? null : name,
-        customBrewery: beerId ? null : brewery,
-        customStyle: beerId ? null : style,
-        customAbv: beerId ? null : abv,
+        beerId: finalBeerId, // Always reference a catalog beer now
         orderIndex: nextOrderIndex,
         status: 'untasted'
       },
@@ -61,20 +72,16 @@ export async function POST(
     });
 
     // Return unified response
-    const responseName = tastingBeer.beer?.name || tastingBeer.customName;
-    const responseBrewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery;
-    const responseStyle = tastingBeer.beer?.style || tastingBeer.customStyle;
-    const responseAbv = tastingBeer.beer?.abv || tastingBeer.customAbv;
-
     return NextResponse.json({
       id: tastingBeer.id,
-      name: responseName,
-      brewery: responseBrewery,
-      style: responseStyle,
-      abv: responseAbv,
+      name: tastingBeer.beer?.name,
+      brewery: tastingBeer.beer?.brewery,
+      style: tastingBeer.beer?.style,
+      abv: tastingBeer.beer?.abv,
       status: tastingBeer.status,
       orderIndex: tastingBeer.orderIndex,
-      fromCatalog: !!beerId
+      fromCatalog: !!beerId,
+      createdNewCatalogEntry: !beerId // Indicates if we created a new catalog entry
     }, { status: 201 });
 
   } catch (error) {
