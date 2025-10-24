@@ -543,26 +543,26 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   <h3 className="font-semibold text-blue-600 dark:text-blue-400">⏳ Ósmakkaðir bjórar ({untastedBeers.length})</h3>
                   <div className="space-y-2">
                     {untastedBeers.map((beer) => (
-                      <div key={beer.id} className="flex items-center justify-between gap-3 p-4 bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800 rounded-md hover:border-blue-400 transition-colors">
+                      <div key={beer.id} className="flex flex-col gap-3 p-4 bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800 rounded-md hover:border-blue-400 transition-colors">
                         <div className="flex-1 min-w-0">
-                          <h4 className="font-semibold text-lg truncate">{beer.name}</h4>
-                          <p className="text-sm text-muted-foreground truncate">{beer.brewery}</p>
+                          <h4 className="font-semibold text-lg">{beer.name}</h4>
+                          <p className="text-sm text-muted-foreground">{beer.brewery}</p>
                         </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <button
+                            onClick={() => handleSetCurrent(beer.id)}
+                            disabled={tasting.status !== 'active' || !!currentBeer}
+                            className="flex-1 px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            Setja sem núverandi bjór
+                          </button>
                           <button
                             onClick={() => handleDeleteBeer(beer.id)}
-                            className="inline-flex items-center gap-1 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
+                            className="inline-flex items-center justify-center gap-1 px-3 py-2 text-sm border border-red-300 text-red-600 rounded-md hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
                             title="Fjarlægja bjór"
                           >
                             <Trash2 className="w-4 h-4" />
                             Fjarlægja
-                          </button>
-                          <button
-                            onClick={() => handleSetCurrent(beer.id)}
-                            disabled={tasting.status !== 'active' || !!currentBeer}
-                            className="px-4 py-2 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            Setja sem núverandi bjór
                           </button>
                         </div>
                       </div>
