@@ -294,12 +294,21 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
         {/* Navigation */}
         <div className="flex justify-center gap-4 pt-4">
-          <button
-            onClick={() => router.back()}
-            className="text-sm text-muted-foreground hover:text-foreground cursor-pointer"
-          >
-            ← Til baka
-          </button>
+          {scores.status === 'closed' ? (
+            <Link
+              href="/"
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Til baka á forsíðu
+            </Link>
+          ) : (
+            <Link
+              href={`/t/${params.id}/rate`}
+              className="text-sm text-muted-foreground hover:text-foreground"
+            >
+              ← Til baka í smökkun
+            </Link>
+          )}
           <Link
             href="/"
             className="text-sm text-muted-foreground hover:text-foreground"
