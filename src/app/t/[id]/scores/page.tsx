@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface BeerScore {
   beerId: string
@@ -58,6 +59,7 @@ interface AnalyticsData {
 
 export default function ScoresPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
+  const router = useRouter()
   const [scores, setScores] = useState<ScoresData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -251,12 +253,12 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
         {/* Navigation */}
         <div className="flex justify-center gap-4 pt-4">
-          <Link
-            href={`/t/${params.id}/rate`}
-            className="text-sm text-muted-foreground hover:text-foreground"
+          <button
+            onClick={() => router.back()}
+            className="text-sm text-muted-foreground hover:text-foreground cursor-pointer"
           >
-            ← Til baka í einkunnagjöf
-          </Link>
+            ← Til baka
+          </button>
         </div>
       </div>
     </div>

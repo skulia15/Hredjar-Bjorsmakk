@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Edit, ArrowUpDown, Grid, List } from 'lucide-react'
+import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 
 interface Beer {
   id: string
@@ -318,19 +319,29 @@ export default function BeersPage() {
                       </button>
 
                       {/* Beer Image */}
-                      {beer.imageUrl && (
-                        <div className="mb-4 flex justify-center">
+                      <div className="mb-4 flex justify-center">
+                        {beer.imageUrl ? (
                           <img
                             src={beer.imageUrl}
                             alt={beer.name}
                             className="h-32 w-auto object-contain"
                             onError={(e) => {
-                              // Hide image if it fails to load
-                              e.currentTarget.style.display = 'none'
+                              // Show placeholder if image fails to load
+                              const parent = e.currentTarget.parentElement
+                              if (parent) {
+                                e.currentTarget.style.display = 'none'
+                                const placeholder = parent.querySelector('.beer-placeholder')
+                                if (placeholder) {
+                                  (placeholder as HTMLElement).style.display = 'block'
+                                }
+                              }
                             }}
                           />
+                        ) : null}
+                        <div className={beer.imageUrl ? 'hidden beer-placeholder' : 'beer-placeholder'}>
+                          <BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
                         </div>
-                      )}
+                      </div>
 
                       {/* Beer Header */}
                       <div className="space-y-1 pr-8">
@@ -430,19 +441,29 @@ export default function BeersPage() {
                 </button>
 
                 {/* Beer Image */}
-                {beer.imageUrl && (
-                  <div className="mb-4 flex justify-center">
+                <div className="mb-4 flex justify-center">
+                  {beer.imageUrl ? (
                     <img
                       src={beer.imageUrl}
                       alt={beer.name}
                       className="h-32 w-auto object-contain"
                       onError={(e) => {
-                        // Hide image if it fails to load
-                        e.currentTarget.style.display = 'none'
+                        // Show placeholder if image fails to load
+                        const parent = e.currentTarget.parentElement
+                        if (parent) {
+                          e.currentTarget.style.display = 'none'
+                          const placeholder = parent.querySelector('.beer-placeholder')
+                          if (placeholder) {
+                            (placeholder as HTMLElement).style.display = 'block'
+                          }
+                        }
                       }}
                     />
+                  ) : null}
+                  <div className={beer.imageUrl ? 'hidden beer-placeholder' : 'beer-placeholder'}>
+                    <BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
                   </div>
-                )}
+                </div>
 
                 {/* Beer Header */}
                 <div className="space-y-1 pr-8">

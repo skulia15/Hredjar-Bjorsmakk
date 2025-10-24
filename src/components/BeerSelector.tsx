@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { Search, Plus, ArrowLeft, Check } from 'lucide-react'
+import { BeerPlaceholder } from './BeerPlaceholder'
 
 interface Beer {
   id: string
@@ -149,19 +150,29 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                       >
                         <div className="flex items-start justify-between gap-3">
                           {/* Beer Image */}
-                          {beer.imageUrl && (
-                            <div className="flex-shrink-0">
+                          <div className="flex-shrink-0 w-16 flex justify-center">
+                            {beer.imageUrl ? (
                               <img
                                 src={beer.imageUrl}
                                 alt={beer.name}
                                 className="h-16 w-auto object-contain"
                                 onError={(e) => {
-                                  // Hide image if it fails to load
-                                  e.currentTarget.style.display = 'none'
+                                  // Show placeholder if image fails to load
+                                  const parent = e.currentTarget.parentElement
+                                  if (parent) {
+                                    e.currentTarget.style.display = 'none'
+                                    const placeholder = parent.querySelector('.beer-placeholder')
+                                    if (placeholder) {
+                                      (placeholder as HTMLElement).style.display = 'block'
+                                    }
+                                  }
                                 }}
                               />
+                            ) : null}
+                            <div className={beer.imageUrl ? 'hidden beer-placeholder' : 'beer-placeholder'}>
+                              <BeerPlaceholder className="h-16 w-auto text-muted-foreground" />
                             </div>
-                          )}
+                          </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-2">
                               <div className="font-medium text-sm truncate">{beer.name}</div>

@@ -113,7 +113,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleSelectMultipleBeers = async (beerIds: string[]) => {
-    setMessage(`Adding ${beerIds.length} beers...`)
+    setMessage(`Bæti við ${beerIds.length} bjórum...`)
     try {
       // Add all beers in parallel
       const results = await Promise.allSettled(
@@ -131,9 +131,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const failures = results.filter(r => r.status === 'rejected').length
 
       if (failures > 0) {
-        setMessage(`Added ${successes} beers, ${failures} failed`)
+        setMessage(`Bætti við ${successes} bjórum, ${failures} mistókust`)
       } else {
-        setMessage(`Successfully added ${successes} beers!`)
+        setMessage(`Tókst að bæta við ${successes} bjórum!`)
       }
 
       setTimeout(() => setMessage(''), 3000)
@@ -183,7 +183,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleFinishBeer = async (beerId: string) => {
-    if (!confirm('Finish this beer? Participants will no longer be able to rate it.')) return
+    if (!confirm('Klára þennan bjór? Þátttakendur munu ekki geta gefið honum einkunn lengur.')) return
 
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}/finish`, {
@@ -203,7 +203,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleDeleteBeer = async (beerId: string) => {
-    if (!confirm('Remove this beer from the tasting?')) return
+    if (!confirm('Fjarlægja þennan bjór úr smökkuninni?')) return
 
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}`, {
@@ -229,15 +229,15 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const handleRemoveParticipant = async (participantId: string) => {
     // Ask if they want to keep ratings
     const keepRatings = confirm(
-      'Do you want to KEEP this participant\'s ratings?\n\n' +
-      'Click OK to KEEP ratings (participant removed from list but ratings preserved)\n' +
-      'Click Cancel to DELETE ratings (participant and all their ratings will be removed)'
+      'Viltu HALDA einkunnum þessa þátttakanda?\n\n' +
+      'Smelltu á OK til að HALDA einkunnum (þátttakandi fjarlægður af lista en einkunnir geymdar)\n' +
+      'Smelltu á Hætta við til að EYÐA einkunnum (þátttakandi og allar hans einkunnir verða fjarlægðar)'
     )
 
     // Confirm the action
     const confirmMessage = keepRatings
-      ? 'Remove this participant from the list while preserving their ratings?'
-      : 'Remove this participant AND delete all their ratings?'
+      ? 'Fjarlægja þennan þátttakanda af listanum en geyma einkunnir?'
+      : 'Fjarlægja þennan þátttakanda OG eyða öllum hans einkunnum?'
 
     if (!confirm(confirmMessage)) return
 
@@ -302,7 +302,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
       if (!response.ok) throw new Error('Failed to start tasting')
 
-      setMessage('Tasting started!')
+      setMessage('Smökkun hafin!')
       setTimeout(() => setMessage(''), 3000)
       loadTasting()
     } catch (error) {
@@ -312,7 +312,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleCompleteTasting = async () => {
-    if (!confirm('Complete this tasting? No more ratings can be submitted.')) return
+    if (!confirm('Ljúka þessari smökkun? Ekki verður hægt að skrá fleiri einkunnir.')) return
 
     try {
       const response = await fetch(`/api/tastings/${params.id}`, {
@@ -323,7 +323,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
       if (!response.ok) throw new Error('Failed to complete tasting')
 
-      setMessage('Tasting completed!')
+      setMessage('Smökkun lokið!')
       setTimeout(() => setMessage(''), 3000)
       loadTasting()
     } catch (error) {
@@ -430,12 +430,12 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             <button
               onClick={() => {
                 navigator.clipboard.writeText(`${window.location.origin}/t/${params.id}`)
-                setMessage('Link copied!')
+                setMessage('Tengill afritaður!')
                 setTimeout(() => setMessage(''), 2000)
               }}
               className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
             >
-              Copy
+              Afrita
             </button>
           </div>
 
@@ -483,19 +483,27 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         {/* Tabs */}
         <div className="border-b">
           <div className="flex gap-4">
-            {(['manage', 'analytics', 'participation', 'scores'] as TabType[]).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 border-b-2 transition-colors ${
-                  activeTab === tab
-                    ? 'border-primary text-primary font-medium'
-                    : 'border-transparent text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+            {(['manage', 'analytics', 'participation', 'scores'] as TabType[]).map((tab) => {
+              const tabLabels = {
+                manage: 'Stjórna',
+                analytics: 'Tölfræði',
+                participation: 'Þátttaka',
+                scores: 'Einkunnir'
+              }
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-4 py-2 border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-primary text-primary font-medium'
+                      : 'border-transparent text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {tabLabels[tab]}
+                </button>
+              )
+            })}
           </div>
         </div>
 
@@ -509,7 +517,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="text-2xl">🍺</span>
-                      <h3 className="font-bold text-lg text-green-700 dark:text-green-400">CURRENT BEER</h3>
+                      <h3 className="font-bold text-lg text-green-700 dark:text-green-400">NÚVERANDI BJÓR</h3>
                     </div>
                     {currentBeer.currentSince && (
                       <CurrentBeerTimer
@@ -536,7 +544,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                     </div>
                     {currentBeer.ratingCount !== undefined && (
                       <p className="text-sm font-semibold text-green-600 mt-2">
-                        {currentBeer.ratingCount} rating{currentBeer.ratingCount !== 1 ? 's' : ''} submitted
+                        {currentBeer.ratingCount} einkunn{currentBeer.ratingCount !== 1 ? 'ir' : ''} skráð{currentBeer.ratingCount !== 1 ? 'ar' : ''}
                       </p>
                     )}
                   </div>
@@ -544,7 +552,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                     onClick={() => handleFinishBeer(currentBeer.id)}
                     className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 transition-colors"
                   >
-                    Finish This Beer
+                    Klára þennan bjór
                   </button>
                 </div>
               )}
@@ -640,7 +648,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       onClick={handleStartTasting}
                       disabled={tasting.beers.length === 0}
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title={tasting.beers.length === 0 ? 'Add beers first' : 'Start the tasting'}
+                      title={tasting.beers.length === 0 ? 'Bættu við bjórum fyrst' : 'Byrja smökkuna'}
                     >
                       Byrja smökkun
                     </button>
@@ -658,14 +666,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                     download
                     className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
                   >
-                    Export XLSX
+                    Flytja út XLSX
                   </a>
                   <a
                     href={`/api/tastings/${params.id}/export?format=csv&userName=${userName}`}
                     download
                     className="px-4 py-2 border rounded hover:bg-accent"
                   >
-                    Export CSV
+                    Flytja út CSV
                   </a>
                 </div>
               </div>
@@ -681,7 +689,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               <iframe
                 src={`/t/${params.id}/rate`}
                 className="w-full h-[80vh] border-0 rounded-lg"
-                title="Participation View"
+                title="Þátttökusýn"
               />
             </div>
           )}
@@ -689,13 +697,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           {activeTab === 'scores' && (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                View the leaderboard
+                Skoða stigatöfluna
               </p>
               <Link
                 href={`/t/${params.id}/scores`}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
               >
-                Go to Scores Page
+                Fara á einkunnasiðu
               </Link>
             </div>
           )}
