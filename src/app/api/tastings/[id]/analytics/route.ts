@@ -131,6 +131,36 @@ export async function GET(
       .sort((a, b) => b.average - a.average)
       .slice(0, 10);
 
+    // Calculate style distribution and average ratings per style
+    const styleStats: Record<string, { count: number; totalRating: number; ratings: number[] }> = {};
+
+    tasting.tastingBeers
+      .filter(beer => beer.status === 'finished')
+      .forEach(beer => {
+        const styles = beer.beer?.styles || (beer.customStyle ? [beer.customStyle] : []);
+        const beerRatings = beer.ratings.map(r => r.score);
+
+        styles.forEach(style => {
+          if (!styleStats[style]) {
+            styleStats[style] = { count: 0, totalRating: 0, ratings: [] };
+          }
+          styleStats[style].count++;
+          styleStats[style].ratings.push(...beerRatings);
+          styleStats[style].totalRating += beerRatings.reduce((sum, r) => sum + r, 0);
+        });
+      });
+
+    const styleDistribution = Object.entries(styleStats)
+      .map(([style, data]) => ({
+        style,
+        count: data.count,
+        averageRating: data.ratings.length > 0
+          ? Number((data.totalRating / data.ratings.length).toFixed(2))
+          : 0,
+        totalRatings: data.ratings.length
+      }))
+      .sort((a, b) => b.count - a.count);
+
     // Calculate rating trend over time (chronologically ordered beers with their average ratings)
     const ratingTrend = tasting.tastingBeers
       .filter(beer => beer.status === 'finished')  // Only finished beers
@@ -252,6 +282,7 @@ export async function GET(
       },
       ratingDistribution,
       ratingTrend,
+      styleDistribution,
       beerTimings,
       beerParticipation,
       topRatedBeers,

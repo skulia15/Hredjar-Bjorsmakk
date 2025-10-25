@@ -634,12 +634,16 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           )}
 
           {activeTab === 'participation' && (
-            <div className="w-full">
-              <iframe
-                src={`/t/${params.id}/rate`}
-                className="w-full h-[80vh] border-0 rounded-lg"
-                title="Þátttökusýn"
-              />
+            <div className="text-center py-12">
+              <p className="text-muted-foreground mb-4">
+                Skoða þátttakendasynjuna
+              </p>
+              <Link
+                href={`/t/${params.id}/rate`}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
+              >
+                Opna þátttakandasíðu
+              </Link>
             </div>
           )}
 

@@ -665,7 +665,7 @@ export default function BeersPage() {
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Skráðu stíla aðskilda með kommu. Dæmi: "IPA, Hazy IPA"
+                    Skráðu stíla aðskilda með kommu. Dæmi: &quot;IPA, Hazy IPA&quot;
                   </p>
                 </div>
 

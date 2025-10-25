@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 interface BeerScore {
   beerId: string
@@ -23,6 +23,13 @@ interface RatingTrendPoint {
   name: string
   average: number
   ratingsCount: number
+}
+
+interface StyleDistribution {
+  style: string
+  count: number
+  averageRating: number
+  totalRatings: number
 }
 
 interface ParticipantStats {
