@@ -236,9 +236,52 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   // Colors for pie chart
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16']
 
-  // Country to flag emoji mapping
+  // Country to flag emoji mapping (Icelandic country names)
   const getCountryFlag = (country: string): string => {
     const flagMap: Record<string, string> = {
+      // Icelandic names
+      'Ísland': '🇮🇸',
+      'Þýskaland': '🇩🇪',
+      'Bandaríkin': '🇺🇸',
+      'Bretland': '🇬🇧',
+      'Írland': '🇮🇪',
+      'Belgía': '🇧🇪',
+      'Holland': '🇳🇱',
+      'Frakkland': '🇫🇷',
+      'Spánn': '🇪🇸',
+      'Ítalía': '🇮🇹',
+      'Portúgal': '🇵🇹',
+      'Danmörk': '🇩🇰',
+      'Noregur': '🇳🇴',
+      'Svíþjóð': '🇸🇪',
+      'Finnland': '🇫🇮',
+      'Pólland': '🇵🇱',
+      'Tékkland': '🇨🇿',
+      'Austurríki': '🇦🇹',
+      'Sviss': '🇨🇭',
+      'Kanada': '🇨🇦',
+      'Mexíkó': '🇲🇽',
+      'Brasilía': '🇧🇷',
+      'Argentína': '🇦🇷',
+      'Ástralía': '🇦🇺',
+      'Nýja-Sjáland': '🇳🇿',
+      'Kína': '🇨🇳',
+      'Suður-Kórea': '🇰🇷',
+      'Eistland': '🇪🇪',
+      'Lettland': '🇱🇻',
+      'Litháen': '🇱🇹',
+      'Rússland': '🇷🇺',
+      'Úkraína': '🇺🇦',
+      'Grikkland': '🇬🇷',
+      'Króatía': '🇭🇷',
+      'Slóvenía': '🇸🇮',
+      'Rúmenía': '🇷🇴',
+      'Ungverjaland': '🇭🇺',
+      'Slóvakía': '🇸🇰',
+      'Búlgaría': '🇧🇬',
+      'Serbía': '🇷🇸',
+      'Færeyjar': '🇫🇴',
+      // English names (fallback)
       'Iceland': '🇮🇸',
       'Germany': '🇩🇪',
       'USA': '🇺🇸',
@@ -284,6 +327,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       'Slovakia': '🇸🇰',
       'Bulgaria': '🇧🇬',
       'Serbia': '🇷🇸',
+      'Faroe Islands': '🇫🇴',
     }
     return flagMap[country] || '🌍'
   }
@@ -1382,7 +1426,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <div
                 key={country.country}
                 className={`p-4 rounded-lg border-2 ${
-                  country.country === 'Iceland'
+                  country.country === 'Ísland'
                     ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700'
                     : 'bg-muted/30 border-muted'
                 }`}
