@@ -833,7 +833,10 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           </p>
           <ResponsiveContainer width="100%" height={Math.max(300, analytics.stylePerformanceRanking.length * 40)}>
             <BarChart
-              data={analytics.stylePerformanceRanking}
+              data={analytics.stylePerformanceRanking.map(({ style: _style, ...item }) => ({
+                ...item,
+                beerStyle: _style
+              }))}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
@@ -846,7 +849,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               />
               <YAxis
                 type="category"
-                dataKey="style"
+                dataKey="beerStyle"
                 width={150}
                 tick={{ fontSize: 11 }}
               />
@@ -882,7 +885,10 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           </p>
           <ResponsiveContainer width="100%" height={Math.max(300, analytics.styleRatingSpread.length * 40)}>
             <BarChart
-              data={analytics.styleRatingSpread}
+              data={analytics.styleRatingSpread.map(({ style: _style, ...item }) => ({
+                ...item,
+                beerStyle: _style
+              }))}
               layout="vertical"
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
@@ -894,7 +900,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               />
               <YAxis
                 type="category"
-                dataKey="style"
+                dataKey="beerStyle"
                 width={150}
                 tick={{ fontSize: 11 }}
               />
