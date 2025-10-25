@@ -131,6 +131,32 @@ export async function GET(
       .sort((a, b) => b.average - a.average)
       .slice(0, 10);
 
+    // Calculate rating trend over time (chronologically ordered beers with their average ratings)
+    const ratingTrend = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished')  // Only finished beers
+      .sort((a, b) => {
+        // Sort by finishedAt timestamp (chronological order)
+        const timeA = a.finishedAt ? new Date(a.finishedAt).getTime() : 0;
+        const timeB = b.finishedAt ? new Date(b.finishedAt).getTime() : 0;
+        return timeA - timeB;
+      })
+      .map((beer, index) => {
+        const ratings = beer.ratings.map(r => r.score);
+        const average = ratings.length > 0
+          ? ratings.reduce((sum, score) => sum + score, 0) / ratings.length
+          : 0;
+
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+
+        return {
+          beerIndex: index + 1,  // 1-indexed for display (Beer 1, Beer 2, etc.)
+          beerId: beer.id,
+          name,
+          average: Number(average.toFixed(2)),
+          ratingsCount: ratings.length
+        };
+      });
+
     // Enhanced participant statistics with per-user details
     const participantStats = tasting.participants.map(p => {
       // Get all ratings from this participant
@@ -225,6 +251,7 @@ export async function GET(
         averageTimePerBeer: averageTimePerBeer ? Math.round(averageTimePerBeer * 10) / 10 : null
       },
       ratingDistribution,
+      ratingTrend,
       beerTimings,
       beerParticipation,
       topRatedBeers,

@@ -276,28 +276,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
 
     try {
-      // If no current beer is set, automatically set the first untasted beer as current
-      if (!tasting.currentBeerId) {
-        const firstUntastedBeer = tasting.beers.find(b => b.status === 'untasted')
-        if (!firstUntastedBeer) {
-          setMessage('No untasted beers available')
-          setTimeout(() => setMessage(''), 5000)
-          return
-        }
-
-        // Set first beer as current
-        const setCurrentResponse = await fetch(`/api/tastings/${params.id}/current`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ beerId: firstUntastedBeer.id, userName })
-        })
-
-        if (!setCurrentResponse.ok) {
-          throw new Error('Failed to set starting beer')
-        }
-      }
-
-      // Start the tasting
+      // Start the tasting without automatically selecting a beer
       const response = await fetch(`/api/tastings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -306,8 +285,8 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
       if (!response.ok) throw new Error('Failed to start tasting')
 
-      setMessage('Smökkun hafin!')
-      setTimeout(() => setMessage(''), 3000)
+      setMessage('Smökkun hafin! Veldu núverandi bjór til að byrja.')
+      setTimeout(() => setMessage(''), 5000)
       loadTasting()
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Error starting tasting')

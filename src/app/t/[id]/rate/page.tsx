@@ -20,6 +20,7 @@ interface Beer {
   containerType?: string
   priceISK?: number
   imageUrl?: string
+  country?: string
   status: string
   currentSince?: Date | string | null
   finishedAt?: Date | string | null
@@ -406,6 +407,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             </div>
             <h2 className="text-2xl font-bold">{currentBeer.name}</h2>
             <p className="text-lg text-muted-foreground">{currentBeer.brewery}</p>
+            {currentBeer.country && (
+              <p className="text-sm text-muted-foreground mt-1">
+                🌍 {currentBeer.country}
+              </p>
+            )}
             {currentBeer.style && (
               <p className="text-sm text-muted-foreground mt-1">
                 {currentBeer.style} {currentBeer.abv && `• ${currentBeer.abv}%`}

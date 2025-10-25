@@ -9,7 +9,7 @@ interface Beer {
   id: string
   name: string
   brewery: string
-  style?: string
+  styles?: string[]
   abv?: number
   country?: string
   imageUrl?: string
@@ -184,7 +184,7 @@ export default function BeersPage() {
       return (
         beer.name.toLowerCase().includes(query) ||
         beer.brewery.toLowerCase().includes(query) ||
-        beer.style?.toLowerCase().includes(query) ||
+        beer.styles?.some(style => style.toLowerCase().includes(query)) ||
         beer.country?.toLowerCase().includes(query)
       )
     })
@@ -393,11 +393,11 @@ export default function BeersPage() {
 
                       {/* Beer Details */}
                       <div className="flex flex-wrap gap-2">
-                        {beer.style && (
-                          <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
-                            {beer.style}
+                        {beer.styles && beer.styles.map((style, idx) => (
+                          <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
+                            {style}
                           </span>
-                        )}
+                        ))}
                         {beer.abv && (
                           <span className="px-2 py-1 bg-orange-500/10 text-orange-600 text-xs rounded">
                             {beer.abv}% ABV
@@ -525,11 +525,11 @@ export default function BeersPage() {
 
                 {/* Beer Details */}
                 <div className="flex flex-wrap gap-2">
-                  {beer.style && (
-                    <span className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
-                      {beer.style}
+                  {beer.styles && beer.styles.map((style, idx) => (
+                    <span key={idx} className="px-2 py-1 bg-primary/10 text-primary text-xs rounded">
+                      {style}
                     </span>
-                  )}
+                  ))}
                   {beer.abv && (
                     <span className="px-2 py-1 bg-orange-500/10 text-orange-600 text-xs rounded">
                       {beer.abv}% ABV
@@ -648,15 +648,25 @@ export default function BeersPage() {
                   />
                 </div>
 
-                {/* Style */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Stíll</label>
+                {/* Styles */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium mb-1">Stílar (aðskildir með kommu)</label>
                   <input
                     type="text"
-                    value={editingBeer.style || ''}
-                    onChange={(e) => setEditingBeer({ ...editingBeer, style: e.target.value })}
+                    value={editingBeer.styles?.join(', ') || ''}
+                    onChange={(e) => {
+                      const stylesArray = e.target.value
+                        .split(',')
+                        .map(s => s.trim())
+                        .filter(s => s.length > 0)
+                      setEditingBeer({ ...editingBeer, styles: stylesArray.length > 0 ? stylesArray : undefined })
+                    }}
+                    placeholder="t.d. IPA, Hazy IPA, New England IPA"
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Skráðu stíla aðskilda með kommu. Dæmi: "IPA, Hazy IPA"
+                  </p>
                 </div>
 
                 {/* ABV */}
