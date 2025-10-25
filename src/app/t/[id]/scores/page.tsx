@@ -14,6 +14,15 @@ const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod 
   )
 })
 
+const RatingsTable = dynamic(() => import('@/components/RatingsTable').then(mod => ({ default: mod.RatingsTable })), {
+  ssr: false,
+  loading: () => (
+    <div className="mt-8 text-center py-12">
+      <p className="text-muted-foreground">Hleður einkunnatöflu...</p>
+    </div>
+  )
+})
+
 interface BeerScore {
   beerId: string
   name: string
@@ -85,11 +94,31 @@ interface AnalyticsData {
   }>
 }
 
+interface RatingsDetailData {
+  tastingId: string
+  title: string
+  status: string
+  participants: Array<{
+    id: string
+    userName: string
+    code: string
+  }>
+  beers: Array<{
+    beerId: string
+    name: string
+    brewery: string
+    average: number
+    ratingsCount: number
+    ratings: Record<string, number | null>
+  }>
+}
+
 export default function ScoresPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const router = useRouter()
   const [scores, setScores] = useState<ScoresData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [ratingsDetail, setRatingsDetail] = useState<RatingsDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isClient, setIsClient] = useState(false)
   const [showAllBeers, setShowAllBeers] = useState(false)
@@ -104,14 +133,17 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
   const loadData = async () => {
     try {
-      const [scoresResponse, analyticsResponse] = await Promise.all([
+      const [scoresResponse, analyticsResponse, ratingsDetailResponse] = await Promise.all([
         fetch(`/api/tastings/${params.id}/scores`),
-        fetch(`/api/tastings/${params.id}/analytics`)
+        fetch(`/api/tastings/${params.id}/analytics`),
+        fetch(`/api/tastings/${params.id}/ratings-detail`)
       ])
       const scoresData = await scoresResponse.json()
       const analyticsData = await analyticsResponse.json()
+      const ratingsDetailData = await ratingsDetailResponse.json()
       setScores(scoresData)
       setAnalytics(analyticsData)
+      setRatingsDetail(ratingsDetailData)
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {
@@ -247,6 +279,19 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         {/* Charts and Analytics */}
         {isClient && analytics && scores.beers.length > 0 && (
           <ScoresCharts scores={scores} analytics={analytics} />
+        )}
+
+        {/* Detailed Ratings Table */}
+        {isClient && ratingsDetail && ratingsDetail.beers.length > 0 && ratingsDetail.participants.length > 0 && (
+          <div className="mt-8 space-y-4">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Einkunnatafla</h2>
+              <p className="text-sm text-muted-foreground">
+                Einkunnir hvers þátttakanda fyrir hvern bjór
+              </p>
+            </div>
+            <RatingsTable participants={ratingsDetail.participants} beers={ratingsDetail.beers} />
+          </div>
         )}
 
         {/* User Statistics - Only show for closed tastings */}

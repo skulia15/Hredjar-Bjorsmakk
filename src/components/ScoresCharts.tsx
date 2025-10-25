@@ -1450,11 +1450,11 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     <span className="font-semibold">{country.beersCount}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">Fjöldi einkunnir:</span>
+                    <span className="text-xs text-muted-foreground">Fjöldi einkunna:</span>
                     <span className="font-semibold">{country.ratingsCount}</span>
                   </div>
                   <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-xs text-muted-foreground">Span:</span>
+                    <span className="text-xs text-muted-foreground">Bil:</span>
                     <span className="text-xs font-semibold">{country.minRating.toFixed(1)} - {country.maxRating.toFixed(1)}</span>
                   </div>
                 </div>
