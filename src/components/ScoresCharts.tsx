@@ -236,6 +236,58 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   // Colors for pie chart
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16']
 
+  // Country to flag emoji mapping
+  const getCountryFlag = (country: string): string => {
+    const flagMap: Record<string, string> = {
+      'Iceland': '🇮🇸',
+      'Germany': '🇩🇪',
+      'USA': '🇺🇸',
+      'United States': '🇺🇸',
+      'UK': '🇬🇧',
+      'United Kingdom': '🇬🇧',
+      'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+      'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+      'Ireland': '🇮🇪',
+      'Belgium': '🇧🇪',
+      'Netherlands': '🇳🇱',
+      'France': '🇫🇷',
+      'Spain': '🇪🇸',
+      'Italy': '🇮🇹',
+      'Portugal': '🇵🇹',
+      'Denmark': '🇩🇰',
+      'Norway': '🇳🇴',
+      'Sweden': '🇸🇪',
+      'Finland': '🇫🇮',
+      'Poland': '🇵🇱',
+      'Czech Republic': '🇨🇿',
+      'Austria': '🇦🇹',
+      'Switzerland': '🇨🇭',
+      'Canada': '🇨🇦',
+      'Mexico': '🇲🇽',
+      'Brazil': '🇧🇷',
+      'Argentina': '🇦🇷',
+      'Australia': '🇦🇺',
+      'New Zealand': '🇳🇿',
+      'Japan': '🇯🇵',
+      'China': '🇨🇳',
+      'South Korea': '🇰🇷',
+      'Estonia': '🇪🇪',
+      'Latvia': '🇱🇻',
+      'Lithuania': '🇱🇹',
+      'Russia': '🇷🇺',
+      'Ukraine': '🇺🇦',
+      'Greece': '🇬🇷',
+      'Croatia': '🇭🇷',
+      'Slovenia': '🇸🇮',
+      'Romania': '🇷🇴',
+      'Hungary': '🇭🇺',
+      'Slovakia': '🇸🇰',
+      'Bulgaria': '🇧🇬',
+      'Serbia': '🇷🇸',
+    }
+    return flagMap[country] || '🌍'
+  }
+
   return (
     <div className="mt-8 space-y-8">
       {/* Rating Trend Over Time Chart */}
@@ -308,7 +360,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       {/* Beer Style Distribution Pie Chart */}
       {analytics.styleDistribution && analytics.styleDistribution.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-xl font-bold mb-4 text-center">Dreifing bjórstegunda</h3>
+          <h3 className="text-xl font-bold mb-4 text-center">Dreifing bjórtegunda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hversu margir bjórar af hverri tegund voru smakkaðir
           </p>
@@ -376,7 +428,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       {/* Rating Distribution Chart */}
       {analytics.ratingDistribution && Object.keys(analytics.ratingDistribution).length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-xl font-bold mb-4 text-center">Dreifing einkunnanna</h3>
+          <h3 className="text-xl font-bold mb-4 text-center">Dreifing einkunna</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hversu oft hver einkunn var gefin
           </p>
@@ -620,8 +672,8 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                             data.controversy === 'Medium' ? 'text-orange-600 font-semibold' :
                             'text-green-600 font-semibold'
                           }>
-                            {data.controversy === 'High' ? '🔥 Mjög umdeilanlegur' :
-                             data.controversy === 'Medium' ? '⚠️ Nokkuð umdeilanlegur' :
+                            {data.controversy === 'High' ? '🔥 Mjög umdeildur' :
+                             data.controversy === 'Medium' ? '⚠️ Nokkuð umdeildur' :
                              '✅ Almennt sammála'}
                           </span>
                         </p>
@@ -822,24 +874,31 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
         </div>
       )}
 
-      {/* Rating Consensus Radar Chart */}
-      {analytics.ratingConsensus && analytics.ratingConsensus.length > 2 && (
+      {/* Rating Consensus Bar Chart */}
+      {analytics.ratingConsensus && analytics.ratingConsensus.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samstaða um bjóra</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hversu sammála voru þátttakendur um hvern bjór? (hærra = meiri samstaða)
           </p>
-          <ResponsiveContainer width="100%" height={450}>
-            <RadarChart data={analytics.ratingConsensus}>
-              <PolarGrid stroke="#94a3b8" opacity={0.3} />
-              <PolarAngleAxis
-                dataKey="name"
-                tick={{ fontSize: 11, fill: '#666' }}
-              />
-              <PolarRadiusAxis
-                angle={90}
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.ratingConsensus.length * 40)}>
+            <BarChart
+              data={[...analytics.ratingConsensus].sort((a, b) => b.consensus - a.consensus)}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
                 domain={[0, 10]}
-                tick={{ fontSize: 10 }}
+                label={{ value: 'Samstaða', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={150}
+                tick={{ fontSize: 11 }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -854,9 +913,15 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                           Staðalfrávik: {data.standardDeviation.toFixed(2)}
                         </p>
                         <p className="text-xs mt-1">
-                          {data.consensus > 8 ? '✅ Mjög sammála' :
-                           data.consensus > 6 ? '👍 Nokkuð sammála' :
-                           '⚠️ Misjafnt álit'}
+                          <span className={
+                            data.consensus > 8 ? 'text-green-600 font-semibold' :
+                            data.consensus > 6 ? 'text-orange-600 font-semibold' :
+                            'text-red-600 font-semibold'
+                          }>
+                            {data.consensus > 8 ? '✅ Mjög sammála' :
+                             data.consensus > 6 ? '👍 Nokkuð sammála' :
+                             '⚠️ Misjafnt álit'}
+                          </span>
                         </p>
                       </div>
                     )
@@ -864,14 +929,24 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Radar
-                name="Samstaða"
+              <Bar
                 dataKey="consensus"
-                stroke="#3b82f6"
-                fill="#3b82f6"
-                fillOpacity={0.6}
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.consensus > 8 ? '#10b981' :
+                               payload.consensus > 6 ? '#f59e0b' : '#ef4444'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
               />
-            </RadarChart>
+            </BarChart>
           </ResponsiveContainer>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Hærri gildi þýða meiri samstöðu (minni ágreiningur)
@@ -1196,7 +1271,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       {/* COUNTRY ANALYTICS - Country Performance Ranking */}
       {analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-xl font-bold mb-4 text-center">Besti og versti upprunalandið</h3>
+          <h3 className="text-xl font-bold mb-4 text-center">Besta og versta upprunaland</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hvaða lönd framleiða bjóra sem fengu hæstu og lægstu meðaleinkunnir?
           </p>
@@ -1225,7 +1300,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     const data = payload[0].payload
                     return (
                       <div className="bg-card border rounded-lg p-3 shadow-lg">
-                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="font-bold text-sm mb-2">{getCountryFlag(data.country)} {data.country}</p>
                         <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
                         <p className="text-sm">Bjórar: <span className="font-semibold">{data.beersCount}</span></p>
                         <p className="text-sm">Einkunnir: <span className="font-semibold">{data.ratingsCount}</span></p>
@@ -1295,6 +1370,56 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
         </div>
       )}
 
+      {/* Detailed Per-Country Statistics */}
+      {analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Tölfræði eftir löndum</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Ítarlegur samanburður á meðaleinkunnir, fjölda bjóra og einkunnir fyrir hvert land
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {analytics.countryPerformanceRanking.map((country, index) => (
+              <div
+                key={country.country}
+                className={`p-4 rounded-lg border-2 ${
+                  country.country === 'Iceland'
+                    ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700'
+                    : 'bg-muted/30 border-muted'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{getCountryFlag(country.country)}</span>
+                    <h4 className="font-semibold text-sm">{country.country}</h4>
+                  </div>
+                  {index === 0 && <span className="text-xl">🥇</span>}
+                  {index === 1 && <span className="text-xl">🥈</span>}
+                  {index === 2 && <span className="text-xl">🥉</span>}
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Meðaleinkunn:</span>
+                    <span className="text-primary font-bold text-lg">{country.averageRating.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Fjöldi bjóra:</span>
+                    <span className="font-semibold">{country.beersCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">Fjöldi einkunnir:</span>
+                    <span className="font-semibold">{country.ratingsCount}</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t">
+                    <span className="text-xs text-muted-foreground">Span:</span>
+                    <span className="text-xs font-semibold">{country.minRating.toFixed(1)} - {country.maxRating.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Country Distribution Pie Chart */}
       {analytics.countryDistribution && analytics.countryDistribution.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
@@ -1329,7 +1454,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     const data = payload[0].payload
                     return (
                       <div className="bg-card border rounded-lg p-3 shadow-lg">
-                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="font-bold text-sm mb-2">{getCountryFlag(data.country)} {data.country}</p>
                         <p className="text-sm">Bjórar: <span className="font-semibold">{data.count}</span></p>
                         <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
                         <p className="text-xs text-muted-foreground mt-1">{data.totalRatings} einkunnir samtals</p>
@@ -1378,14 +1503,14 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   {participant.favoriteCountry && (
                     <div className="bg-green-50 dark:bg-green-950 p-3 rounded">
                       <p className="text-xs text-muted-foreground mb-1">Uppáhalds land</p>
-                      <p className="font-semibold text-green-700 dark:text-green-400">🌍 {participant.favoriteCountry.country}</p>
+                      <p className="font-semibold text-green-700 dark:text-green-400">{getCountryFlag(participant.favoriteCountry.country)} {participant.favoriteCountry.country}</p>
                       <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.favoriteCountry.average.toFixed(2)}</span> ({participant.favoriteCountry.count} bjórar)</p>
                     </div>
                   )}
                   {participant.leastFavoriteCountry && (
                     <div className="bg-red-50 dark:bg-red-950 p-3 rounded">
                       <p className="text-xs text-muted-foreground mb-1">Minnst uppáhalds land</p>
-                      <p className="font-semibold text-red-700 dark:text-red-400">🌍 {participant.leastFavoriteCountry.country}</p>
+                      <p className="font-semibold text-red-700 dark:text-red-400">{getCountryFlag(participant.leastFavoriteCountry.country)} {participant.leastFavoriteCountry.country}</p>
                       <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.leastFavoriteCountry.average.toFixed(2)}</span> ({participant.leastFavoriteCountry.count} bjórar)</p>
                     </div>
                   )}
@@ -1427,7 +1552,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     const data = payload[0].payload
                     return (
                       <div className="bg-card border rounded-lg p-3 shadow-lg">
-                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="font-bold text-sm mb-2">{getCountryFlag(data.country)} {data.country}</p>
                         <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
                         <p className="text-sm">Samstaða: <span className={
                           data.agreement === 'High' ? 'text-green-600 font-semibold' :

@@ -92,6 +92,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isClient, setIsClient] = useState(false)
+  const [showAllBeers, setShowAllBeers] = useState(false)
 
   useEffect(() => {
     setIsClient(true)
@@ -172,49 +173,74 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {scores.beers.map((beer) => (
-              <div
-                key={beer.beerId}
-                className={`p-4 rounded-lg border ${
-                  beer.rank <= 3
-                    ? 'bg-card border-2 border-primary'
-                    : 'bg-card'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      {getMedal(beer.rank) && (
-                        <span className="text-2xl">{getMedal(beer.rank)}</span>
-                      )}
-                      <span className="text-lg font-semibold text-muted-foreground">
-                        #{beer.rank}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-lg truncate">{beer.name}</h3>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {beer.brewery}
-                    </p>
-                    {(beer.containerSize || beer.containerType) && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {beer.containerSize && beer.containerType && (
-                          <span>{beer.containerSize}ml {beer.containerType}</span>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {(showAllBeers ? scores.beers : scores.beers.slice(0, 3)).map((beer) => (
+                <div
+                  key={beer.beerId}
+                  className={`p-4 rounded-lg border ${
+                    beer.rank <= 3
+                      ? 'bg-card border-2 border-primary'
+                      : 'bg-card'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        {getMedal(beer.rank) && (
+                          <span className="text-2xl">{getMedal(beer.rank)}</span>
                         )}
+                        <span className="text-lg font-semibold text-muted-foreground">
+                          #{beer.rank}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-lg truncate">{beer.name}</h3>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {beer.brewery}
                       </p>
-                    )}
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-3xl font-bold text-primary">
-                      {beer.average.toFixed(2)}
+                      {(beer.containerSize || beer.containerType) && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {beer.containerSize && beer.containerType && (
+                            <span>{beer.containerSize}ml {beer.containerType}</span>
+                          )}
+                        </p>
+                      )}
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-3xl font-bold text-primary">
+                        {beer.average.toFixed(2)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+
+            {/* Show More/Less Button */}
+            {scores.beers.length > 3 && (
+              <div className="flex justify-center">
+                <button
+                  onClick={() => setShowAllBeers(!showAllBeers)}
+                  className="px-6 py-3 rounded-lg border bg-card hover:bg-muted transition-colors font-medium"
+                >
+                  {showAllBeers ? (
+                    <>
+                      Fela stigatöflu
+                      <span className="ml-2">↑</span>
+                    </>
+                  ) : (
+                    <>
+                      Sjá alla stigatöflu
+                      <span className="ml-2 text-muted-foreground">({scores.beers.length - 3} bjórar í viðbót)</span>
+                      <span className="ml-2">↓</span>
+                    </>
+                  )}
+                </button>
               </div>
-            ))}
+            )}
           </div>
         )}
 
@@ -291,7 +317,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     {/* Rating consistency */}
                     {participant.ratingVariance > 0 && (
                       <div className="text-xs text-muted-foreground">
-                        Samræmi einkunnanna: {participant.ratingVariance < 1.5 ? 'Mjög samræmi' : participant.ratingVariance < 2.5 ? 'Í meðallagi' : 'Misjafnt'} (σ = {participant.ratingVariance})
+                        Samræmi einkunnanna: {participant.ratingVariance < 1.5 ? 'Mikið samræmi' : participant.ratingVariance < 2.5 ? 'Í meðallagi' : 'Misjafnt'} (σ = {participant.ratingVariance})
                       </div>
                     )}
                   </div>
