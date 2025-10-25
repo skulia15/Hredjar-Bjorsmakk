@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis } from 'recharts'
 
 interface BeerScore {
   beerId: string
@@ -32,6 +32,50 @@ interface StyleDistribution {
   totalRatings: number
 }
 
+interface BeerControversy {
+  beerId: string
+  name: string
+  brewery: string
+  average: number
+  standardDeviation: number
+  ratingsCount: number
+  controversy: string
+}
+
+interface AbvVsRating {
+  beerId: string
+  name: string
+  abv: number
+  averageRating: number
+  ratingsCount: number
+}
+
+interface RatingVelocity {
+  beerId: string
+  name: string
+  durationMinutes: number
+  ratingsCount: number
+  ratingsPerMinute: number
+}
+
+interface ParticipantDeviation {
+  participantId: string
+  userName: string
+  userAverage: number
+  groupAverage: number
+  deviation: number
+  ratingsCount: number
+}
+
+interface RatingConsensus {
+  beerId: string
+  name: string
+  fullName: string
+  consensus: number
+  standardDeviation: number
+  averageRating: number
+}
+
 interface ParticipantStats {
   participantId: string
   userName: string
@@ -50,6 +94,11 @@ interface AnalyticsData {
   ratingDistribution: Record<string, number>
   ratingTrend?: RatingTrendPoint[]
   styleDistribution?: StyleDistribution[]
+  beerControversy?: BeerControversy[]
+  abvVsRating?: AbvVsRating[]
+  ratingVelocity?: RatingVelocity[]
+  participantDeviation?: ParticipantDeviation[]
+  ratingConsensus?: RatingConsensus[]
   beerTimings: BeerTiming[]
 }
 
@@ -399,6 +448,306 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Beer Controversy Index Chart */}
+      {analytics.beerControversy && analytics.beerControversy.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Umdeildir bjórar</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða bjórar vöktu mest ágreining (hár staðalfrávik = meiri ágreiningur)
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.beerControversy.length * 40)}>
+            <BarChart
+              data={analytics.beerControversy}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg max-w-xs">
+                        <p className="font-bold text-sm">{data.name}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{data.brewery}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.average.toFixed(2)}</span></p>
+                        <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        <p className="text-xs mt-1">
+                          <span className={
+                            data.controversy === 'High' ? 'text-red-600 font-semibold' :
+                            data.controversy === 'Medium' ? 'text-orange-600 font-semibold' :
+                            'text-green-600 font-semibold'
+                          }>
+                            {data.controversy === 'High' ? '🔥 Mjög umdeilanlegur' :
+                             data.controversy === 'Medium' ? '⚠️ Nokkuð umdeilanlegur' :
+                             '✅ Almennt sammála'}
+                          </span>
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="standardDeviation"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.controversy === 'High' ? '#ef4444' :
+                               payload.controversy === 'Medium' ? '#f59e0b' : '#10b981'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Hærra staðalfrávik þýðir meiri ágreiningur um bjórinn
+          </p>
+        </div>
+      )}
+
+      {/* ABV vs Rating Scatter Plot */}
+      {analytics.abvVsRating && analytics.abvVsRating.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Áfengisstyrkur vs. Einkunn</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Eru sterkari bjórar metnir hærra eða lægra?
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <ScatterChart margin={{ top: 20, right: 30, bottom: 20, left: 20 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                dataKey="abv"
+                name="ABV"
+                label={{ value: 'Áfengisstyrkur (%)', position: 'insideBottom', offset: -10 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="number"
+                dataKey="averageRating"
+                name="Einkunn"
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg max-w-xs">
+                        <p className="font-bold text-sm">{data.name}</p>
+                        <p className="text-sm mt-1">ABV: <span className="font-semibold">{data.abv}%</span></p>
+                        <p className="text-sm">Einkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-xs text-muted-foreground">{data.ratingsCount} einkunnir</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Scatter data={analytics.abvVsRating} fill="#3b82f6">
+                {analytics.abvVsRating.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Scatter>
+            </ScatterChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Rating Velocity Chart */}
+      {analytics.ratingVelocity && analytics.ratingVelocity.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Hraði einkunnagjaafar</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hversu hratt var bjórum gefin einkunn (hraðar einkunnir = greiðara val)
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.ratingVelocity.length * 40)}>
+            <BarChart
+              data={analytics.ratingVelocity}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Mínútur til einkunnagjaafar', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm">{data.name}</p>
+                        <p className="text-sm mt-1">Tími: <span className="font-semibold">{data.durationMinutes} mín</span></p>
+                        <p className="text-sm">Hraði: <span className="text-primary font-semibold">{data.ratingsPerMinute} einkunnir/mín</span></p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar dataKey="durationMinutes" fill="#10b981" />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Styttri tími getur bent til að bjórinn hafi verið auðveldari í vali
+          </p>
+        </div>
+      )}
+
+      {/* Participant Deviation Scatter Plot */}
+      {analytics.participantDeviation && analytics.participantDeviation.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Einkunnir vs. Hópmeðaltal</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvernig einkunn hver þátttakanda stendur í samanburði við hópinn
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <ScatterChart margin={{ top: 20, right: 30, bottom: 60, left: 60 }}>
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="category"
+                dataKey="userName"
+                name="Þátttakandi"
+                angle={-45}
+                textAnchor="end"
+                height={100}
+                tick={{ fontSize: 11 }}
+              />
+              <YAxis
+                type="number"
+                dataKey="deviation"
+                name="Frávik"
+                label={{ value: 'Frávik frá hópmeðaltali', angle: -90, position: 'insideLeft' }}
+                tick={{ fontSize: 12 }}
+                domain={['dataMin - 0.5', 'dataMax + 0.5']}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">{data.userName}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="font-semibold">{data.userAverage.toFixed(2)}</span></p>
+                        <p className="text-sm">Hópmeðaltal: <span className="font-semibold">{data.groupAverage.toFixed(2)}</span></p>
+                        <p className="text-sm mt-1">Frávik: <span className={data.deviation > 0 ? 'text-green-600 font-semibold' : data.deviation < 0 ? 'text-red-600 font-semibold' : 'font-semibold'}>
+                          {data.deviation > 0 ? '+' : ''}{data.deviation.toFixed(2)}
+                        </span></p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {data.deviation > 0.5 ? '😊 Rausnarlegri en hópurinn' :
+                           data.deviation < -0.5 ? '🤔 Gagnrýnni en hópurinn' :
+                           '👌 Nálægt hópnum'}
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Scatter data={analytics.participantDeviation} fill="#3b82f6">
+                {analytics.participantDeviation.map((entry, index) => {
+                  const fill = entry.deviation > 0.5 ? '#10b981' : entry.deviation < -0.5 ? '#ef4444' : '#3b82f6'
+                  return <Cell key={`cell-${index}`} fill={fill} />
+                })}
+              </Scatter>
+              {/* Reference line at y=0 */}
+              <line x1={0} y1="50%" x2="100%" y2="50%" stroke="#94a3b8" strokeDasharray="5 5" />
+            </ScatterChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Jákvætt frávik = rausnarlegri, Neikvætt frávik = gagnrýnni
+          </p>
+        </div>
+      )}
+
+      {/* Rating Consensus Radar Chart */}
+      {analytics.ratingConsensus && analytics.ratingConsensus.length > 2 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Samstaða um bjóra</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hversu sammála voru þátttakendur um hvern bjór? (hærra = meiri samstaða)
+          </p>
+          <ResponsiveContainer width="100%" height={450}>
+            <RadarChart data={analytics.ratingConsensus}>
+              <PolarGrid stroke="#94a3b8" opacity={0.3} />
+              <PolarAngleAxis
+                dataKey="name"
+                tick={{ fontSize: 11, fill: '#666' }}
+              />
+              <PolarRadiusAxis
+                angle={90}
+                domain={[0, 10]}
+                tick={{ fontSize: 10 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg max-w-xs">
+                        <p className="font-bold text-sm">{data.fullName}</p>
+                        <p className="text-sm mt-1">Samstaða: <span className="font-semibold">{data.consensus.toFixed(2)}/10</span></p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Staðalfrávik: {data.standardDeviation.toFixed(2)}
+                        </p>
+                        <p className="text-xs mt-1">
+                          {data.consensus > 8 ? '✅ Mjög sammála' :
+                           data.consensus > 6 ? '👍 Nokkuð sammála' :
+                           '⚠️ Misjafnt álit'}
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Radar
+                name="Samstaða"
+                dataKey="consensus"
+                stroke="#3b82f6"
+                fill="#3b82f6"
+                fillOpacity={0.6}
+              />
+            </RadarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Hærri gildi þýða meiri samstöðu (minni ágreiningur)
+          </p>
         </div>
       )}
     </div>

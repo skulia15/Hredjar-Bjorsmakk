@@ -187,6 +187,124 @@ export async function GET(
         };
       });
 
+    // Calculate beer controversy (standard deviation of ratings per beer)
+    const beerControversy = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished' && beer.ratings.length > 1)
+      .map(beer => {
+        const ratings = beer.ratings.map(r => r.score);
+        const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
+        const variance = ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / ratings.length;
+        const stdDev = Math.sqrt(variance);
+
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+        const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
+
+        return {
+          beerId: beer.id,
+          name,
+          brewery,
+          average: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          ratingsCount: ratings.length,
+          controversy: stdDev > 2 ? 'High' : stdDev > 1 ? 'Medium' : 'Low'
+        };
+      })
+      .sort((a, b) => b.standardDeviation - a.standardDeviation);
+
+    // Calculate ABV vs Rating correlation
+    const abvVsRating = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished' && beer.ratings.length > 0)
+      .map(beer => {
+        const abv = beer.beer?.abv || beer.customAbv;
+        if (!abv) return null;
+
+        const ratings = beer.ratings.map(r => r.score);
+        const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+
+        return {
+          beerId: beer.id,
+          name,
+          abv,
+          averageRating: Number(average.toFixed(2)),
+          ratingsCount: ratings.length
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => a.abv - b.abv);
+
+    // Calculate rating velocity (time to collect all ratings per beer)
+    const ratingVelocity = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished' && beer.currentSince && beer.ratings.length > 0)
+      .map(beer => {
+        const startTime = new Date(beer.currentSince!).getTime();
+
+        // Find the time of the last rating for this beer
+        const ratingTimes = beer.ratings.map(r => new Date(r.createdAt).getTime());
+        const lastRatingTime = Math.max(...ratingTimes);
+
+        const durationMinutes = (lastRatingTime - startTime) / 1000 / 60;
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+
+        return {
+          beerId: beer.id,
+          name,
+          durationMinutes: Math.round(durationMinutes * 10) / 10,
+          ratingsCount: beer.ratings.length,
+          ratingsPerMinute: Number((beer.ratings.length / durationMinutes).toFixed(2))
+        };
+      })
+      .sort((a, b) => a.durationMinutes - b.durationMinutes);
+
+    // Calculate participant deviation from group average
+    const participantDeviation = tasting.participants.map(p => {
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings.filter(r => r.participantId === p.id).map(r => r.score)
+      );
+
+      if (userRatings.length === 0) return null;
+
+      const userAverage = userRatings.reduce((sum, score) => sum + score, 0) / userRatings.length;
+      const deviation = userAverage - overallAverage;
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        userAverage: Number(userAverage.toFixed(2)),
+        groupAverage: Number(overallAverage.toFixed(2)),
+        deviation: Number(deviation.toFixed(2)),
+        ratingsCount: userRatings.length
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => b.deviation - a.deviation);
+
+    // Calculate rating consensus per beer (for radar chart)
+    const ratingConsensus = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished' && beer.ratings.length > 1)
+      .map(beer => {
+        const ratings = beer.ratings.map(r => r.score);
+        const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
+        const variance = ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / ratings.length;
+        const stdDev = Math.sqrt(variance);
+
+        // Consensus score: inverse of standard deviation (higher = more consensus)
+        // Normalize to 0-10 scale
+        const consensusScore = Math.max(0, 10 - (stdDev * 2));
+
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+
+        return {
+          beerId: beer.id,
+          name: name.length > 20 ? name.substring(0, 20) + '...' : name,
+          fullName: name,
+          consensus: Number(consensusScore.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          averageRating: Number(average.toFixed(2))
+        };
+      })
+      .slice(0, 8);  // Limit to 8 beers for radar chart readability
+
     // Enhanced participant statistics with per-user details
     const participantStats = tasting.participants.map(p => {
       // Get all ratings from this participant
@@ -283,6 +401,11 @@ export async function GET(
       ratingDistribution,
       ratingTrend,
       styleDistribution,
+      beerControversy,
+      abvVsRating,
+      ratingVelocity,
+      participantDeviation,
+      ratingConsensus,
       beerTimings,
       beerParticipation,
       topRatedBeers,
