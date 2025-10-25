@@ -612,9 +612,9 @@ export async function GET(
     // 2. Local vs International Comparison
     const localVsInternational = (() => {
       const icelandicBeers = tasting.tastingBeers
-        .filter(beer => beer.status === 'finished' && beer.beer?.country === 'Iceland');
+        .filter(beer => beer.status === 'finished' && beer.beer?.country === 'Ísland');
       const internationalBeers = tasting.tastingBeers
-        .filter(beer => beer.status === 'finished' && beer.beer?.country && beer.beer.country !== 'Iceland');
+        .filter(beer => beer.status === 'finished' && beer.beer?.country && beer.beer.country !== 'Ísland');
 
       const icelandicRatings = icelandicBeers.flatMap(beer => beer.ratings.map(r => r.score));
       const internationalRatings = internationalBeers.flatMap(beer => beer.ratings.map(r => r.score));
