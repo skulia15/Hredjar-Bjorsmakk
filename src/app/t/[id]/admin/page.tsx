@@ -636,7 +636,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           {activeTab === 'participation' && (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">
-                Skoða þátttakendasynjuna
+                Skoða þátttakendasýn
               </p>
               <Link
                 href={`/t/${params.id}/rate`}

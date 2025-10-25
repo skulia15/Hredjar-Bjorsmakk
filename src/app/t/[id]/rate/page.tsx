@@ -58,6 +58,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
     pendingCount: number
     pending: Array<{ participantId: string; name: string; code: string }>
   } | null>(null)
+  const [hasRated, setHasRated] = useState(false)
 
   // Wrap-up overlay state
   const [showWrapUp, setShowWrapUp] = useState(false)
@@ -186,9 +187,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
           )
           if (existingRating) {
             setRating(existingRating.score)
+            setHasRated(true)
           } else {
             // Reset to 0 for new beer
             setRating(0)
+            setHasRated(false)
           }
         })
         .catch(err => console.error('Error loading existing rating:', err))
@@ -266,12 +269,36 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       }
 
       setMessage('Einkunn hefur verið skráð!')
+      setHasRated(true)
       setTimeout(() => setMessage(''), 3000)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Error submitting rating')
       setTimeout(() => setMessage(''), 5000)
     } finally {
       setSubmitting(false)
+    }
+  }
+
+  // Leader control handlers
+  const handleFinishBeer = async () => {
+    if (!currentBeer) return
+    if (!confirm('Klára þennan bjór? Þátttakendur munu ekki geta gefið honum einkunn lengur.')) return
+
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/beers/${currentBeer.id}/finish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userName: participantInfo?.name || 'leader' })
+      })
+
+      if (!response.ok) throw new Error('Failed to finish beer')
+
+      setMessage('Bjór kláraður!')
+      setTimeout(() => setMessage(''), 3000)
+      loadTasting(false)
+    } catch (error) {
+      setMessage('Villa við að klára bjór')
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
@@ -327,7 +354,13 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
 
   // Show leaderboard if no current beer and we've shown wrap-up before
   if (!currentBeer && (showLeaderboard || tasting.beers?.some(b => b.status === 'finished'))) {
-    return <LeaderboardWaiting tastingId={params.id} />
+    return (
+      <LeaderboardWaiting
+        tastingId={params.id}
+        isLeader={tasting.currentUserIsLeader}
+        participantName={participantInfo?.name}
+      />
+    )
   }
 
   // Show basic waiting state if no current beer and no finished beers yet
@@ -472,7 +505,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               disabled={submitting}
               className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
             >
-              {submitting ? 'Skrái...' : 'Skrá einkunn'}
+              {submitting ? 'Skrái...' : hasRated ? 'Uppfæra einkunn' : 'Skrá einkunn'}
             </button>
           </form>
         </div>
@@ -525,6 +558,24 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
                 🎉 Allir hafa gefið einkunn!
               </p>
             )}
+          </div>
+        )}
+
+        {/* Leader Controls */}
+        {!isEmbedded && tasting.currentUserIsLeader && currentBeer && (
+          <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border-2 border-amber-500 space-y-3">
+            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Leiðtogastýringar
+            </div>
+            <button
+              onClick={handleFinishBeer}
+              className="w-full px-4 py-2.5 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 transition-colors"
+            >
+              Klára þennan bjór
+            </button>
           </div>
         )}
 

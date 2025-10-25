@@ -86,6 +86,69 @@ interface ParticipantStats {
   averageRating: number
 }
 
+interface StylePerformanceRanking {
+  style: string
+  beersCount: number
+  ratingsCount: number
+  averageRating: number
+  standardDeviation: number
+  minRating: number
+  maxRating: number
+}
+
+interface StyleRatingSpread {
+  style: string
+  beersCount: number
+  ratingsCount: number
+  standardDeviation: number
+  agreement: string
+}
+
+interface StyleRatingDistribution {
+  style: string
+  beersCount: number
+  ratingsCount: number
+  min: number
+  q1: number
+  median: number
+  q3: number
+  max: number
+  average: number
+}
+
+interface ParticipantStylePreferences {
+  participantId: string
+  userName: string
+  favoriteStyle: { style: string; average: number; count: number } | null
+  leastFavoriteStyle: { style: string; average: number; count: number } | null
+  allStylePreferences: Array<{ style: string; average: number; count: number }>
+}
+
+interface UnanimousRating {
+  beerId: string
+  name: string
+  brewery: string
+  average: number
+  standardDeviation: number
+  ratingsCount: number
+  minRating: number
+  maxRating: number
+  range: number
+  unanimity: string
+}
+
+interface ParticipantRatingSpread {
+  participantId: string
+  userName: string
+  ratingsCount: number
+  minRating: number
+  maxRating: number
+  range: number
+  average: number
+  standardDeviation: number
+  ratingStyle: string
+}
+
 interface AnalyticsData {
   overview: {
     averageTimePerBeer: number | null
@@ -100,6 +163,13 @@ interface AnalyticsData {
   participantDeviation?: ParticipantDeviation[]
   ratingConsensus?: RatingConsensus[]
   beerTimings: BeerTiming[]
+  // New analytics
+  stylePerformanceRanking?: StylePerformanceRanking[]
+  styleRatingSpread?: StyleRatingSpread[]
+  styleRatingDistribution?: StyleRatingDistribution[]
+  participantStylePreferences?: ParticipantStylePreferences[]
+  unanimousRatings?: UnanimousRating[]
+  participantRatingSpread?: ParticipantRatingSpread[]
 }
 
 interface ScoresChartsProps {
@@ -190,14 +260,17 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
-                data={analytics.styleDistribution}
+                data={analytics.styleDistribution.map(({ style: _style, ...item }) => ({
+                  ...item,
+                  beerStyle: _style
+                }))}
                 dataKey="count"
-                nameKey="style"
+                nameKey="beerStyle"
                 cx="50%"
                 cy="50%"
                 outerRadius={120}
-                label={({ style, count, percent }) =>
-                  `${style}: ${count} (${(percent * 100).toFixed(0)}%)`
+                label={({ beerStyle, count, percent }: any) =>
+                  `${beerStyle}: ${count} (${((percent as number) * 100).toFixed(0)}%)`
                 }
                 labelLine={true}
               >
@@ -747,6 +820,314 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           </ResponsiveContainer>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Hærri gildi þýða meiri samstöðu (minni ágreiningur)
+          </p>
+        </div>
+      )}
+
+      {/* NEW ANALYTICS - Style Performance Ranking */}
+      {analytics.stylePerformanceRanking && analytics.stylePerformanceRanking.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Besti og versti bjórstíllinn</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða bjórstíllar fengu hæstu og lægstu meðaleinkunnir?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.stylePerformanceRanking.length * 40)}>
+            <BarChart
+              data={analytics.stylePerformanceRanking}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="style"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">{data.style}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.beersCount}</span></p>
+                        <p className="text-sm">Einkunnir: <span className="font-semibold">{data.ratingsCount}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">Span: {data.minRating.toFixed(1)} - {data.maxRating.toFixed(1)}</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar dataKey="averageRating" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Style Rating Spread - Agreement levels */}
+      {analytics.styleRatingSpread && analytics.styleRatingSpread.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Samstaða um bjórstíla</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða bjórstíllar vöktu mest og minnst ágreining?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.styleRatingSpread.length * 40)}>
+            <BarChart
+              data={analytics.styleRatingSpread}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="style"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">{data.style}</p>
+                        <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        <p className="text-sm">Samstaða: <span className={
+                          data.agreement === 'High' ? 'text-green-600 font-semibold' :
+                          data.agreement === 'Medium' ? 'text-orange-600 font-semibold' :
+                          'text-red-600 font-semibold'
+                        }>{data.agreement === 'High' ? '✅ Há' : data.agreement === 'Medium' ? '⚠️ Miðlungs' : '🔥 Lág'}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.ratingsCount} einkunnir</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="standardDeviation"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.agreement === 'High' ? '#10b981' :
+                               payload.agreement === 'Medium' ? '#f59e0b' : '#ef4444'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Lægra staðalfrávik = meiri samstaða um stílinn
+          </p>
+        </div>
+      )}
+
+      {/* Participant Style Preferences */}
+      {analytics.participantStylePreferences && analytics.participantStylePreferences.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds bjórstíllar þátttakenda</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða bjórstíllar fengu hæstar og lægstar einkunnir frá hverjum þátttakanda?
+          </p>
+          <div className="space-y-4">
+            {analytics.participantStylePreferences.map((participant) => (
+              <div key={participant.participantId} className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">{participant.userName}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {participant.favoriteStyle && (
+                    <div className="bg-green-50 dark:bg-green-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Uppáhald</p>
+                      <p className="font-semibold text-green-700 dark:text-green-400">{participant.favoriteStyle.style}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.favoriteStyle.average.toFixed(2)}</span> ({participant.favoriteStyle.count} bjórar)</p>
+                    </div>
+                  )}
+                  {participant.leastFavoriteStyle && (
+                    <div className="bg-red-50 dark:bg-red-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Minnst uppáhald</p>
+                      <p className="font-semibold text-red-700 dark:text-red-400">{participant.leastFavoriteStyle.style}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.leastFavoriteStyle.average.toFixed(2)}</span> ({participant.leastFavoriteStyle.count} bjórar)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Unanimous Ratings */}
+      {analytics.unanimousRatings && analytics.unanimousRatings.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Bjórar með minnstum ágreiningi</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Bjórar þar sem þátttakendur voru mest sammála um einkunnina
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.unanimousRatings.length * 40)}>
+            <BarChart
+              data={analytics.unanimousRatings}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="name"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg max-w-xs">
+                        <p className="font-bold text-sm">{data.name}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{data.brewery}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.average.toFixed(2)}</span></p>
+                        <p className="text-sm">Span: <span className="font-semibold">{data.minRating.toFixed(1)} - {data.maxRating.toFixed(1)}</span> (bil: {data.range.toFixed(1)})</p>
+                        <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        <p className="text-xs mt-1">
+                          <span className={
+                            data.unanimity === 'Very High' ? 'text-green-600 font-semibold' :
+                            data.unanimity === 'High' ? 'text-green-500 font-semibold' :
+                            'text-orange-600 font-semibold'
+                          }>
+                            {data.unanimity === 'Very High' ? '✅ Mjög há samstaða' :
+                             data.unanimity === 'High' ? '✅ Há samstaða' :
+                             '👍 Góð samstaða'}
+                          </span>
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="standardDeviation"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.unanimity === 'Very High' ? '#10b981' :
+                               payload.unanimity === 'High' ? '#14b8a6' : '#f59e0b'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Lægra staðalfrávik þýðir meiri samstöðu um bjórinn
+          </p>
+        </div>
+      )}
+
+      {/* Participant Rating Spread */}
+      {analytics.participantRatingSpread && analytics.participantRatingSpread.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Einkunna-svið þátttakenda</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hver hefur breiðasta og þrengsta einkunna-sviðið?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.participantRatingSpread.length * 40)}>
+            <BarChart
+              data={analytics.participantRatingSpread}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Einkunna-svið (max - min)', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="userName"
+                width={100}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">{data.userName}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="font-semibold">{data.average.toFixed(2)}</span></p>
+                        <p className="text-sm">Lægsta: <span className="font-semibold">{data.minRating.toFixed(1)}</span></p>
+                        <p className="text-sm">Hæsta: <span className="font-semibold">{data.maxRating.toFixed(1)}</span></p>
+                        <p className="text-sm">Svið: <span className="text-primary font-semibold">{data.range.toFixed(1)}</span></p>
+                        <p className="text-xs mt-1">
+                          <span className={
+                            data.ratingStyle === 'Consistent' ? 'text-green-600 font-semibold' :
+                            data.ratingStyle === 'Moderate' ? 'text-orange-600 font-semibold' :
+                            'text-red-600 font-semibold'
+                          }>
+                            {data.ratingStyle === 'Consistent' ? '✅ Stöðugur' :
+                             data.ratingStyle === 'Moderate' ? '⚠️ Miðlungs' :
+                             '🔥 Breitt svið'}
+                          </span>
+                        </p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="range"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.ratingStyle === 'Consistent' ? '#10b981' :
+                               payload.ratingStyle === 'Moderate' ? '#f59e0b' : '#ef4444'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Breitt svið getur þýtt að þátttakandi sé nákvæmari í vali, eða smakki fleiri bjórtegundir
           </p>
         </div>
       )}

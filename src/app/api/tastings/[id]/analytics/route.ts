@@ -386,6 +386,184 @@ export async function GET(
       };
     }).sort((a, b) => b.ratingsCount - a.ratingsCount);
 
+    // 1. Style Performance Ranking - which styles got highest/lowest average ratings
+    const stylePerformanceRanking = Object.entries(styleStats)
+      .map(([style, data]) => {
+        const average = data.ratings.length > 0
+          ? data.totalRating / data.ratings.length
+          : 0;
+
+        // Calculate standard deviation for this style
+        const variance = data.ratings.length > 1
+          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
+          : 0;
+        const stdDev = Math.sqrt(variance);
+
+        return {
+          style,
+          beersCount: data.count,
+          ratingsCount: data.ratings.length,
+          averageRating: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          minRating: data.ratings.length > 0 ? Math.min(...data.ratings) : 0,
+          maxRating: data.ratings.length > 0 ? Math.max(...data.ratings) : 0
+        };
+      })
+      .filter(s => s.beersCount > 0)
+      .sort((a, b) => b.averageRating - a.averageRating);
+
+    // 2. Style Rating Spread - which styles had most/least agreement
+    const styleRatingSpread = stylePerformanceRanking
+      .map(style => ({
+        style: style.style,
+        beersCount: style.beersCount,
+        ratingsCount: style.ratingsCount,
+        standardDeviation: style.standardDeviation,
+        agreement: style.standardDeviation < 1 ? 'High' : style.standardDeviation < 2 ? 'Medium' : 'Low'
+      }))
+      .sort((a, b) => a.standardDeviation - b.standardDeviation);
+
+    // 3. Rating Distribution per Style - for box plot visualization
+    const styleRatingDistribution = Object.entries(styleStats)
+      .map(([style, data]) => {
+        if (data.ratings.length === 0) return null;
+
+        const sorted = [...data.ratings].sort((a, b) => a - b);
+        const average = data.totalRating / data.ratings.length;
+
+        const q1Index = Math.floor(sorted.length * 0.25);
+        const q2Index = Math.floor(sorted.length * 0.5);
+        const q3Index = Math.floor(sorted.length * 0.75);
+
+        return {
+          style,
+          beersCount: data.count,
+          ratingsCount: data.ratings.length,
+          min: sorted[0],
+          q1: sorted[q1Index],
+          median: sorted[q2Index],
+          q3: sorted[q3Index],
+          max: sorted[sorted.length - 1],
+          average: Number(average.toFixed(2))
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .sort((a, b) => b.average - a.average);
+
+    // 4. Participant Style Preferences - each person's favorite/least favorite styles
+    const participantStylePreferences = tasting.participants.map(p => {
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings
+          .filter(r => r.participantId === p.id)
+          .map(rating => ({
+            score: rating.score,
+            styles: beer.beer?.styles || (beer.customStyle ? [beer.customStyle] : [])
+          }))
+      );
+
+      // Group ratings by style
+      const styleRatings = userRatings
+        .flatMap(r => r.styles.map(style => ({ style, score: r.score })))
+        .reduce((acc, { style, score }) => {
+          if (!acc[style]) {
+            acc[style] = { scores: [], count: 0 };
+          }
+          acc[style].scores.push(score);
+          acc[style].count++;
+          return acc;
+        }, {} as Record<string, { scores: number[], count: number }>);
+
+      const styleAverages = Object.entries(styleRatings)
+        .map(([style, data]) => ({
+          style,
+          average: data.scores.reduce((sum, s) => sum + s, 0) / data.count,
+          count: data.count
+        }))
+        .filter(s => s.count >= 2)  // Only include styles with at least 2 ratings
+        .sort((a, b) => b.average - a.average);
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        favoriteStyle: styleAverages[0] ? {
+          style: styleAverages[0].style,
+          average: Number(styleAverages[0].average.toFixed(2)),
+          count: styleAverages[0].count
+        } : null,
+        leastFavoriteStyle: styleAverages[styleAverages.length - 1] && styleAverages.length > 1 ? {
+          style: styleAverages[styleAverages.length - 1].style,
+          average: Number(styleAverages[styleAverages.length - 1].average.toFixed(2)),
+          count: styleAverages[styleAverages.length - 1].count
+        } : null,
+        allStylePreferences: styleAverages.map(s => ({
+          style: s.style,
+          average: Number(s.average.toFixed(2)),
+          count: s.count
+        }))
+      };
+    })
+    .filter(p => p.favoriteStyle !== null);
+
+    // 5. Unanimous Ratings - beers where everyone gave same or very similar scores
+    const unanimousRatings = tasting.tastingBeers
+      .filter(beer => beer.status === 'finished' && beer.ratings.length >= Math.max(2, totalParticipants * 0.5))
+      .map(beer => {
+        const ratings = beer.ratings.map(r => r.score);
+        const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
+        const variance = ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / ratings.length;
+        const stdDev = Math.sqrt(variance);
+
+        const name = beer.beer?.name || beer.customName || 'Unknown';
+        const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
+
+        return {
+          beerId: beer.id,
+          name,
+          brewery,
+          average: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          ratingsCount: ratings.length,
+          minRating: Math.min(...ratings),
+          maxRating: Math.max(...ratings),
+          range: Number((Math.max(...ratings) - Math.min(...ratings)).toFixed(2)),
+          unanimity: stdDev < 0.5 ? 'Very High' : stdDev < 1 ? 'High' : stdDev < 1.5 ? 'Medium' : 'Low'
+        };
+      })
+      .filter(beer => beer.standardDeviation < 1.5)  // Only show beers with reasonable agreement
+      .sort((a, b) => a.standardDeviation - b.standardDeviation);
+
+    // 6. Participant Rating Spread - who has the widest/narrowest rating range
+    const participantRatingSpread = tasting.participants.map(p => {
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings.filter(r => r.participantId === p.id).map(r => r.score)
+      );
+
+      if (userRatings.length < 2) return null;
+
+      const min = Math.min(...userRatings);
+      const max = Math.max(...userRatings);
+      const range = max - min;
+      const average = userRatings.reduce((sum, score) => sum + score, 0) / userRatings.length;
+
+      // Calculate standard deviation
+      const variance = userRatings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / userRatings.length;
+      const stdDev = Math.sqrt(variance);
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        ratingsCount: userRatings.length,
+        minRating: min,
+        maxRating: max,
+        range: Number(range.toFixed(2)),
+        average: Number(average.toFixed(2)),
+        standardDeviation: Number(stdDev.toFixed(2)),
+        ratingStyle: range < 3 ? 'Consistent' : range < 5 ? 'Moderate' : 'Wide Range'
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => b.range - a.range);
+
     return NextResponse.json({
       overview: {
         tastingId: tasting.id,
@@ -409,7 +587,14 @@ export async function GET(
       beerTimings,
       beerParticipation,
       topRatedBeers,
-      participantStats
+      participantStats,
+      // New analytics
+      stylePerformanceRanking,
+      styleRatingSpread,
+      styleRatingDistribution,
+      participantStylePreferences,
+      unanimousRatings,
+      participantRatingSpread
     });
 
   } catch (error) {
