@@ -74,6 +74,7 @@ export async function GET(
       const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
       const styles = tastingBeer.beer?.styles || (tastingBeer.customStyle ? [tastingBeer.customStyle] : []);
       const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
+      const country = tastingBeer.beer?.country || null;
       const containerSize = tastingBeer.beer?.containerSize || null;
       const containerType = tastingBeer.beer?.containerType || null;
       const priceISK = tastingBeer.beer?.priceISK || null;
@@ -85,6 +86,7 @@ export async function GET(
         brewery,
         styles,
         abv,
+        country,
         containerSize,
         containerType,
         priceISK,
