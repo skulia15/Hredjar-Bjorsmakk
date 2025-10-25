@@ -362,7 +362,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     {/* Rating consistency */}
                     {participant.ratingVariance > 0 && (
                       <div className="text-xs text-muted-foreground">
-                        Samræmi einkunnanna: {participant.ratingVariance < 1.5 ? 'Mikið samræmi' : participant.ratingVariance < 2.5 ? 'Í meðallagi' : 'Misjafnt'} (σ = {participant.ratingVariance})
+                        Samræmi einkunna: {participant.ratingVariance < 1.5 ? 'Mikið samræmi' : participant.ratingVariance < 2.5 ? 'Í meðallagi' : 'Misjafnt'} (σ = {participant.ratingVariance})
                       </div>
                     )}
                   </div>

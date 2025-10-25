@@ -179,7 +179,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
       <div className="bg-card p-4 rounded-lg border">
         <h3 className="font-semibold mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5" />
-          Dreifing einkunnanna
+          Dreifing einkunna
         </h3>
         <div className="space-y-1">
           {Object.entries(ratingDistribution)

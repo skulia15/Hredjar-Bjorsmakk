@@ -337,7 +337,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       {/* Rating Trend Over Time Chart */}
       {analytics.ratingTrend && analytics.ratingTrend.length > 1 && (
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunnanna í gegnum smökkunina</h3>
+          <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunna í gegnum smökkunina</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hvernig meðaleinkunnir breytast eftir því sem bjórum fjölgar
           </p>
@@ -668,7 +668,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <Bar dataKey="averageRating" fill="#3b82f6" />
               <Bar dataKey="ratingsCount" fill="#94a3b8" />
               <Legend
-                formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunnanna'}
+                formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunna'}
               />
             </BarChart>
           </ResponsiveContainer>
