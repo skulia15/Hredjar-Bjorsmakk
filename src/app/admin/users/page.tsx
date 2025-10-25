@@ -197,7 +197,7 @@ export default function AdminUsersPage() {
                       )}
                     </div>
                     <div className="flex gap-4 text-sm text-muted-foreground mt-1">
-                      <span>{user.tastingCount} smakkanir{user.tastingCount !== 1 ? 'ar' : ''}</span>
+                      <span>{user.tastingCount} smakkanir</span>
                       <span>{user.ratingCount} einkunn{user.ratingCount !== 1 ? 'ir' : ''}</span>
                       <span>Skráður {new Date(user.createdAt).toLocaleDateString()}</span>
                     </div>

@@ -37,6 +37,102 @@ interface Tasting {
   currentUserIsLeader?: boolean
 }
 
+// Country to flag emoji mapping (Icelandic country names)
+const getCountryFlag = (country: string): string => {
+  const flagMap: Record<string, string> = {
+    // Icelandic names
+    'Ísland': '🇮🇸',
+    'Þýskaland': '🇩🇪',
+    'Bandaríkin': '🇺🇸',
+    'Bretland': '🇬🇧',
+    'Írland': '🇮🇪',
+    'Belgía': '🇧🇪',
+    'Holland': '🇳🇱',
+    'Frakkland': '🇫🇷',
+    'Spánn': '🇪🇸',
+    'Ítalía': '🇮🇹',
+    'Portúgal': '🇵🇹',
+    'Danmörk': '🇩🇰',
+    'Noregur': '🇳🇴',
+    'Svíþjóð': '🇸🇪',
+    'Finnland': '🇫🇮',
+    'Pólland': '🇵🇱',
+    'Tékkland': '🇨🇿',
+    'Austurríki': '🇦🇹',
+    'Sviss': '🇨🇭',
+    'Kanada': '🇨🇦',
+    'Mexíkó': '🇲🇽',
+    'Brasilía': '🇧🇷',
+    'Argentína': '🇦🇷',
+    'Ástralía': '🇦🇺',
+    'Nýja-Sjáland': '🇳🇿',
+    'Kína': '🇨🇳',
+    'Suður-Kórea': '🇰🇷',
+    'Eistland': '🇪🇪',
+    'Lettland': '🇱🇻',
+    'Litháen': '🇱🇹',
+    'Rússland': '🇷🇺',
+    'Úkraína': '🇺🇦',
+    'Grikkland': '🇬🇷',
+    'Króatía': '🇭🇷',
+    'Slóvenía': '🇸🇮',
+    'Rúmenía': '🇷🇴',
+    'Ungverjaland': '🇭🇺',
+    'Slóvakía': '🇸🇰',
+    'Búlgaría': '🇧🇬',
+    'Serbía': '🇷🇸',
+    'Færeyjar': '🇫🇴',
+    // English names (fallback)
+    'Iceland': '🇮🇸',
+    'Germany': '🇩🇪',
+    'USA': '🇺🇸',
+    'United States': '🇺🇸',
+    'UK': '🇬🇧',
+    'United Kingdom': '🇬🇧',
+    'England': '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
+    'Scotland': '🏴󠁧󠁢󠁳󠁣󠁴󠁿',
+    'Ireland': '🇮🇪',
+    'Belgium': '🇧🇪',
+    'Netherlands': '🇳🇱',
+    'France': '🇫🇷',
+    'Spain': '🇪🇸',
+    'Italy': '🇮🇹',
+    'Portugal': '🇵🇹',
+    'Denmark': '🇩🇰',
+    'Norway': '🇳🇴',
+    'Sweden': '🇸🇪',
+    'Finland': '🇫🇮',
+    'Poland': '🇵🇱',
+    'Czech Republic': '🇨🇿',
+    'Austria': '🇦🇹',
+    'Switzerland': '🇨🇭',
+    'Canada': '🇨🇦',
+    'Mexico': '🇲🇽',
+    'Brazil': '🇧🇷',
+    'Argentina': '🇦🇷',
+    'Australia': '🇦🇺',
+    'New Zealand': '🇳🇿',
+    'Japan': '🇯🇵',
+    'China': '🇨🇳',
+    'South Korea': '🇰🇷',
+    'Estonia': '🇪🇪',
+    'Latvia': '🇱🇻',
+    'Lithuania': '🇱🇹',
+    'Russia': '🇷🇺',
+    'Ukraine': '🇺🇦',
+    'Greece': '🇬🇷',
+    'Croatia': '🇭🇷',
+    'Slovenia': '🇸🇮',
+    'Romania': '🇷🇴',
+    'Hungary': '🇭🇺',
+    'Slovakia': '🇸🇰',
+    'Bulgaria': '🇧🇬',
+    'Serbia': '🇷🇸',
+    'Faroe Islands': '🇫🇴',
+  }
+  return flagMap[country] || '🌍'
+}
+
 export default function RatePage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const router = useRouter()
@@ -442,7 +538,7 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             <p className="text-lg text-muted-foreground">{currentBeer.brewery}</p>
             {currentBeer.country && (
               <p className="text-sm text-muted-foreground mt-1">
-                🌍 {currentBeer.country}
+                {getCountryFlag(currentBeer.country)} {currentBeer.country}
               </p>
             )}
             {currentBeer.style && (
