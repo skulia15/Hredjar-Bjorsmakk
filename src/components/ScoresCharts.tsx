@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts'
 
 interface BeerScore {
   beerId: string
@@ -15,6 +15,14 @@ interface BeerTiming {
   beerId: string
   name: string
   durationMinutes: number
+}
+
+interface RatingTrendPoint {
+  beerIndex: number
+  beerId: string
+  name: string
+  average: number
+  ratingsCount: number
 }
 
 interface ParticipantStats {
@@ -33,6 +41,7 @@ interface AnalyticsData {
   }
   participantStats: ParticipantStats[]
   ratingDistribution: Record<string, number>
+  ratingTrend?: RatingTrendPoint[]
   beerTimings: BeerTiming[]
 }
 
@@ -44,6 +53,73 @@ interface ScoresChartsProps {
 export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   return (
     <div className="mt-8 space-y-8">
+      {/* Rating Trend Over Time Chart */}
+      {analytics.ratingTrend && analytics.ratingTrend.length > 1 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunnanna í gegnum smökkunina</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvernig meðaleinkunnir breytast eftir því sem bjórum fjölgar
+          </p>
+          <ResponsiveContainer width="100%" height={350}>
+            <LineChart
+              data={analytics.ratingTrend}
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                dataKey="beerIndex"
+                label={{ value: 'Bjór númer', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
+                tick={{ fontSize: 12 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg max-w-xs">
+                        <p className="font-bold text-sm">Bjór #{data.beerIndex}</p>
+                        <p className="text-xs text-muted-foreground mb-2">{data.name}</p>
+                        <p className="text-primary font-semibold">Einkunn: {data.average.toFixed(2)}</p>
+                        <p className="text-xs text-muted-foreground">{data.ratingsCount} þátttakendur</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="average"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                dot={{ fill: '#3b82f6', r: 5 }}
+                activeDot={{ r: 7 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+          <div className="mt-4 text-center text-sm text-muted-foreground">
+            {analytics.ratingTrend[0].average < analytics.ratingTrend[analytics.ratingTrend.length - 1].average ? (
+              <p className="text-green-600 font-medium">
+                📈 Hækkandi þróun: Einkunnir hækkuðu frá {analytics.ratingTrend[0].average.toFixed(2)} í {analytics.ratingTrend[analytics.ratingTrend.length - 1].average.toFixed(2)}
+              </p>
+            ) : analytics.ratingTrend[0].average > analytics.ratingTrend[analytics.ratingTrend.length - 1].average ? (
+              <p className="text-orange-600 font-medium">
+                📉 Lækkandi þróun: Einkunnir lækkuðu frá {analytics.ratingTrend[0].average.toFixed(2)} í {analytics.ratingTrend[analytics.ratingTrend.length - 1].average.toFixed(2)}
+              </p>
+            ) : (
+              <p>
+                ➡️ Stöðug þróun: Einkunnir haldast í kringum {analytics.ratingTrend[0].average.toFixed(2)}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Rating Distribution Chart */}
       {analytics.ratingDistribution && Object.keys(analytics.ratingDistribution).length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
