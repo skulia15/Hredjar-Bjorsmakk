@@ -149,6 +149,55 @@ interface ParticipantRatingSpread {
   ratingStyle: string
 }
 
+interface CountryPerformanceRanking {
+  country: string
+  beersCount: number
+  ratingsCount: number
+  averageRating: number
+  standardDeviation: number
+  minRating: number
+  maxRating: number
+}
+
+interface LocalVsInternational {
+  icelandic: {
+    beersCount: number
+    ratingsCount: number
+    averageRating: number
+  }
+  international: {
+    beersCount: number
+    ratingsCount: number
+    averageRating: number
+  }
+  difference: number
+  favoritism: string
+}
+
+interface CountryDistribution {
+  country: string
+  count: number
+  averageRating: number
+  totalRatings: number
+}
+
+interface ParticipantCountryPreferences {
+  participantId: string
+  userName: string
+  favoriteCountry: { country: string; average: number; count: number } | null
+  leastFavoriteCountry: { country: string; average: number; count: number } | null
+  allCountryPreferences: Array<{ country: string; average: number; count: number }>
+}
+
+interface CountryRatingConsensus {
+  country: string
+  beersCount: number
+  ratingsCount: number
+  averageRating: number
+  standardDeviation: number
+  agreement: string
+}
+
 interface AnalyticsData {
   overview: {
     averageTimePerBeer: number | null
@@ -163,13 +212,19 @@ interface AnalyticsData {
   participantDeviation?: ParticipantDeviation[]
   ratingConsensus?: RatingConsensus[]
   beerTimings: BeerTiming[]
-  // New analytics
+  // Style analytics
   stylePerformanceRanking?: StylePerformanceRanking[]
   styleRatingSpread?: StyleRatingSpread[]
   styleRatingDistribution?: StyleRatingDistribution[]
   participantStylePreferences?: ParticipantStylePreferences[]
   unanimousRatings?: UnanimousRating[]
   participantRatingSpread?: ParticipantRatingSpread[]
+  // Country analytics
+  countryPerformanceRanking?: CountryPerformanceRanking[]
+  localVsInternational?: LocalVsInternational
+  countryDistribution?: CountryDistribution[]
+  participantCountryPreferences?: ParticipantCountryPreferences[]
+  countryRatingConsensus?: CountryRatingConsensus[]
 }
 
 interface ScoresChartsProps {
@@ -1134,6 +1189,279 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           </ResponsiveContainer>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Breitt svið getur þýtt að þátttakandi sé nákvæmari í vali, eða smakki fleiri bjórtegundir
+          </p>
+        </div>
+      )}
+
+      {/* COUNTRY ANALYTICS - Country Performance Ranking */}
+      {analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Besti og versti upprunalandið</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða lönd framleiða bjóra sem fengu hæstu og lægstu meðaleinkunnir?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.countryPerformanceRanking.length * 40)}>
+            <BarChart
+              data={analytics.countryPerformanceRanking}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="country"
+                width={120}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.beersCount}</span></p>
+                        <p className="text-sm">Einkunnir: <span className="font-semibold">{data.ratingsCount}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">Span: {data.minRating.toFixed(1)} - {data.maxRating.toFixed(1)}</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar dataKey="averageRating" fill="#3b82f6" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+
+      {/* Local vs International Comparison */}
+      {analytics.localVsInternational && (analytics.localVsInternational.icelandic.beersCount > 0 || analytics.localVsInternational.international.beersCount > 0) && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Íslenskir vs. Erlendir bjórar</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Eru þátttakendur hlutdrægir gagnvart íslenskum bjórum?
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Icelandic Beers */}
+            <div className="bg-blue-50 dark:bg-blue-950 p-6 rounded-lg">
+              <div className="flex items-center justify-center mb-4">
+                <span className="text-4xl">🇮🇸</span>
+              </div>
+              <h4 className="font-semibold text-center text-lg mb-3">Íslenskir bjórar</h4>
+              <div className="space-y-2">
+                <p className="text-sm">Fjöldi bjóra: <span className="font-semibold">{analytics.localVsInternational.icelandic.beersCount}</span></p>
+                <p className="text-sm">Einkunnir: <span className="font-semibold">{analytics.localVsInternational.icelandic.ratingsCount}</span></p>
+                <p className="text-lg mt-3">Meðaleinkunn: <span className="text-primary font-bold text-2xl">{analytics.localVsInternational.icelandic.averageRating.toFixed(2)}</span></p>
+              </div>
+            </div>
+
+            {/* International Beers */}
+            <div className="bg-green-50 dark:bg-green-950 p-6 rounded-lg">
+              <div className="flex items-center justify-center mb-4">
+                <span className="text-4xl">🌍</span>
+              </div>
+              <h4 className="font-semibold text-center text-lg mb-3">Erlendir bjórar</h4>
+              <div className="space-y-2">
+                <p className="text-sm">Fjöldi bjóra: <span className="font-semibold">{analytics.localVsInternational.international.beersCount}</span></p>
+                <p className="text-sm">Einkunnir: <span className="font-semibold">{analytics.localVsInternational.international.ratingsCount}</span></p>
+                <p className="text-lg mt-3">Meðaleinkunn: <span className="text-primary font-bold text-2xl">{analytics.localVsInternational.international.averageRating.toFixed(2)}</span></p>
+              </div>
+            </div>
+          </div>
+
+          {/* Comparison Result */}
+          <div className="mt-6 text-center p-4 bg-muted/30 rounded-lg">
+            <p className="text-sm font-semibold mb-2">Niðurstaða:</p>
+            <p className="text-lg">
+              {analytics.localVsInternational.favoritism === 'Local' && (
+                <span className="text-blue-600 dark:text-blue-400 font-bold">🇮🇸 Íslenskir bjórar fengu hærri einkunnir (+{Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
+              )}
+              {analytics.localVsInternational.favoritism === 'International' && (
+                <span className="text-green-600 dark:text-green-400 font-bold">🌍 Erlendir bjórar fengu hærri einkunnir (+{Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
+              )}
+              {analytics.localVsInternational.favoritism === 'Neutral' && (
+                <span className="font-bold">⚖️ Engin marktæk hlutdrægni (mismunur: {Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
+              )}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Country Distribution Pie Chart */}
+      {analytics.countryDistribution && analytics.countryDistribution.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Dreifing landa</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hversu margir bjórar frá hverju landi voru smakkaðir
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                data={analytics.countryDistribution.map(({ country: _country, ...item }) => ({
+                  ...item,
+                  beerCountry: _country
+                }))}
+                dataKey="count"
+                nameKey="beerCountry"
+                cx="50%"
+                cy="50%"
+                outerRadius={120}
+                label={({ beerCountry, count, percent }: any) =>
+                  `${beerCountry}: ${count} (${((percent as number) * 100).toFixed(0)}%)`
+                }
+                labelLine={true}
+              >
+                {analytics.countryDistribution.map((_entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.count}</span></p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.totalRatings} einkunnir samtals</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+
+          {/* Country ratings breakdown */}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-semibold text-muted-foreground text-center mb-3">Meðaleinkunnir eftir landi</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {analytics.countryDistribution.slice(0, 6).map((country, index) => (
+                <div key={country.country} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm">{country.country}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">{country.averageRating.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Participant Country Preferences */}
+      {analytics.participantCountryPreferences && analytics.participantCountryPreferences.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds upprunalönd þátttakenda</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða lönd fengu hæstar og lægstar einkunnir frá hverjum þátttakanda?
+          </p>
+          <div className="space-y-4">
+            {analytics.participantCountryPreferences.map((participant) => (
+              <div key={participant.participantId} className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">{participant.userName}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {participant.favoriteCountry && (
+                    <div className="bg-green-50 dark:bg-green-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Uppáhalds land</p>
+                      <p className="font-semibold text-green-700 dark:text-green-400">🌍 {participant.favoriteCountry.country}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.favoriteCountry.average.toFixed(2)}</span> ({participant.favoriteCountry.count} bjórar)</p>
+                    </div>
+                  )}
+                  {participant.leastFavoriteCountry && (
+                    <div className="bg-red-50 dark:bg-red-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Minnst uppáhalds land</p>
+                      <p className="font-semibold text-red-700 dark:text-red-400">🌍 {participant.leastFavoriteCountry.country}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.leastFavoriteCountry.average.toFixed(2)}</span> ({participant.leastFavoriteCountry.count} bjórar)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Country Rating Consensus */}
+      {analytics.countryRatingConsensus && analytics.countryRatingConsensus.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Samstaða um upprunalönd</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða lönd vöktu mest og minnst ágreining?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.countryRatingConsensus.length * 40)}>
+            <BarChart
+              data={analytics.countryRatingConsensus}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="country"
+                width={120}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">🌍 {data.country}</p>
+                        <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        <p className="text-sm">Samstaða: <span className={
+                          data.agreement === 'High' ? 'text-green-600 font-semibold' :
+                          data.agreement === 'Medium' ? 'text-orange-600 font-semibold' :
+                          'text-red-600 font-semibold'
+                        }>{data.agreement === 'High' ? '✅ Há' : data.agreement === 'Medium' ? '⚠️ Miðlungs' : '🔥 Lág'}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.ratingsCount} einkunnir</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="standardDeviation"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.agreement === 'High' ? '#10b981' :
+                               payload.agreement === 'Medium' ? '#f59e0b' : '#ef4444'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Lægra staðalfrávik = meiri samstaða um bjóra frá landinu
           </p>
         </div>
       )}

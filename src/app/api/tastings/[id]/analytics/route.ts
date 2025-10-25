@@ -564,6 +564,175 @@ export async function GET(
     .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.range - a.range);
 
+    // COUNTRY-BASED ANALYTICS
+
+    // Calculate country statistics
+    const countryStats: Record<string, { count: number; totalRating: number; ratings: number[] }> = {};
+
+    tasting.tastingBeers
+      .filter(beer => beer.status === 'finished')
+      .forEach(beer => {
+        const country = beer.beer?.country || 'Unknown';
+        const beerRatings = beer.ratings.map(r => r.score);
+
+        if (!countryStats[country]) {
+          countryStats[country] = { count: 0, totalRating: 0, ratings: [] };
+        }
+        countryStats[country].count++;
+        countryStats[country].ratings.push(...beerRatings);
+        countryStats[country].totalRating += beerRatings.reduce((sum, r) => sum + r, 0);
+      });
+
+    // 1. Country Performance Ranking - which countries got highest/lowest average ratings
+    const countryPerformanceRanking = Object.entries(countryStats)
+      .map(([country, data]) => {
+        const average = data.ratings.length > 0
+          ? data.totalRating / data.ratings.length
+          : 0;
+
+        // Calculate standard deviation for this country
+        const variance = data.ratings.length > 1
+          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
+          : 0;
+        const stdDev = Math.sqrt(variance);
+
+        return {
+          country,
+          beersCount: data.count,
+          ratingsCount: data.ratings.length,
+          averageRating: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          minRating: data.ratings.length > 0 ? Math.min(...data.ratings) : 0,
+          maxRating: data.ratings.length > 0 ? Math.max(...data.ratings) : 0
+        };
+      })
+      .filter(c => c.beersCount > 0 && c.country !== 'Unknown')
+      .sort((a, b) => b.averageRating - a.averageRating);
+
+    // 2. Local vs International Comparison
+    const localVsInternational = (() => {
+      const icelandicBeers = tasting.tastingBeers
+        .filter(beer => beer.status === 'finished' && beer.beer?.country === 'Iceland');
+      const internationalBeers = tasting.tastingBeers
+        .filter(beer => beer.status === 'finished' && beer.beer?.country && beer.beer.country !== 'Iceland');
+
+      const icelandicRatings = icelandicBeers.flatMap(beer => beer.ratings.map(r => r.score));
+      const internationalRatings = internationalBeers.flatMap(beer => beer.ratings.map(r => r.score));
+
+      const icelandicAvg = icelandicRatings.length > 0
+        ? icelandicRatings.reduce((sum, r) => sum + r, 0) / icelandicRatings.length
+        : 0;
+      const internationalAvg = internationalRatings.length > 0
+        ? internationalRatings.reduce((sum, r) => sum + r, 0) / internationalRatings.length
+        : 0;
+
+      return {
+        icelandic: {
+          beersCount: icelandicBeers.length,
+          ratingsCount: icelandicRatings.length,
+          averageRating: Number(icelandicAvg.toFixed(2))
+        },
+        international: {
+          beersCount: internationalBeers.length,
+          ratingsCount: internationalRatings.length,
+          averageRating: Number(internationalAvg.toFixed(2))
+        },
+        difference: Number((icelandicAvg - internationalAvg).toFixed(2)),
+        favoritism: icelandicAvg > internationalAvg + 0.3 ? 'Local' :
+                    internationalAvg > icelandicAvg + 0.3 ? 'International' : 'Neutral'
+      };
+    })();
+
+    // 3. Country Distribution - pie chart data
+    const countryDistribution = Object.entries(countryStats)
+      .map(([country, data]) => ({
+        country,
+        count: data.count,
+        averageRating: data.ratings.length > 0
+          ? Number((data.totalRating / data.ratings.length).toFixed(2))
+          : 0,
+        totalRatings: data.ratings.length
+      }))
+      .filter(c => c.country !== 'Unknown')
+      .sort((a, b) => b.count - a.count);
+
+    // 4. Participant Country Preferences - each person's favorite/least favorite countries
+    const participantCountryPreferences = tasting.participants.map(p => {
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings
+          .filter(r => r.participantId === p.id)
+          .map(rating => ({
+            score: rating.score,
+            country: beer.beer?.country || 'Unknown'
+          }))
+      );
+
+      // Group ratings by country
+      const countryRatings = userRatings
+        .filter(r => r.country !== 'Unknown')
+        .reduce((acc, { country, score }) => {
+          if (!acc[country]) {
+            acc[country] = { scores: [], count: 0 };
+          }
+          acc[country].scores.push(score);
+          acc[country].count++;
+          return acc;
+        }, {} as Record<string, { scores: number[], count: number }>);
+
+      const countryAverages = Object.entries(countryRatings)
+        .map(([country, data]) => ({
+          country,
+          average: data.scores.reduce((sum, s) => sum + s, 0) / data.count,
+          count: data.count
+        }))
+        .filter(c => c.count >= 2)  // Only include countries with at least 2 ratings
+        .sort((a, b) => b.average - a.average);
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        favoriteCountry: countryAverages[0] ? {
+          country: countryAverages[0].country,
+          average: Number(countryAverages[0].average.toFixed(2)),
+          count: countryAverages[0].count
+        } : null,
+        leastFavoriteCountry: countryAverages[countryAverages.length - 1] && countryAverages.length > 1 ? {
+          country: countryAverages[countryAverages.length - 1].country,
+          average: Number(countryAverages[countryAverages.length - 1].average.toFixed(2)),
+          count: countryAverages[countryAverages.length - 1].count
+        } : null,
+        allCountryPreferences: countryAverages.map(c => ({
+          country: c.country,
+          average: Number(c.average.toFixed(2)),
+          count: c.count
+        }))
+      };
+    })
+    .filter(p => p.favoriteCountry !== null);
+
+    // 5. Country Rating Consensus - which countries had most/least agreement
+    const countryRatingConsensus = Object.entries(countryStats)
+      .map(([country, data]) => {
+        if (data.ratings.length === 0) return null;
+
+        const average = data.totalRating / data.ratings.length;
+        const variance = data.ratings.length > 1
+          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
+          : 0;
+        const stdDev = Math.sqrt(variance);
+
+        return {
+          country,
+          beersCount: data.count,
+          ratingsCount: data.ratings.length,
+          averageRating: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          agreement: stdDev < 1 ? 'High' : stdDev < 2 ? 'Medium' : 'Low'
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => item !== null && item.country !== 'Unknown')
+      .sort((a, b) => a.standardDeviation - b.standardDeviation);
+
     return NextResponse.json({
       overview: {
         tastingId: tasting.id,
@@ -588,13 +757,19 @@ export async function GET(
       beerParticipation,
       topRatedBeers,
       participantStats,
-      // New analytics
+      // Style analytics
       stylePerformanceRanking,
       styleRatingSpread,
       styleRatingDistribution,
       participantStylePreferences,
       unanimousRatings,
-      participantRatingSpread
+      participantRatingSpread,
+      // Country analytics
+      countryPerformanceRanking,
+      localVsInternational,
+      countryDistribution,
+      participantCountryPreferences,
+      countryRatingConsensus
     });
 
   } catch (error) {
