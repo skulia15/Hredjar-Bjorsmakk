@@ -49,6 +49,7 @@ interface AnalyticsData {
   participantStats: ParticipantStats[]
   ratingDistribution: Record<string, number>
   ratingTrend?: RatingTrendPoint[]
+  styleDistribution?: StyleDistribution[]
   beerTimings: BeerTiming[]
 }
 
@@ -58,6 +59,9 @@ interface ScoresChartsProps {
 }
 
 export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
+  // Colors for pie chart
+  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16']
+
   return (
     <div className="mt-8 space-y-8">
       {/* Rating Trend Over Time Chart */}
@@ -123,6 +127,71 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 ➡️ Stöðug þróun: Einkunnir haldast í kringum {analytics.ratingTrend[0].average.toFixed(2)}
               </p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Beer Style Distribution Pie Chart */}
+      {analytics.styleDistribution && analytics.styleDistribution.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Dreifing bjórstegunda</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hversu margir bjórar af hverri tegund voru smakkaðir
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                data={analytics.styleDistribution}
+                dataKey="count"
+                nameKey="style"
+                cx="50%"
+                cy="50%"
+                outerRadius={120}
+                label={({ style, count, percent }) =>
+                  `${style}: ${count} (${(percent * 100).toFixed(0)}%)`
+                }
+                labelLine={true}
+              >
+                {analytics.styleDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">{data.style}</p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.count}</span></p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.totalRatings} einkunnir samtals</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+
+          {/* Style ratings breakdown */}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-semibold text-muted-foreground text-center mb-3">Meðaleinkunnir eftir stíl</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {analytics.styleDistribution.slice(0, 6).map((style, index) => (
+                <div key={style.style} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm">{style.style}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">{style.averageRating.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
