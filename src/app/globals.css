@@ -47,6 +47,100 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
   }
+
+  /* Neo Brutalist theme overrides (opt-in via .neo-brutalist on <body>) */
+  .neo-brutalist {
+    --background: 52 100% 97%;
+    --foreground: 220 20% 7%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 7%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 7%;
+    --primary: 49 100% 50%; /* punchy yellow */
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 100%;
+    --secondary-foreground: 220 20% 7%;
+    --muted: 52 20% 92%;
+    --muted-foreground: 220 10% 35%;
+    --accent: 330 90% 55%; /* magenta */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 85% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%; /* black borders */
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+    --radius: 0px; /* square corners */
+  }
+
+  .dark.neo-brutalist {
+    --background: 0 0% 10%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 14%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 49 100% 50%;
+    --primary-foreground: 0 0% 10%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 330 90% 60%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 0 0% 100%;
+    --radius: 0px;
+  }
+
+  /* Christmas variant (standalone, not neo-brutalist) */
+  .christmas {
+    --background: 0 0% 98%; /* snow */
+    --foreground: 220 25% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 10%;
+    --primary: 356 78% 45%; /* holly red */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 52 25% 94%; /* warm off-white */
+    --secondary-foreground: 220 25% 10%;
+    --muted: 52 20% 92%;
+    --muted-foreground: 220 15% 35%;
+    --accent: 142 72% 30%; /* pine green */
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 45%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
+    --input: 0 0% 0%;
+    --ring: 0 0% 0%;
+    --radius: 12px; /* softer, rounded */
+  }
+
+  .dark.christmas {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 356 78% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 80%;
+    --accent: 142 72% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 80% 55%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --input: 0 0% 100%;
+    --ring: 0 0% 100%;
+    --radius: 12px;
+  }
 }
 
 @layer base {
@@ -56,4 +150,133 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Typography tweaks for Brutalism */
+  .neo-brutalist h1,
+  .neo-brutalist h2,
+  .neo-brutalist h3,
+  .neo-brutalist h4,
+  .neo-brutalist h5,
+  .neo-brutalist h6 {
+    @apply font-extrabold tracking-tight;
+  }
+}
+
+@layer components {
+  /* Hard, offset drop shadows */
+  .neo-card {
+    @apply border-3 border-black bg-card text-foreground shadow-neo p-4;
+  }
+
+  /* Buttons - bold blocks with hard shadows */
+  .neo-brutalist button,
+  .neo-brutalist .btn,
+  .neo-brutalist [role="button"] {
+    @apply border-3 border-black bg-primary text-primary-foreground shadow-neo px-4 py-2 uppercase font-bold transition-transform;
+  }
+  .neo-brutalist button:hover,
+  .neo-brutalist .btn:hover,
+  .neo-brutalist [role="button"]:hover {
+    @apply -translate-y-px -translate-x-px shadow-neo-lg;
+  }
+  .neo-brutalist button:active,
+  .neo-brutalist .btn:active,
+  .neo-brutalist [role="button"]:active {
+    @apply translate-x-[3px] translate-y-[3px] shadow-none;
+  }
+
+  /* Inputs */
+  .neo-brutalist input,
+  .neo-brutalist select,
+  .neo-brutalist textarea {
+    @apply border-3 border-black bg-card text-foreground shadow-neo-sm px-3 py-2 placeholder-muted-foreground;
+  }
+  .neo-brutalist input:focus,
+  .neo-brutalist select:focus,
+  .neo-brutalist textarea:focus {
+    @apply outline-none ring-0;
+  }
+
+  /* Tables */
+  .neo-brutalist table {
+    @apply border-3 border-black shadow-neo-sm w-full;
+  }
+  .neo-brutalist th,
+  .neo-brutalist td {
+    @apply border-3 border-black px-3 py-2;
+  }
+}
+
+@layer utilities {
+  /* Subtle grid background */
+  .neo-brutalist {
+    background-image: linear-gradient(transparent calc(100% - 2px), rgba(0,0,0,0.06) 2px),
+      linear-gradient(90deg, transparent calc(100% - 2px), rgba(0,0,0,0.06) 2px);
+    background-size: 24px 24px, 24px 24px;
+  }
+
+  /* Christmas candy-stripe background (light, unobtrusive) */
+  .christmas {
+    background-image:
+      repeating-linear-gradient(45deg,
+        rgba(220, 0, 0, 0.06) 0px,
+        rgba(220, 0, 0, 0.06) 10px,
+        rgba(0, 140, 0, 0.06) 10px,
+        rgba(0, 140, 0, 0.06) 20px
+      );
+    background-size: 24px 24px;
+  }
+
+  /* Christmas: keep buttons calm and readable */
+  .christmas button,
+  .christmas .btn,
+  .christmas [role="button"] {
+    background-image: none;
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+    border: 2px solid hsl(var(--accent));
+    box-shadow: none;
+  }
+}
+
+/* Christmas decorative animations */
+@keyframes xmas-snowfall {
+  0% { transform: translateY(-10%) translateX(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.9; }
+  50% { transform: translateY(60vh) translateX(10px) rotate(90deg); }
+  100% { transform: translateY(110vh) translateX(-10px) rotate(180deg); opacity: 0; }
+}
+
+@keyframes xmas-swing {
+  0% { transform: rotate(6deg); }
+  50% { transform: rotate(-6deg); }
+  100% { transform: rotate(6deg); }
+}
+
+@keyframes xmas-twinkle {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+.xmas-snowflake { animation-name: xmas-snowfall, xmas-twinkle; animation-iteration-count: infinite, infinite; animation-timing-function: linear, ease-in-out; }
+.xmas-ornament { transform-origin: top center; animation: xmas-swing 3.5s ease-in-out infinite; }
+.xmas-tree { animation: xmas-twinkle 2.2s ease-in-out infinite; }
+
+/* Ornaments + lights */
+@keyframes xmas-light {
+  0%, 100% { opacity: 0.35; filter: drop-shadow(0 0 0px rgba(255,255,255,0.0)); }
+  50% { opacity: 1; filter: drop-shadow(0 0 6px rgba(255,255,255,0.8)); }
+}
+.xmas-light { animation: xmas-light 1.4s ease-in-out infinite; }
+
+.xmas-hook { position: absolute; top: 0.1rem; width: 12px; height: 12px; border: 2px solid rgba(0,0,0,0.35); border-bottom-color: transparent; border-left-color: transparent; border-radius: 50% 50% 0 0; }
+.xmas-cap { position: absolute; top: 0.7rem; width: 16px; height: 8px; background: linear-gradient(to bottom, #f2f2f2, #c8c8c8); border: 1px solid rgba(0,0,0,0.35); border-radius: 2px; }
+.xmas-bulb { position: absolute; top: 1.4rem; height: 2.25rem; width: 2.25rem; border-radius: 9999px; }
+.xmas-glow { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25)); }
+.xmas-star { position: absolute; top: 1.25rem; }
+
+/* Keep garland from covering content by fading into top edge */
+.xmas-garland-wrap { 
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
 }

@@ -18,6 +18,14 @@ const config = {
       },
     },
     extend: {
+      boxShadow: {
+        neo: "6px 6px 0 0 rgba(0,0,0,1)",
+        "neo-sm": "4px 4px 0 0 rgba(0,0,0,1)",
+        "neo-lg": "10px 10px 0 0 rgba(0,0,0,1)",
+      },
+      borderWidth: {
+        3: "3px",
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
