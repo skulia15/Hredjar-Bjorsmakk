@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className} neo-brutalist min-h-screen flex flex-col`} suppressHydrationWarning>
+      <body className={`${spaceGrotesk.className} christmas min-h-screen flex flex-col`} suppressHydrationWarning>
         <Providers>
           <main className="flex-1">
             {children}

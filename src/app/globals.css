@@ -215,16 +215,9 @@
     background-size: 24px 24px, 24px 24px;
   }
 
-  /* Christmas candy-stripe background (light, unobtrusive) */
+  /* Christmas background: solid (no stripes) */
   .christmas {
-    background-image:
-      repeating-linear-gradient(45deg,
-        rgba(220, 0, 0, 0.06) 0px,
-        rgba(220, 0, 0, 0.06) 10px,
-        rgba(0, 140, 0, 0.06) 10px,
-        rgba(0, 140, 0, 0.06) 20px
-      );
-    background-size: 24px 24px;
+    background-image: none;
   }
 
   /* Christmas: keep buttons calm and readable */
