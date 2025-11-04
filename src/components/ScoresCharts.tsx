@@ -1,6 +1,7 @@
 'use client'
 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, ZAxis } from 'recharts'
+import { useChartTheme } from '@/hooks/useChartTheme'
 
 interface BeerScore {
   beerId: string
@@ -233,8 +234,9 @@ interface ScoresChartsProps {
 }
 
 export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
+  const chart = useChartTheme()
   // Colors for pie chart
-  const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4', '#84cc16']
+  const COLORS = chart.pieColors
 
   // Country to flag emoji mapping (Icelandic country names)
   const getCountryFlag = (country: string): string => {
@@ -346,16 +348,18 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               data={analytics.ratingTrend}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke={chart.grid} />
               <XAxis
                 dataKey="beerIndex"
                 label={{ value: 'Bjór númer', position: 'insideBottom', offset: -5 }}
                 tick={{ fontSize: 12 }}
+                stroke={chart.axis}
               />
               <YAxis
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
+                stroke={chart.axis}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -376,9 +380,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <Line
                 type="monotone"
                 dataKey="average"
-                stroke="#3b82f6"
+                stroke={chart.primary}
                 strokeWidth={3}
-                dot={{ fill: '#3b82f6', r: 5 }}
+                dot={{ fill: chart.primary, r: 5 }}
                 activeDot={{ r: 7 }}
               />
             </LineChart>
@@ -481,15 +485,17 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               rating: parseFloat(rating),
               count
             })).filter(d => d.count > 0).sort((a, b) => a.rating - b.rating)}>
-              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke={chart.grid} />
               <XAxis
                 dataKey="rating"
                 label={{ value: 'Einkunn', position: 'insideBottom', offset: -5 }}
                 tick={{ fontSize: 12 }}
+                stroke={chart.axis}
               />
               <YAxis
                 label={{ value: 'Fjöldi', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
+                stroke={chart.axis}
                 allowDecimals={false}
               />
               <Tooltip
@@ -505,7 +511,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Bar dataKey="count" fill="#3b82f6" />
+              <Bar dataKey="count" fill={chart.primary} radius={[chart.barCornerRadius, chart.barCornerRadius, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
