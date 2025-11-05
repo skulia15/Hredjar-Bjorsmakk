@@ -164,7 +164,7 @@ export function LeaderboardWaiting({
         {/* Leaderboard */}
         {beers.length > 0 ? (
           <div className="space-y-3">
-            {beers.map((beer) => (
+            {beers.slice(0, 5).map((beer) => (
               <div
                 key={beer.beerId}
                 className={`bg-card p-4 rounded-lg border ${
