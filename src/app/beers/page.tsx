@@ -139,7 +139,11 @@ export default function BeersPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to delete beer')
+        // Show detailed error message if available
+        const errorMsg = data.details 
+          ? `${data.error}\n\n${data.details}`
+          : data.error || 'Failed to delete beer'
+        throw new Error(errorMsg)
       }
 
       setError(`Bjór eytt: ${beer.name}`)
@@ -147,9 +151,11 @@ export default function BeersPage() {
       await loadBeers()
       await loadImageStats()
     } catch (err: any) {
-      setError(err.message || 'Villa við að eyða bjór')
+      const errorMessage = err.message || 'Villa við að eyða bjór'
+      setError(errorMessage)
       console.error('Error deleting beer:', err)
-      setTimeout(() => setError(''), 5000)
+      // Show error longer if it contains details
+      setTimeout(() => setError(''), errorMessage.includes('\n') ? 8000 : 5000)
     }
   }
 
@@ -249,7 +255,7 @@ export default function BeersPage() {
         </div>
 
         {error && (
-          <div className={`p-4 border rounded-md ${
+          <div className={`p-4 border rounded-md whitespace-pre-line ${
             error.toLowerCase().includes('success')
               ? 'bg-green-500/10 border-green-500 text-green-600'
               : 'bg-destructive/10 border-destructive text-destructive'
@@ -723,12 +729,13 @@ export default function BeersPage() {
                   <label className="block text-sm font-medium mb-1">Umbúðategund</label>
                   <select
                     value={editingBeer.containerType || ''}
-                    onChange={(e) => setEditingBeer({ ...editingBeer, containerType: e.target.value })}
+                    onChange={(e) => setEditingBeer({ ...editingBeer, containerType: e.target.value || undefined })}
                     className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
                   >
                     <option value="">Velja...</option>
-                    <option value="Can">Dós</option>
-                    <option value="Bottle">Flaska</option>
+                    <option value="Dós">Dós</option>
+                    <option value="Flaska">Flaska</option>
+        
                   </select>
                 </div>
 

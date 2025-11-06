@@ -12,6 +12,11 @@ const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400', '700'] 
 export const metadata: Metadata = {
   title: 'Hreðjar Bjórsmakk',
   description: 'Synchronized beer tasting ratings for groups of friends',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+    apple: '/icon.svg',
+  },
 }
 
 export default function RootLayout({

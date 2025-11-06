@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Add cache headers for client-side caching
-    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=7200')
+    // Add cache headers for client-side caching (reduced cache time for faster updates)
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
 
     return response
 

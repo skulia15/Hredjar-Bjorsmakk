@@ -103,26 +103,50 @@ export async function DELETE(
   try {
     const { id } = await params
 
+    if (!id || typeof id !== 'string') {
+      console.error('Invalid beer ID:', id)
+      return NextResponse.json(
+        { error: 'Invalid beer ID provided' },
+        { status: 400 }
+      )
+    }
+
     // Check if beer exists
     const beer = await prisma.beer.findUnique({
       where: { id }
     })
 
     if (!beer) {
+      console.log(`Beer not found: ${id}`)
       return NextResponse.json(
-        { error: 'Beer not found' },
+        { error: `Beer not found with ID: ${id}` },
         { status: 404 }
       )
     }
 
     // Check if beer is used in any tastings
-    const tastingBeersCount = await prisma.tastingBeer.count({
-      where: { beerId: id }
+    const tastingBeers = await prisma.tastingBeer.findMany({
+      where: { beerId: id },
+      include: {
+        tasting: {
+          select: {
+            id: true,
+            title: true,
+            status: true
+          }
+        }
+      }
     })
 
-    if (tastingBeersCount > 0) {
+    if (tastingBeers.length > 0) {
+      const tastingTitles = tastingBeers.map(tb => tb.tasting.title).join(', ')
+      console.log(`Cannot delete beer ${beer.name} (${id}): used in ${tastingBeers.length} tasting(s): ${tastingTitles}`)
       return NextResponse.json(
-        { error: 'Cannot delete beer that is used in tastings' },
+        { 
+          error: `Cannot delete beer that is used in ${tastingBeers.length} tasting(s)`,
+          details: `This beer is referenced in: ${tastingTitles}`,
+          tastingCount: tastingBeers.length
+        },
         { status: 400 }
       )
     }
@@ -132,13 +156,34 @@ export async function DELETE(
       where: { id }
     })
 
+    console.log(`Successfully deleted beer: ${beer.name} (${id})`)
     return NextResponse.json({
-      message: 'Beer deleted successfully'
+      message: `Beer "${beer.name}" deleted successfully`
     })
   } catch (error) {
     console.error('Error deleting beer:', error)
+    
+    // Handle Prisma errors
+    if (error instanceof Error) {
+      // Check for foreign key constraint errors
+      if (error.message.includes('Foreign key constraint') || error.message.includes('violates foreign key')) {
+        return NextResponse.json(
+          { error: 'Cannot delete beer: it is still referenced in one or more tastings' },
+          { status: 400 }
+        )
+      }
+      
+      // Check for record not found
+      if (error.message.includes('Record to delete does not exist')) {
+        return NextResponse.json(
+          { error: 'Beer not found or already deleted' },
+          { status: 404 }
+        )
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to delete beer' },
+      { error: 'Failed to delete beer', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }
