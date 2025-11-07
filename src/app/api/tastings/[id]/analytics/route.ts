@@ -572,7 +572,7 @@ export async function GET(
       .filter(beer => beer.status === 'finished')
       .forEach(beer => {
         const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
-        const country = beer.beer?.country;
+        const country = beer.beer?.country || undefined;
         const beerName = beer.beer?.name || beer.customName || 'Unknown';
         const beerRatings = beer.ratings.map(r => r.score);
 
