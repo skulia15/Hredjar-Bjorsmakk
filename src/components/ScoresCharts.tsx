@@ -1473,14 +1473,17 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           <ResponsiveContainer width="100%" height={400}>
             <PieChart>
               <Pie
-                data={analytics.breweryDistribution}
+                data={analytics.breweryDistribution.map(({ brewery: _brewery, ...item }) => ({
+                  ...item,
+                  breweryName: _brewery
+                }))}
                 dataKey="count"
-                nameKey="brewery"
+                nameKey="breweryName"
                 cx="50%"
                 cy="50%"
                 outerRadius={120}
-                label={({ brewery, count, percent }: any) =>
-                  count >= 2 ? `${brewery}: ${count} (${((percent as number) * 100).toFixed(0)}%)` : ''
+                label={({ breweryName, count, percent }: any) =>
+                  count >= 2 ? `${breweryName}: ${count} (${((percent as number) * 100).toFixed(0)}%)` : ''
                 }
                 labelLine={true}
               >
@@ -1495,7 +1498,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     return (
                       <div className="bg-card border rounded-lg p-3 shadow-lg">
                         <p className="font-bold text-sm mb-2">
-                          {data.country && getCountryFlag(data.country)} {data.brewery}
+                          {data.country && getCountryFlag(data.country)} {data.breweryName}
                         </p>
                         <p className="text-sm">Bjórar: <span className="font-semibold">{data.count}</span></p>
                         <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
