@@ -61,20 +61,92 @@ async function createTestTasting() {
     }
     console.log(`✓ Created/found ${users.length} users\n`)
 
-    // 2. Get a sample of beers (let's use 10 random beers)
-    const allBeers = await prisma.beer.findMany({
-      take: 10,
+    // 2. Get 25 beers, prioritizing breweries with multiple beers
+    console.log('🍺 Selecting 25 beers (prioritizing multi-beer breweries)...')
+
+    // First, get all available beers with price data
+    const availableBeers = await prisma.beer.findMany({
       where: {
         pricePerLiter: { not: null } // Ensure they have price data
+      },
+      orderBy: {
+        brewery: 'asc' // Group by brewery
       }
     })
 
-    if (allBeers.length === 0) {
+    if (availableBeers.length === 0) {
       console.error('❌ No beers found in database!')
       return
     }
 
-    console.log(`🍺 Using ${allBeers.length} beers for the tasting\n`)
+    // Group beers by brewery
+    const beersByBrewery = availableBeers.reduce((acc, beer) => {
+      const brewery = beer.brewery || 'Unknown'
+      if (!acc[brewery]) {
+        acc[brewery] = []
+      }
+      acc[brewery].push(beer)
+      return acc
+    }, {} as Record<string, typeof availableBeers>)
+
+    // Sort breweries by number of beers (descending)
+    const breweriesWithMultipleBeers = Object.entries(beersByBrewery)
+      .filter(([_, beers]) => beers.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length)
+
+    const breweriesWithOneBeers = Object.entries(beersByBrewery)
+      .filter(([_, beers]) => beers.length === 1)
+
+    // Select beers: prioritize breweries with multiple beers
+    const selectedBeers: typeof availableBeers = []
+
+    // First, add beers from breweries with multiple beers (take 2-3 from each)
+    for (const [brewery, beers] of breweriesWithMultipleBeers) {
+      if (selectedBeers.length >= 25) break
+
+      // Take 2-3 beers from this brewery
+      const numToTake = Math.min(
+        beers.length,
+        Math.min(3, 25 - selectedBeers.length),
+        2 + Math.floor(Math.random() * 2) // 2 or 3 beers
+      )
+
+      // Randomly select beers from this brewery
+      const shuffled = [...beers].sort(() => Math.random() - 0.5)
+      selectedBeers.push(...shuffled.slice(0, numToTake))
+
+      console.log(`  ✓ Added ${numToTake} beers from ${brewery}`)
+    }
+
+    // Then, fill remaining slots with single-beer breweries
+    if (selectedBeers.length < 25) {
+      const needed = 25 - selectedBeers.length
+      const singleBeers = breweriesWithOneBeers
+        .map(([_, beers]) => beers[0])
+        .sort(() => Math.random() - 0.5)
+        .slice(0, needed)
+
+      selectedBeers.push(...singleBeers)
+      console.log(`  ✓ Added ${singleBeers.length} beers from single-beer breweries`)
+    }
+
+    const allBeers = selectedBeers.slice(0, 25)
+    console.log(`\n🍺 Selected ${allBeers.length} beers for the tasting`)
+
+    // Print brewery distribution
+    const finalBreweryCount = allBeers.reduce((acc, beer) => {
+      const brewery = beer.brewery || 'Unknown'
+      acc[brewery] = (acc[brewery] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+
+    console.log('\n📊 Brewery distribution:')
+    Object.entries(finalBreweryCount)
+      .sort((a, b) => b[1] - a[1])
+      .forEach(([brewery, count]) => {
+        console.log(`  ${brewery}: ${count} beer${count > 1 ? 's' : ''}`)
+      })
+    console.log()
 
     // 3. Create the test tasting
     console.log('📋 Creating test tasting...')
