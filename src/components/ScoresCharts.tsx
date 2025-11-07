@@ -199,6 +199,66 @@ interface CountryRatingConsensus {
   agreement: string
 }
 
+interface BreweryPerformanceRanking {
+  brewery: string
+  country?: string
+  beersCount: number
+  ratingsCount: number
+  averageRating: number
+  standardDeviation: number
+  minRating: number
+  maxRating: number
+}
+
+interface BreweryConsistency {
+  brewery: string
+  country?: string
+  beersCount: number
+  averageRating: number
+  standardDeviation: number
+  consistency: string
+}
+
+interface BreweryDistribution {
+  brewery: string
+  country?: string
+  count: number
+  averageRating: number
+  totalRatings: number
+}
+
+interface BreweryPortfolio {
+  brewery: string
+  country?: string
+  beersCount: number
+  averageRating: number
+  beers: Array<{
+    name: string
+    rating: number
+    ratingsCount: number
+  }>
+}
+
+interface IcelandicBrewery {
+  brewery: string
+  country?: string
+  beersCount: number
+  ratingsCount: number
+  averageRating: number
+  standardDeviation: number
+  minRating: number
+  maxRating: number
+  rank: number
+}
+
+interface ParticipantBreweryPreferences {
+  participantId: string
+  userName: string
+  favoriteBrewery: { brewery: string; average: number; count: number } | null
+  leastFavoriteBrewery: { brewery: string; average: number; count: number } | null
+  allBreweryPreferences: Array<{ brewery: string; average: number; count: number }>
+}
+
 interface AnalyticsData {
   overview: {
     averageTimePerBeer: number | null
@@ -220,6 +280,13 @@ interface AnalyticsData {
   participantStylePreferences?: ParticipantStylePreferences[]
   unanimousRatings?: UnanimousRating[]
   participantRatingSpread?: ParticipantRatingSpread[]
+  // Brewery analytics
+  breweryPerformanceRanking?: BreweryPerformanceRanking[]
+  breweryConsistency?: BreweryConsistency[]
+  breweryDistribution?: BreweryDistribution[]
+  breweryPortfolio?: BreweryPortfolio[]
+  icelandicBreweries?: IcelandicBrewery[]
+  participantBreweryPreferences?: ParticipantBreweryPreferences[]
   // Country analytics
   countryPerformanceRanking?: CountryPerformanceRanking[]
   localVsInternational?: LocalVsInternational
@@ -1316,6 +1383,342 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           <p className="text-center text-sm text-muted-foreground mt-4">
             Breitt svið getur þýtt að þátttakandi sé nákvæmari í vali, eða smakki fleiri bjórtegundir
           </p>
+        </div>
+      )}
+
+      {/* BREWERY ANALYTICS - Brewery Performance Ranking */}
+      {analytics.breweryPerformanceRanking && analytics.breweryPerformanceRanking.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Bestu og verstu brugghús</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða brugghús framleiða bjóra sem fengu hæstu og lægstu meðaleinkunnir?
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.breweryPerformanceRanking.length * 40)}>
+            <BarChart
+              data={analytics.breweryPerformanceRanking}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="brewery"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">
+                          {data.country && getCountryFlag(data.country)} {data.brewery}
+                        </p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.beersCount}</span></p>
+                        <p className="text-sm">Einkunnir: <span className="font-semibold">{data.ratingsCount}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">Span: {data.minRating.toFixed(1)} - {data.maxRating.toFixed(1)}</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="averageRating"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  // Color Icelandic breweries blue, others green
+                  const fill = payload.country === 'Ísland' ? '#3b82f6' : '#10b981'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <span>Íslensk brugghús</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+              <span>Erlend brugghús</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Brewery Distribution Pie Chart */}
+      {analytics.breweryDistribution && analytics.breweryDistribution.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Dreifing brugghúsa</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hversu margir bjórar frá hverju brugghúsi voru smakkaðir
+          </p>
+          <ResponsiveContainer width="100%" height={400}>
+            <PieChart>
+              <Pie
+                data={analytics.breweryDistribution}
+                dataKey="count"
+                nameKey="brewery"
+                cx="50%"
+                cy="50%"
+                outerRadius={120}
+                label={({ brewery, count, percent }: any) =>
+                  count >= 2 ? `${brewery}: ${count} (${((percent as number) * 100).toFixed(0)}%)` : ''
+                }
+                labelLine={true}
+              >
+                {analytics.breweryDistribution.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">
+                          {data.country && getCountryFlag(data.country)} {data.brewery}
+                        </p>
+                        <p className="text-sm">Bjórar: <span className="font-semibold">{data.count}</span></p>
+                        <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.totalRatings} einkunnir samtals</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+
+          {/* Brewery ratings breakdown */}
+          <div className="mt-6 space-y-2">
+            <p className="text-sm font-semibold text-muted-foreground text-center mb-3">Meðaleinkunnir eftir brugghúsi</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {analytics.breweryDistribution.slice(0, 6).map((brewery, index) => (
+                <div key={brewery.brewery} className="flex items-center justify-between p-2 rounded bg-muted/30">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    />
+                    <span className="text-sm">{brewery.brewery}</span>
+                  </div>
+                  <span className="text-sm font-semibold text-primary">{brewery.averageRating.toFixed(2)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Brewery Consistency Chart */}
+      {analytics.breweryConsistency && analytics.breweryConsistency.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Samræmi í gæðum brugghúsa</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða brugghús eru stöðugust í gæðum? (Aðeins brugghús með 2+ bjóra)
+          </p>
+          <ResponsiveContainer width="100%" height={Math.max(300, analytics.breweryConsistency.length * 40)}>
+            <BarChart
+              data={analytics.breweryConsistency}
+              layout="vertical"
+              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+              <XAxis
+                type="number"
+                label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis
+                type="category"
+                dataKey="brewery"
+                width={150}
+                tick={{ fontSize: 11 }}
+              />
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    const data = payload[0].payload
+                    return (
+                      <div className="bg-card border rounded-lg p-3 shadow-lg">
+                        <p className="font-bold text-sm mb-2">
+                          {data.country && getCountryFlag(data.country)} {data.brewery}
+                        </p>
+                        <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        <p className="text-sm">Samræmi: <span className={
+                          data.consistency === 'Very Consistent' || data.consistency === 'Consistent' ? 'text-green-600 font-semibold' :
+                          data.consistency === 'Moderate' ? 'text-orange-600 font-semibold' :
+                          'text-red-600 font-semibold'
+                        }>{
+                          data.consistency === 'Very Consistent' ? '✅ Mjög stöðugt' :
+                          data.consistency === 'Consistent' ? '✅ Stöðugt' :
+                          data.consistency === 'Moderate' ? '⚠️ Miðlungs' :
+                          '🔥 Breytilegt'
+                        }</span></p>
+                        <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.averageRating.toFixed(2)} meðaleinkunn</p>
+                      </div>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Bar
+                dataKey="standardDeviation"
+                shape={(props: any) => {
+                  const { x, y, width, height, payload } = props
+                  const fill = payload.consistency === 'Very Consistent' || payload.consistency === 'Consistent' ? '#10b981' :
+                               payload.consistency === 'Moderate' ? '#f59e0b' : '#ef4444'
+                  return (
+                    <rect
+                      x={x}
+                      y={y}
+                      width={width}
+                      height={height}
+                      fill={fill}
+                    />
+                  )
+                }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="text-center text-sm text-muted-foreground mt-4">
+            Lægra staðalfrávik = stöðugra gæði milli bjóra
+          </p>
+        </div>
+      )}
+
+      {/* Icelandic Breweries Leaderboard */}
+      {analytics.icelandicBreweries && analytics.icelandicBreweries.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">🇮🇸 Íslensk brugghús</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Raðað eftir meðaleinkunn
+          </p>
+          <div className="space-y-3">
+            {analytics.icelandicBreweries.map((brewery) => (
+              <div
+                key={brewery.brewery}
+                className={`p-4 rounded-lg border-2 ${
+                  brewery.rank === 1 ? 'bg-yellow-50 dark:bg-yellow-950 border-yellow-400' :
+                  brewery.rank === 2 ? 'bg-gray-100 dark:bg-gray-900 border-gray-400' :
+                  brewery.rank === 3 ? 'bg-orange-50 dark:bg-orange-950 border-orange-400' :
+                  'bg-muted/30 border-muted'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">
+                      {brewery.rank === 1 ? '🥇' : brewery.rank === 2 ? '🥈' : brewery.rank === 3 ? '🥉' : `#${brewery.rank}`}
+                    </span>
+                    <h4 className="font-bold text-lg">{brewery.brewery}</h4>
+                  </div>
+                  <span className="text-primary font-bold text-2xl">{brewery.averageRating.toFixed(2)}</span>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Bjórar:</span>
+                    <span className="ml-2 font-semibold">{brewery.beersCount}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Einkunnir:</span>
+                    <span className="ml-2 font-semibold">{brewery.ratingsCount}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Lægsta:</span>
+                    <span className="ml-2 font-semibold">{brewery.minRating.toFixed(1)}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Hæsta:</span>
+                    <span className="ml-2 font-semibold">{brewery.maxRating.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Brewery Portfolio Analysis */}
+      {analytics.breweryPortfolio && analytics.breweryPortfolio.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Brugghús með mörgum bjórum</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða brugghús höfðu marga bjóra í smökkuninni og hvernig gengu þeir?
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {analytics.breweryPortfolio.map((portfolio) => (
+              <div key={portfolio.brewery} className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="font-bold">
+                    {portfolio.country && getCountryFlag(portfolio.country)} {portfolio.brewery}
+                  </h4>
+                  <span className="text-primary font-bold text-xl">{portfolio.averageRating.toFixed(2)}</span>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">{portfolio.beersCount} bjórar í smökkuninni</p>
+                <div className="space-y-2">
+                  {portfolio.beers.map((beer, idx) => (
+                    <div key={idx} className="flex items-center justify-between text-sm p-2 rounded bg-muted/30">
+                      <span className="truncate flex-1">{beer.name}</span>
+                      <span className="ml-2 font-semibold text-primary">{beer.rating.toFixed(2)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Participant Brewery Preferences */}
+      {analytics.participantBreweryPreferences && analytics.participantBreweryPreferences.length > 0 && (
+        <div className="bg-card p-6 rounded-lg border">
+          <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds brugghús þátttakenda</h3>
+          <p className="text-sm text-muted-foreground text-center mb-6">
+            Hvaða brugghús fengu hæstar og lægstar einkunnir frá hverjum þátttakanda?
+          </p>
+          <div className="space-y-4">
+            {analytics.participantBreweryPreferences.map((participant) => (
+              <div key={participant.participantId} className="border rounded-lg p-4">
+                <h4 className="font-semibold mb-3">{participant.userName}</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {participant.favoriteBrewery && (
+                    <div className="bg-green-50 dark:bg-green-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Uppáhald</p>
+                      <p className="font-semibold text-green-700 dark:text-green-400">{participant.favoriteBrewery.brewery}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.favoriteBrewery.average.toFixed(2)}</span> ({participant.favoriteBrewery.count} bjórar)</p>
+                    </div>
+                  )}
+                  {participant.leastFavoriteBrewery && (
+                    <div className="bg-red-50 dark:bg-red-950 p-3 rounded">
+                      <p className="text-xs text-muted-foreground mb-1">Minnst uppáhald</p>
+                      <p className="font-semibold text-red-700 dark:text-red-400">{participant.leastFavoriteBrewery.brewery}</p>
+                      <p className="text-sm mt-1">Einkunn: <span className="font-semibold">{participant.leastFavoriteBrewery.average.toFixed(2)}</span> ({participant.leastFavoriteBrewery.count} bjórar)</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

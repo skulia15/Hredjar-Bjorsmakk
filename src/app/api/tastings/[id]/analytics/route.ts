@@ -563,6 +563,186 @@ export async function GET(
     .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.range - a.range);
 
+    // BREWERY-BASED ANALYTICS
+
+    // Calculate brewery statistics
+    const breweryStats: Record<string, { count: number; totalRating: number; ratings: number[]; country?: string; beerNames: string[] }> = {};
+
+    tasting.tastingBeers
+      .filter(beer => beer.status === 'finished')
+      .forEach(beer => {
+        const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
+        const country = beer.beer?.country;
+        const beerName = beer.beer?.name || beer.customName || 'Unknown';
+        const beerRatings = beer.ratings.map(r => r.score);
+
+        if (!breweryStats[brewery]) {
+          breweryStats[brewery] = { count: 0, totalRating: 0, ratings: [], country, beerNames: [] };
+        }
+        breweryStats[brewery].count++;
+        breweryStats[brewery].ratings.push(...beerRatings);
+        breweryStats[brewery].totalRating += beerRatings.reduce((sum, r) => sum + r, 0);
+        breweryStats[brewery].beerNames.push(beerName);
+        // Keep first country if multiple (shouldn't happen)
+        if (!breweryStats[brewery].country && country) {
+          breweryStats[brewery].country = country;
+        }
+      });
+
+    // 1. Brewery Performance Ranking - which breweries got highest/lowest average ratings
+    const breweryPerformanceRanking = Object.entries(breweryStats)
+      .map(([brewery, data]) => {
+        const average = data.ratings.length > 0
+          ? data.totalRating / data.ratings.length
+          : 0;
+
+        // Calculate standard deviation for this brewery
+        const variance = data.ratings.length > 1
+          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
+          : 0;
+        const stdDev = Math.sqrt(variance);
+
+        return {
+          brewery,
+          country: data.country,
+          beersCount: data.count,
+          ratingsCount: data.ratings.length,
+          averageRating: Number(average.toFixed(2)),
+          standardDeviation: Number(stdDev.toFixed(2)),
+          minRating: data.ratings.length > 0 ? Math.min(...data.ratings) : 0,
+          maxRating: data.ratings.length > 0 ? Math.max(...data.ratings) : 0
+        };
+      })
+      .filter(b => b.beersCount > 0 && b.brewery !== 'Unknown')
+      .sort((a, b) => b.averageRating - a.averageRating);
+
+    // 2. Brewery Consistency - which breweries have most consistent quality
+    const breweryConsistency = breweryPerformanceRanking
+      .filter(b => b.beersCount >= 2)  // Only breweries with 2+ beers
+      .map(brewery => ({
+        brewery: brewery.brewery,
+        country: brewery.country,
+        beersCount: brewery.beersCount,
+        averageRating: brewery.averageRating,
+        standardDeviation: brewery.standardDeviation,
+        consistency: brewery.standardDeviation < 0.5 ? 'Very Consistent' :
+                     brewery.standardDeviation < 1.0 ? 'Consistent' :
+                     brewery.standardDeviation < 1.5 ? 'Moderate' : 'Variable'
+      }))
+      .sort((a, b) => a.standardDeviation - b.standardDeviation);
+
+    // 3. Brewery Distribution - pie chart data
+    const breweryDistribution = Object.entries(breweryStats)
+      .map(([brewery, data]) => ({
+        brewery,
+        country: data.country,
+        count: data.count,
+        averageRating: data.ratings.length > 0
+          ? Number((data.totalRating / data.ratings.length).toFixed(2))
+          : 0,
+        totalRatings: data.ratings.length
+      }))
+      .filter(b => b.brewery !== 'Unknown')
+      .sort((a, b) => b.count - a.count);
+
+    // 4. Brewery Portfolio Analysis - breweries with multiple beers
+    const breweryPortfolio = Object.entries(breweryStats)
+      .filter(([_, data]) => data.count >= 2)
+      .map(([brewery, data]) => {
+        const average = data.totalRating / data.ratings.length;
+
+        // Get individual beer ratings for this brewery
+        const beersFromBrewery = tasting.tastingBeers
+          .filter(beer => {
+            const beerBrewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
+            return beerBrewery === brewery && beer.status === 'finished';
+          })
+          .map(beer => {
+            const ratings = beer.ratings.map(r => r.score);
+            const beerAvg = ratings.length > 0
+              ? ratings.reduce((sum, score) => sum + score, 0) / ratings.length
+              : 0;
+
+            return {
+              name: beer.beer?.name || beer.customName || 'Unknown',
+              rating: Number(beerAvg.toFixed(2)),
+              ratingsCount: ratings.length
+            };
+          })
+          .sort((a, b) => b.rating - a.rating);
+
+        return {
+          brewery,
+          country: data.country,
+          beersCount: data.count,
+          averageRating: Number(average.toFixed(2)),
+          beers: beersFromBrewery
+        };
+      })
+      .sort((a, b) => b.beersCount - a.beersCount);
+
+    // 5. Icelandic Breweries Ranking
+    const icelandicBreweries = breweryPerformanceRanking
+      .filter(b => b.country === 'Ísland')
+      .map((brewery, index) => ({
+        ...brewery,
+        rank: index + 1
+      }));
+
+    // 6. Participant Brewery Preferences
+    const participantBreweryPreferences = tasting.participants.map(p => {
+      const userRatings = tasting.tastingBeers.flatMap(beer =>
+        beer.ratings
+          .filter(r => r.participantId === p.id)
+          .map(rating => ({
+            score: rating.score,
+            brewery: beer.beer?.brewery || beer.customBrewery || 'Unknown'
+          }))
+      );
+
+      // Group ratings by brewery
+      const breweryRatings = userRatings
+        .filter(r => r.brewery !== 'Unknown')
+        .reduce((acc, { brewery, score }) => {
+          if (!acc[brewery]) {
+            acc[brewery] = { scores: [], count: 0 };
+          }
+          acc[brewery].scores.push(score);
+          acc[brewery].count++;
+          return acc;
+        }, {} as Record<string, { scores: number[], count: number }>);
+
+      const breweryAverages = Object.entries(breweryRatings)
+        .map(([brewery, data]) => ({
+          brewery,
+          average: data.scores.reduce((sum, s) => sum + s, 0) / data.count,
+          count: data.count
+        }))
+        .filter(b => b.count >= 2)  // Only include breweries with at least 2 ratings
+        .sort((a, b) => b.average - a.average);
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        favoriteBrewery: breweryAverages[0] ? {
+          brewery: breweryAverages[0].brewery,
+          average: Number(breweryAverages[0].average.toFixed(2)),
+          count: breweryAverages[0].count
+        } : null,
+        leastFavoriteBrewery: breweryAverages[breweryAverages.length - 1] && breweryAverages.length > 1 ? {
+          brewery: breweryAverages[breweryAverages.length - 1].brewery,
+          average: Number(breweryAverages[breweryAverages.length - 1].average.toFixed(2)),
+          count: breweryAverages[breweryAverages.length - 1].count
+        } : null,
+        allBreweryPreferences: breweryAverages.map(b => ({
+          brewery: b.brewery,
+          average: Number(b.average.toFixed(2)),
+          count: b.count
+        }))
+      };
+    })
+    .filter(p => p.favoriteBrewery !== null);
+
     // COUNTRY-BASED ANALYTICS
 
     // Calculate country statistics
@@ -763,6 +943,13 @@ export async function GET(
       participantStylePreferences,
       unanimousRatings,
       participantRatingSpread,
+      // Brewery analytics
+      breweryPerformanceRanking,
+      breweryConsistency,
+      breweryDistribution,
+      breweryPortfolio,
+      icelandicBreweries,
+      participantBreweryPreferences,
       // Country analytics
       countryPerformanceRanking,
       localVsInternational,
