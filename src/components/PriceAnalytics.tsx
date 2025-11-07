@@ -168,7 +168,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
         <div className="flex items-start gap-3">
           <div className="text-3xl">💎</div>
           <div className="flex-1">
-            <div className="font-semibold text-sm text-muted-foreground mb-1">BESTA KAUP</div>
+            <div className="font-semibold text-sm text-muted-foreground mb-1">BESTU KAUP</div>
             <div className="font-bold text-lg">{data.bestValue.name}</div>
             <div className="text-sm text-muted-foreground">{data.bestValue.brewery}</div>
             <div className="mt-2 flex gap-4 text-sm">
