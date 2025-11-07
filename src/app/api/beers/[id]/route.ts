@@ -62,7 +62,7 @@ export async function PATCH(
 
     if (body.name !== undefined) updateData.name = body.name
     if (body.brewery !== undefined) updateData.brewery = body.brewery
-    if (body.style !== undefined) updateData.style = body.style
+    if (body.styles !== undefined) updateData.styles = body.styles
     if (body.abv !== undefined) updateData.abv = body.abv
     if (body.country !== undefined) updateData.country = body.country
     if (body.description !== undefined) updateData.description = body.description
@@ -71,7 +71,37 @@ export async function PATCH(
     if (body.productNumber !== undefined) updateData.productNumber = body.productNumber
     if (body.vinbudinUrl !== undefined) updateData.vinbudinUrl = body.vinbudinUrl
     if (body.priceISK !== undefined) updateData.priceISK = body.priceISK
+    if (body.pricePerLiter !== undefined) updateData.pricePerLiter = body.pricePerLiter
     if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl
+
+    // Check if update would violate unique constraint
+    // Unique constraint: [name, brewery, containerSize, containerType]
+    const nameToCheck = updateData.name ?? existingBeer.name
+    const breweryToCheck = updateData.brewery ?? existingBeer.brewery
+    const sizeToCheck = updateData.containerSize ?? existingBeer.containerSize
+    const typeToCheck = updateData.containerType ?? existingBeer.containerType
+
+    const conflictingBeer = await prisma.beer.findFirst({
+      where: {
+        AND: [
+          { name: nameToCheck },
+          { brewery: breweryToCheck },
+          { containerSize: sizeToCheck },
+          { containerType: typeToCheck },
+          { id: { not: id } } // Exclude current beer
+        ]
+      }
+    })
+
+    if (conflictingBeer) {
+      return NextResponse.json(
+        {
+          error: 'A beer with this name, brewery, and container size/type already exists',
+          conflictingBeerId: conflictingBeer.id
+        },
+        { status: 409 }
+      )
+    }
 
     // Update the beer
     const updatedBeer = await prisma.beer.update({

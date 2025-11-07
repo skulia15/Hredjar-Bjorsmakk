@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { isAdminSession, canCreateTastings } from '@/lib/session'
 
 export default async function HomePage() {
@@ -8,8 +9,17 @@ export default async function HomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-5xl font-bold">🍺</h1>
-          <h2 className="text-3xl font-bold tracking-tight">Hreðjar Bjórsmakk</h2>
+          <div className="flex justify-center mb-4 rounded-lg">
+            <Image 
+              src="/logo.png" 
+              alt="Hreðjar Bjórsmakk Logo" 
+              width={600} 
+              height={450}
+              className="w-full max-w-sm object-contain rounded-lg"
+              priority
+            />
+          </div>
+          {/* <h2 className="text-3xl font-bold tracking-tight">Hreðjar Bjórsmakk</h2> */}
         </div>
 
         <div className="space-y-4">

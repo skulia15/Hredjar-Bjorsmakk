@@ -63,6 +63,7 @@ model Beer {
   productNumber String?  // Vínbúðin product/SKU number
   vinbudinUrl   String?  // Direct link to product page
   priceISK      Float?   // Price in Icelandic Króna
+  pricePerLiter Float?   // Price per liter in ISK
 
   // Metadata
   createdAt     DateTime @default(now())

@@ -735,7 +735,6 @@ export default function BeersPage() {
                     <option value="">Velja...</option>
                     <option value="Dós">Dós</option>
                     <option value="Flaska">Flaska</option>
-        
                   </select>
                 </div>
 

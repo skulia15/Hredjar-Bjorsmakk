@@ -60,7 +60,8 @@ export async function GET(request: NextRequest) {
         containerType: true,
         productNumber: true,
         vinbudinUrl: true,
-        priceISK: true
+        priceISK: true,
+        pricePerLiter: true
       }
     })
 
@@ -84,8 +85,8 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Add cache headers for client-side caching (reduced cache time for faster updates)
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    // Add cache headers for client-side caching
+    response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=7200')
 
     return response
 

@@ -23,6 +23,15 @@ const RatingsTable = dynamic(() => import('@/components/RatingsTable').then(mod 
   )
 })
 
+const PriceAnalytics = dynamic(() => import('@/components/PriceAnalytics').then(mod => ({ default: mod.PriceAnalytics })), {
+  ssr: false,
+  loading: () => (
+    <div className="mt-8 text-center py-12">
+      <p className="text-muted-foreground">Hleður verðgreiningu...</p>
+    </div>
+  )
+})
+
 interface BeerScore {
   beerId: string
   name: string
@@ -279,6 +288,11 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         {/* Charts and Analytics */}
         {isClient && analytics && scores.beers.length > 0 && (
           <ScoresCharts scores={scores} analytics={analytics} />
+        )}
+
+        {/* Price Analytics */}
+        {isClient && scores.status === 'closed' && scores.beers.length > 0 && (
+          <PriceAnalytics tastingId={params.id} />
         )}
 
         {/* Detailed Ratings Table */}
