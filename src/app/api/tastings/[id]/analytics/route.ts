@@ -718,7 +718,7 @@ export async function GET(
           average: data.scores.reduce((sum, s) => sum + s, 0) / data.count,
           count: data.count
         }))
-        .filter(b => b.count >= 2)  // Only include breweries with at least 2 ratings
+        .filter(b => b.count >= 1)  // Include breweries with at least 1 rating (not 2)
         .sort((a, b) => b.average - a.average);
 
       return {
@@ -729,7 +729,7 @@ export async function GET(
           average: Number(breweryAverages[0].average.toFixed(2)),
           count: breweryAverages[0].count
         } : null,
-        leastFavoriteBrewery: breweryAverages[breweryAverages.length - 1] && breweryAverages.length > 1 ? {
+        leastFavoriteBrewery: breweryAverages.length >= 2 && breweryAverages[breweryAverages.length - 1].brewery !== breweryAverages[0].brewery ? {
           brewery: breweryAverages[breweryAverages.length - 1].brewery,
           average: Number(breweryAverages[breweryAverages.length - 1].average.toFixed(2)),
           count: breweryAverages[breweryAverages.length - 1].count
