@@ -679,7 +679,7 @@ export async function GET(
           beers: beersFromBrewery
         };
       })
-      .sort((a, b) => b.beersCount - a.beersCount);
+      .sort((a, b) => b.averageRating - a.averageRating);
 
     // 5. Icelandic Breweries Ranking
     const icelandicBreweries = breweryPerformanceRanking
