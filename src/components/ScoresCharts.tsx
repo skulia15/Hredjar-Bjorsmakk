@@ -883,6 +883,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 name="Frávik"
                 label={{ value: 'Frávik frá hópmeðaltali', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
+                tickFormatter={(value) => Number(value.toFixed(2))}
                 domain={['dataMin - 0.5', 'dataMax + 0.5']}
               />
               <Tooltip
@@ -895,7 +896,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                         <p className="text-sm">Meðaleinkunn: <span className="font-semibold">{data.userAverage.toFixed(2)}</span></p>
                         <p className="text-sm">Hópmeðaltal: <span className="font-semibold">{data.groupAverage.toFixed(2)}</span></p>
                         <p className="text-sm mt-1">Frávik: <span className={data.deviation > 0 ? 'text-green-600 font-semibold' : data.deviation < 0 ? 'text-red-600 font-semibold' : 'font-semibold'}>
-                          {data.deviation > 0 ? '+' : ''}{data.deviation.toFixed(2)}
+                          {data.deviation > 0 ? '+' : ''}{Number(data.deviation.toFixed(2))}
                         </span></p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {data.deviation > 0.5 ? '😊 Rausnarlegri en hópurinn' :

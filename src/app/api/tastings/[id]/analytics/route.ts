@@ -302,8 +302,7 @@ export async function GET(
           standardDeviation: Number(stdDev.toFixed(2)),
           averageRating: Number(average.toFixed(2))
         };
-      })
-      .slice(0, 8);  // Limit to 8 beers for radar chart readability
+      });
 
     // Enhanced participant statistics with per-user details
     const participantStats = tasting.participants.map(p => {
