@@ -455,19 +455,33 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
             </LineChart>
           </ResponsiveContainer>
           <div className="mt-4 text-center text-sm text-muted-foreground">
-            {analytics.ratingTrend[0].average < analytics.ratingTrend[analytics.ratingTrend.length - 1].average ? (
-              <p className="text-green-600 font-medium">
-                📈 Hækkandi þróun: Einkunnir hækkuðu frá {analytics.ratingTrend[0].average.toFixed(2)} í {analytics.ratingTrend[analytics.ratingTrend.length - 1].average.toFixed(2)}
-              </p>
-            ) : analytics.ratingTrend[0].average > analytics.ratingTrend[analytics.ratingTrend.length - 1].average ? (
-              <p className="text-orange-600 font-medium">
-                📉 Lækkandi þróun: Einkunnir lækkuðu frá {analytics.ratingTrend[0].average.toFixed(2)} í {analytics.ratingTrend[analytics.ratingTrend.length - 1].average.toFixed(2)}
-              </p>
-            ) : (
-              <p>
-                ➡️ Stöðug þróun: Einkunnir haldast í kringum {analytics.ratingTrend[0].average.toFixed(2)}
-              </p>
-            )}
+            {(() => {
+              const firstRating = analytics.ratingTrend[0].average
+              const lastRating = analytics.ratingTrend[analytics.ratingTrend.length - 1].average
+              const change = lastRating - firstRating
+              const changePerBeer = change / (analytics.ratingTrend.length - 1)
+              const percentChange = (change / firstRating) * 100
+
+              if (Math.abs(changePerBeer) < 0.05) {
+                return (
+                  <p>
+                    ➡️ Stöðug þróun: Einkunnir haldast nokkurn veginn stöðugar í gegnum kvöldið
+                  </p>
+                )
+              } else if (changePerBeer > 0) {
+                return (
+                  <p className="text-green-600 font-medium">
+                    📈 Hækkandi þróun: Einkunnir hækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(0)}%)
+                  </p>
+                )
+              } else {
+                return (
+                  <p className="text-orange-600 font-medium">
+                    📉 Lækkandi þróun: Einkunnir lækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({percentChange.toFixed(0)}%)
+                  </p>
+                )
+              }
+            })()}
           </div>
         </div>
       )}
