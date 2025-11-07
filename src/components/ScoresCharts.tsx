@@ -701,9 +701,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       {/* Participant Engagement Chart */}
       {analytics.participantStats && analytics.participantStats.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
-          <h3 className="text-xl font-bold mb-4 text-center">Þátttaka og meðaleinkunnir</h3>
+          <h3 className="text-xl font-bold mb-4 text-center">Meðaleinkunnir þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Meðaleinkunn og fjöldi einkunna hvers þátttakanda
+            Meðaleinkunn hvers þátttakanda
           </p>
           <ResponsiveContainer width="100%" height={Math.max(300, analytics.participantStats.length * 50)}>
             <BarChart
@@ -714,6 +714,8 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
                 type="number"
+                domain={[0, 10]}
+                label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
                 tick={{ fontSize: 12 }}
               />
               <YAxis
@@ -739,10 +741,6 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 }}
               />
               <Bar dataKey="averageRating" fill="#3b82f6" />
-              <Bar dataKey="ratingsCount" fill="#94a3b8" />
-              <Legend
-                formatter={(value) => value === 'averageRating' ? 'Meðaleinkunn' : 'Fjöldi einkunna'}
-              />
             </BarChart>
           </ResponsiveContainer>
         </div>
