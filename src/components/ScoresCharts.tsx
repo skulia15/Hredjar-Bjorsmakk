@@ -408,7 +408,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunna í gegnum smökkunina</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Hvernig meðaleinkunnir breytast eftir því sem bjórum fjölgar
+            Hvernig meðaleinkunnir þróast eftir því sem líður á kvöldið
           </p>
           <ResponsiveContainer width="100%" height={350}>
             <LineChart
