@@ -883,7 +883,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 name="Frávik"
                 label={{ value: 'Frávik frá hópmeðaltali', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
-                tickFormatter={(value) => Number(value.toFixed(2))}
+                tickFormatter={(value) => value.toFixed(2)}
                 domain={['dataMin - 0.5', 'dataMax + 0.5']}
               />
               <Tooltip
