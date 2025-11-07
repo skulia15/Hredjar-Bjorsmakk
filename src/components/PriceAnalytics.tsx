@@ -63,6 +63,24 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
   const [data, setData] = useState<PriceAnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showScatter, setShowScatter] = useState(true)
+  const [expandedQuadrants, setExpandedQuadrants] = useState<{
+    hiddenGems: boolean
+    premiumWorthIt: boolean
+    budgetOptions: boolean
+    overpriced: boolean
+  }>({
+    hiddenGems: false,
+    premiumWorthIt: false,
+    budgetOptions: false,
+    overpriced: false
+  })
+
+  const toggleQuadrant = (quadrant: keyof typeof expandedQuadrants) => {
+    setExpandedQuadrants(prev => ({
+      ...prev,
+      [quadrant]: !prev[quadrant]
+    }))
+  }
 
   useEffect(() => {
     loadData()
@@ -264,51 +282,144 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           </div>
 
           {/* Quadrants Summary */}
-          <div className="grid grid-cols-2 gap-3">
-            {data.quadrants.hiddenGems.length > 0 && (
-              <div className="p-3 rounded-lg border bg-green-500/10 border-green-500/20">
-                <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <span>💎</span>
-                  <span>Falinn gimsteinn ({data.quadrants.hiddenGems.length})</span>
+          <div className="space-y-3">
+            <h3 className="font-semibold text-center text-sm text-muted-foreground">
+              Bjórar eftir svæðum í dreifingarriti
+            </h3>
+            <div className="grid grid-cols-2 gap-3">
+              {data.quadrants.hiddenGems.length > 0 && (
+                <div className="rounded-lg border bg-green-500/10 border-green-500/20">
+                  <button
+                    onClick={() => toggleQuadrant('hiddenGems')}
+                    className="w-full p-3 text-left hover:bg-green-500/5 transition-colors"
+                  >
+                    <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>💎</span>
+                        <span>Falinn gimsteinn ({data.quadrants.hiddenGems.length})</span>
+                      </div>
+                      <span className="text-xs">{expandedQuadrants.hiddenGems ? '▼' : '▶'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Há einkunn, lágt verð
+                    </div>
+                  </button>
+                  {expandedQuadrants.hiddenGems && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {data.quadrants.hiddenGems.map((beer, idx) => (
+                        <div key={idx} className="text-xs border-t pt-2">
+                          <div className="font-semibold">{beer.name}</div>
+                          <div className="text-muted-foreground">{beer.brewery}</div>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-primary">{beer.rating} einkunn</span>
+                            <span>{beer.pricePerLiter} kr/L</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Há einkunn, lágt verð
+              )}
+              {data.quadrants.premiumWorthIt.length > 0 && (
+                <div className="rounded-lg border bg-blue-500/10 border-blue-500/20">
+                  <button
+                    onClick={() => toggleQuadrant('premiumWorthIt')}
+                    className="w-full p-3 text-left hover:bg-blue-500/5 transition-colors"
+                  >
+                    <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>⭐</span>
+                        <span>Premium gæði ({data.quadrants.premiumWorthIt.length})</span>
+                      </div>
+                      <span className="text-xs">{expandedQuadrants.premiumWorthIt ? '▼' : '▶'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Há einkunn, hátt verð
+                    </div>
+                  </button>
+                  {expandedQuadrants.premiumWorthIt && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {data.quadrants.premiumWorthIt.map((beer, idx) => (
+                        <div key={idx} className="text-xs border-t pt-2">
+                          <div className="font-semibold">{beer.name}</div>
+                          <div className="text-muted-foreground">{beer.brewery}</div>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-primary">{beer.rating} einkunn</span>
+                            <span>{beer.pricePerLiter} kr/L</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-            {data.quadrants.premiumWorthIt.length > 0 && (
-              <div className="p-3 rounded-lg border bg-blue-500/10 border-blue-500/20">
-                <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <span>⭐</span>
-                  <span>Premium gæði ({data.quadrants.premiumWorthIt.length})</span>
+              )}
+              {data.quadrants.budgetOptions.length > 0 && (
+                <div className="rounded-lg border bg-yellow-500/10 border-yellow-500/20">
+                  <button
+                    onClick={() => toggleQuadrant('budgetOptions')}
+                    className="w-full p-3 text-left hover:bg-yellow-500/5 transition-colors"
+                  >
+                    <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>💰</span>
+                        <span>Sparnaður ({data.quadrants.budgetOptions.length})</span>
+                      </div>
+                      <span className="text-xs">{expandedQuadrants.budgetOptions ? '▼' : '▶'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Lág einkunn, lágt verð
+                    </div>
+                  </button>
+                  {expandedQuadrants.budgetOptions && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {data.quadrants.budgetOptions.map((beer, idx) => (
+                        <div key={idx} className="text-xs border-t pt-2">
+                          <div className="font-semibold">{beer.name}</div>
+                          <div className="text-muted-foreground">{beer.brewery}</div>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-primary">{beer.rating} einkunn</span>
+                            <span>{beer.pricePerLiter} kr/L</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-muted-foreground">
-                  Há einkunn, hátt verð
+              )}
+              {data.quadrants.overpriced.length > 0 && (
+                <div className="rounded-lg border bg-red-500/10 border-red-500/20">
+                  <button
+                    onClick={() => toggleQuadrant('overpriced')}
+                    className="w-full p-3 text-left hover:bg-red-500/5 transition-colors"
+                  >
+                    <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span>⚠️</span>
+                        <span>Spurning ({data.quadrants.overpriced.length})</span>
+                      </div>
+                      <span className="text-xs">{expandedQuadrants.overpriced ? '▼' : '▶'}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Lág einkunn, hátt verð
+                    </div>
+                  </button>
+                  {expandedQuadrants.overpriced && (
+                    <div className="px-3 pb-3 space-y-2">
+                      {data.quadrants.overpriced.map((beer, idx) => (
+                        <div key={idx} className="text-xs border-t pt-2">
+                          <div className="font-semibold">{beer.name}</div>
+                          <div className="text-muted-foreground">{beer.brewery}</div>
+                          <div className="flex gap-3 mt-1">
+                            <span className="text-primary">{beer.rating} einkunn</span>
+                            <span>{beer.pricePerLiter} kr/L</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-            {data.quadrants.budgetOptions.length > 0 && (
-              <div className="p-3 rounded-lg border bg-yellow-500/10 border-yellow-500/20">
-                <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <span>💰</span>
-                  <span>Sparnaður ({data.quadrants.budgetOptions.length})</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Lág einkunn, lágt verð
-                </div>
-              </div>
-            )}
-            {data.quadrants.overpriced.length > 0 && (
-              <div className="p-3 rounded-lg border bg-red-500/10 border-red-500/20">
-                <div className="font-semibold text-sm mb-2 flex items-center gap-2">
-                  <span>⚠️</span>
-                  <span>Spurning ({data.quadrants.overpriced.length})</span>
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Lág einkunn, hátt verð
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       ) : (
