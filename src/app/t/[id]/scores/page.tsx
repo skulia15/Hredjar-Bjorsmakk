@@ -346,7 +346,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                     {/* Top 3 beers */}
                     {participant.topBeers && participant.topBeers.length > 0 && (
                       <div className="space-y-2">
-                        <div className="font-semibold text-muted-foreground text-sm">Bestu bjórarnir</div>
+                        <div className="font-semibold text-muted-foreground text-sm">Uppáhalds bjórar</div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                           {participant.topBeers.map((beer, index) => (
                             <div key={beer.beerId} className="p-3 rounded bg-muted/50 relative">
