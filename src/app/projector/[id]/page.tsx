@@ -186,24 +186,20 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     return distribution
   }
 
-  // Helper function to calculate timing stats
-  const getTimingStats = (ratings: RatedParticipant[], currentSince?: Date | string | null) => {
-    if (!currentSince || ratings.length === 0) return null
+  // Helper function to calculate timing stats across all finished beers
+  const getOverallTimingStats = () => {
+    if (!tasting) return null
 
-    const startTime = new Date(currentSince).getTime()
-    const times = ratings.map(r => {
-      const submitTime = new Date(r.submittedAt).getTime()
-      return {
-        name: r.name,
-        seconds: Math.max(0, (submitTime - startTime) / 1000)
-      }
-    })
+    // Get all finished beers
+    const finishedBeers = tasting.beers.filter(b => b.status === 'finished' && b.currentSince)
 
-    const avgSeconds = times.reduce((sum, t) => sum + t.seconds, 0) / times.length
-    const fastest = times.reduce((min, t) => t.seconds < min.seconds ? t : min, times[0])
-    const slowest = times.reduce((max, t) => t.seconds > max.seconds ? t : max, times[0])
+    if (finishedBeers.length === 0) return null
 
-    return { avgSeconds, fastest, slowest }
+    // We need to fetch ratings with timestamps, but we only have rated data from current beer
+    // For now, we'll use current beer data if available, otherwise show placeholder
+    // TODO: Could be improved by fetching all ratings with timestamps from API
+
+    return null // Return null for now - need more data from API
   }
 
   // Helper function to get engagement stats
@@ -259,10 +255,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const lowestScore = currentBeerRatings.length > 0
     ? Math.min(...currentBeerRatings.map(r => r.score))
     : null
-  const timingStats = currentBeer && currentBeerRatings.length > 0
-    ? getTimingStats(currentBeerRatings, currentBeer.currentSince)
-    : null
   const engagementStats = getEngagementStats()
+
+  // Calculate overall tasting stats
+  const totalBeersFinished = tasting.beers.filter(b => b.status === 'finished').length
+  const totalRatingsGiven = analytics?.participantStats?.reduce((sum, p) => sum + p.ratingsCount, 0) || 0
 
   return (
     <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
@@ -540,41 +537,35 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               <div className="flex-[2] flex flex-col border-t-2 pt-4">
                 <h3 className="text-lg font-semibold mb-3 text-center">📊 Tölfræði</h3>
                 <div className="flex-1 grid grid-cols-2 gap-2 overflow-y-auto">
-                  {/* Average Time */}
-                  {timingStats && (
+                  {/* Total Beers Finished */}
+                  {totalBeersFinished > 0 && (
                     <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">⏱️</div>
-                      <div className="text-base text-muted-foreground mb-1">Meðal tími</div>
+                      <div className="text-4xl mb-2">🍻</div>
+                      <div className="text-base text-muted-foreground mb-1">Bjórar kláraðir</div>
                       <div className="text-3xl font-bold text-blue-600">
-                        {Math.floor(timingStats.avgSeconds / 60)}:{String(Math.floor(timingStats.avgSeconds % 60)).padStart(2, '0')}
+                        {totalBeersFinished}
                       </div>
                     </div>
                   )}
 
-                  {/* Fastest */}
-                  {timingStats && timingStats.fastest && (
+                  {/* Total Ratings Given */}
+                  {totalRatingsGiven > 0 && (
                     <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🚀</div>
-                      <div className="text-base text-muted-foreground mb-1">Hraðastur</div>
-                      <div className="text-xl font-bold text-green-600 truncate max-w-full">
-                        {timingStats.fastest.name}
-                      </div>
-                      <div className="text-base text-muted-foreground">
-                        {Math.floor(timingStats.fastest.seconds / 60)}:{String(Math.floor(timingStats.fastest.seconds % 60)).padStart(2, '0')}
+                      <div className="text-4xl mb-2">📝</div>
+                      <div className="text-base text-muted-foreground mb-1">Samtals einkunnir</div>
+                      <div className="text-3xl font-bold text-green-600">
+                        {totalRatingsGiven}
                       </div>
                     </div>
                   )}
 
-                  {/* Slowest */}
-                  {timingStats && timingStats.slowest && (
+                  {/* Average Rating Across Tasting */}
+                  {topBeers.length > 0 && (
                     <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🐌</div>
-                      <div className="text-base text-muted-foreground mb-1">Hægastur</div>
-                      <div className="text-xl font-bold text-orange-600 truncate max-w-full">
-                        {timingStats.slowest.name}
-                      </div>
-                      <div className="text-base text-muted-foreground">
-                        {Math.floor(timingStats.slowest.seconds / 60)}:{String(Math.floor(timingStats.slowest.seconds % 60)).padStart(2, '0')}
+                      <div className="text-4xl mb-2">📈</div>
+                      <div className="text-base text-muted-foreground mb-1">Meðaleinkunn</div>
+                      <div className="text-3xl font-bold text-orange-600">
+                        {(topBeers.reduce((sum, b) => sum + b.average, 0) / topBeers.length).toFixed(2)}
                       </div>
                     </div>
                   )}
