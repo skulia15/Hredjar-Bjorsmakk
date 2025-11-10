@@ -49,6 +49,7 @@ export async function GET(
         abv: tb.beer?.abv || tb.customAbv || null,
         containerSize: tb.beer?.containerSize || null,
         containerType: tb.beer?.containerType || null,
+        imageUrl: tb.beer?.imageUrl || null,
         average: Number(average.toFixed(2)),
         count: ratings.length,
         status: tb.status,
