@@ -20,7 +20,7 @@ interface Tasting {
   id: string
   title: string
   status: string
-  currentTastingBeerId?: string | null
+  currentBeerId?: string | null
   beers: Beer[]
 }
 
@@ -141,7 +141,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       setAnalytics(analyticsData)
 
       // Load pending raters if there's a current beer
-      if (tastingData.currentTastingBeerId) {
+      if (tastingData.currentBeerId) {
         const pendingResponse = await fetch(`/api/tastings/${params.id}/current/pending-raters`)
         const pendingData = await pendingResponse.json()
         setPendingRaters(pendingData)
@@ -229,7 +229,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     )
   }
 
-  const currentBeer = tasting.beers.find(b => b.id === tasting.currentTastingBeerId)
+  const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
   const topBeers = scores?.beers.slice(0, 5) || []
 
   // Calculate current beer stats
