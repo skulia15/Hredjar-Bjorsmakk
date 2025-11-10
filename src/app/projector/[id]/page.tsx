@@ -317,13 +317,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   <div className="flex items-start gap-3">
                     {/* Beer Image */}
                     {beer.imageUrl && (
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center">
                         <Image
                           src={beer.imageUrl}
                           alt={beer.name}
-                          width={60}
-                          height={60}
-                          className="rounded object-contain"
+                          width={64}
+                          height={64}
+                          className="rounded object-contain max-h-16"
                         />
                       </div>
                     )}
@@ -451,18 +451,6 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   </div>
                 </div>
               )}
-
-              {/* Timer */}
-              {currentBeer.currentSince && (
-                <div className="bg-card p-3 rounded-lg border text-center">
-                  <div className="text-xs text-muted-foreground mb-1">Tími</div>
-                  <CurrentBeerTimer
-                    currentSince={currentBeer.currentSince}
-                    colorCoded={true}
-                    size="lg"
-                  />
-                </div>
-              )}
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -555,9 +543,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Average Time */}
                   {timingStats && (
                     <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">⏱️</div>
-                      <div className="text-sm text-muted-foreground mb-1">Meðal tími</div>
-                      <div className="text-2xl font-bold text-blue-600">
+                      <div className="text-4xl mb-2">⏱️</div>
+                      <div className="text-base text-muted-foreground mb-1">Meðal tími</div>
+                      <div className="text-3xl font-bold text-blue-600">
                         {Math.floor(timingStats.avgSeconds / 60)}:{String(Math.floor(timingStats.avgSeconds % 60)).padStart(2, '0')}
                       </div>
                     </div>
@@ -566,12 +554,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Fastest */}
                   {timingStats && timingStats.fastest && (
                     <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">🚀</div>
-                      <div className="text-sm text-muted-foreground mb-1">Hraðastur</div>
-                      <div className="text-lg font-bold text-green-600 truncate max-w-full">
+                      <div className="text-4xl mb-2">🚀</div>
+                      <div className="text-base text-muted-foreground mb-1">Hraðastur</div>
+                      <div className="text-xl font-bold text-green-600 truncate max-w-full">
                         {timingStats.fastest.name}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         {Math.floor(timingStats.fastest.seconds / 60)}:{String(Math.floor(timingStats.fastest.seconds % 60)).padStart(2, '0')}
                       </div>
                     </div>
@@ -580,12 +568,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Slowest */}
                   {timingStats && timingStats.slowest && (
                     <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">🐌</div>
-                      <div className="text-sm text-muted-foreground mb-1">Hægastur</div>
-                      <div className="text-lg font-bold text-orange-600 truncate max-w-full">
+                      <div className="text-4xl mb-2">🐌</div>
+                      <div className="text-base text-muted-foreground mb-1">Hægastur</div>
+                      <div className="text-xl font-bold text-orange-600 truncate max-w-full">
                         {timingStats.slowest.name}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-base text-muted-foreground">
                         {Math.floor(timingStats.slowest.seconds / 60)}:{String(Math.floor(timingStats.slowest.seconds % 60)).padStart(2, '0')}
                       </div>
                     </div>
@@ -594,12 +582,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Most Generous */}
                   {engagementStats?.mostGenerous && (
                     <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">🎁</div>
-                      <div className="text-sm text-muted-foreground mb-1">Rausnarlegastur</div>
-                      <div className="text-lg font-bold text-purple-600 truncate max-w-full">
+                      <div className="text-4xl mb-2">🎁</div>
+                      <div className="text-base text-muted-foreground mb-1">Rausnarlegastur</div>
+                      <div className="text-xl font-bold text-purple-600 truncate max-w-full">
                         {engagementStats.mostGenerous.userName}
                       </div>
-                      <div className="text-base text-muted-foreground">
+                      <div className="text-lg text-muted-foreground">
                         ⌀ {engagementStats.mostGenerous.averageRating.toFixed(2)}
                       </div>
                     </div>
@@ -608,12 +596,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Toughest Critic */}
                   {engagementStats?.toughestCritic && (
                     <div className="bg-red-50 dark:bg-red-950/20 p-4 rounded-lg border border-red-200 dark:border-red-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">🔍</div>
-                      <div className="text-sm text-muted-foreground mb-1">Strangastur</div>
-                      <div className="text-lg font-bold text-red-600 truncate max-w-full">
+                      <div className="text-4xl mb-2">🔍</div>
+                      <div className="text-base text-muted-foreground mb-1">Strangastur</div>
+                      <div className="text-xl font-bold text-red-600 truncate max-w-full">
                         {engagementStats.toughestCritic.userName}
                       </div>
-                      <div className="text-base text-muted-foreground">
+                      <div className="text-lg text-muted-foreground">
                         ⌀ {engagementStats.toughestCritic.averageRating.toFixed(2)}
                       </div>
                     </div>
@@ -622,9 +610,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Total Ratings */}
                   {currentBeerRatings.length > 0 && (
                     <div className="bg-indigo-50 dark:bg-indigo-950/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-3xl mb-2">⭐</div>
-                      <div className="text-sm text-muted-foreground mb-1">Fjöldi einkanna</div>
-                      <div className="text-2xl font-bold text-indigo-600">
+                      <div className="text-4xl mb-2">⭐</div>
+                      <div className="text-base text-muted-foreground mb-1">Fjöldi einkunna</div>
+                      <div className="text-3xl font-bold text-indigo-600">
                         {currentBeerRatings.length}
                       </div>
                     </div>
