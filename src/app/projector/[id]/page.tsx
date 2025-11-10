@@ -589,20 +589,6 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     </div>
                   )}
 
-                  {/* Most Deviant Rater */}
-                  {engagementStats?.mostDeviant && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🎯</div>
-                      <div className="text-base text-muted-foreground mb-1">Mest frábrugðinn</div>
-                      <div className="text-xl font-bold text-blue-600 truncate max-w-full">
-                        {engagementStats.mostDeviant.userName}
-                      </div>
-                      <div className="text-base text-muted-foreground">
-                        {engagementStats.mostDeviant.deviation > 0 ? '+' : ''}{engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali
-                      </div>
-                    </div>
-                  )}
-
                   {/* Most Generous */}
                   {engagementStats?.mostGenerous && (
                     <div className="bg-purple-50 dark:bg-purple-950/20 p-4 rounded-lg border border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center text-center">
@@ -631,6 +617,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     </div>
                   )}
 
+                  {/* Most Deviant Rater */}
+                  {engagementStats?.mostDeviant && (
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-4xl mb-2">🎯</div>
+                      <div className="text-base text-muted-foreground mb-1">Mest frábrugðinn</div>
+                      <div className="text-xl font-bold text-blue-600 truncate max-w-full">
+                        {engagementStats.mostDeviant.userName}
+                      </div>
+                      <div className="text-base text-muted-foreground">
+                        {engagementStats.mostDeviant.deviation > 0 ? '+' : ''}{engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali
+                      </div>
+                    </div>
+                  )}
                   {/* Total Ratings */}
                   {totalRatingsGiven > 0 && (
                     <div className="bg-indigo-50 dark:bg-indigo-950/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800 flex flex-col items-center justify-center text-center">
