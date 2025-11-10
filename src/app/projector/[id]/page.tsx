@@ -3,6 +3,7 @@
 import { use, useState, useEffect } from 'react'
 import Image from 'next/image'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
+import { NudgeNotification } from '@/components/NudgeNotification'
 
 interface Beer {
   id: string
@@ -86,6 +87,14 @@ interface AnalyticsData {
     slowestSeconds: number
     averageMinutes: number
   }>
+  participantDeviation: Array<{
+    participantId: string
+    userName: string
+    userAverage: number
+    groupAverage: number
+    deviation: number
+    ratingsCount: number
+  }>
 }
 
 export default function ProjectorDisplayPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -106,6 +115,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   // Setup SSE connection for nudge notifications
   useEffect(() => {
+    console.log('[Projector] Setting up SSE connection')
     const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
 
     eventSource.addEventListener('nudge', (e: MessageEvent) => {
@@ -113,16 +123,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         const data = JSON.parse(e.data)
         console.log('[Projector] Nudge received:', data)
 
-        // Show nudge notification
+        // Show nudge notification (component will auto-hide after duration)
         setShowNudge(true)
-
-        // Hide after 3 seconds
-        setTimeout(() => {
-          setShowNudge(false)
-        }, 3000)
       } catch (error) {
         console.error('[Projector] Error parsing nudge event:', error)
       }
+    })
+
+    eventSource.addEventListener('connected', () => {
+      console.log('[Projector] SSE connection established')
     })
 
     eventSource.onerror = (err) => {
@@ -131,6 +140,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     }
 
     return () => {
+      console.log('[Projector] Closing SSE connection')
       eventSource.close()
     }
   }, [params.id])
@@ -229,7 +239,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     const fastestRater = analytics.participantRatingSpeed?.[0] || null  // First in array (sorted by averageSeconds ascending)
     const slowestRater = analytics.participantRatingSpeed?.[analytics.participantRatingSpeed.length - 1] || null  // Last in array
 
-    return { mostGenerous, toughestCritic, biggestSpread, fastestRater, slowestRater }
+    // Get most deviant participant (furthest from group average)
+    const mostDeviant = analytics.participantDeviation?.reduce((max, p) =>
+      Math.abs(p.deviation) > Math.abs(max.deviation) ? p : max,
+      analytics.participantDeviation[0]
+    ) || null
+
+    return { mostGenerous, toughestCritic, biggestSpread, fastestRater, slowestRater, mostDeviant }
   }
 
   if (loading) {
@@ -278,15 +294,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
       {/* Nudge Notification Overlay */}
       {showNudge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-300">
-          <div className="bg-red-600 text-white px-12 py-8 rounded-2xl shadow-2xl animate-in zoom-in duration-300">
-            <div className="text-center space-y-4">
-              <div className="text-8xl">⏰</div>
-              <div className="text-4xl font-bold">Drífa sig!</div>
-              <div className="text-2xl">Komið með einkunn!</div>
-            </div>
-          </div>
-        </div>
+        <NudgeNotification
+          onComplete={() => setShowNudge(false)}
+          duration={3000}
+        />
       )}
 
       {/* Header */}
@@ -578,13 +589,16 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     </div>
                   )}
 
-                  {/* Average Rating Across Tasting */}
-                  {topBeers.length > 0 && (
+                  {/* Most Deviant Rater */}
+                  {engagementStats?.mostDeviant && (
                     <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">📈</div>
-                      <div className="text-base text-muted-foreground mb-1">Meðaleinkunn</div>
-                      <div className="text-3xl font-bold text-blue-600">
-                        {(topBeers.reduce((sum, b) => sum + b.average, 0) / topBeers.length).toFixed(2)}
+                      <div className="text-4xl mb-2">🎯</div>
+                      <div className="text-base text-muted-foreground mb-1">Mest frábrugðinn</div>
+                      <div className="text-xl font-bold text-blue-600 truncate max-w-full">
+                        {engagementStats.mostDeviant.userName}
+                      </div>
+                      <div className="text-base text-muted-foreground">
+                        {engagementStats.mostDeviant.deviation > 0 ? '+' : ''}{engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali
                       </div>
                     </div>
                   )}
