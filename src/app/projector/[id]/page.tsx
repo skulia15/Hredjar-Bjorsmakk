@@ -262,7 +262,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const engagementStats = getEngagementStats()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 relative">
+    <div className="min-h-screen w-full overflow-x-hidden bg-gradient-to-br from-background to-muted p-4 md:p-6 relative">
       {/* Nudge Notification Overlay */}
       {showNudge && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-300">
@@ -277,9 +277,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       )}
 
       {/* Header */}
-      <div className="mb-6 text-center">
-        <h1 className="text-4xl md:text-5xl font-bold mb-2">{tasting.title}</h1>
-        <div className="flex items-center justify-center gap-4 text-lg text-muted-foreground">
+      <div className="mb-4 md:mb-6 text-center">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{tasting.title}</h1>
+        <div className="flex items-center justify-center gap-4 text-base md:text-lg text-muted-foreground">
           <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-lg font-medium">
             {tasting.status === 'active' ? 'Í gangi' : tasting.status}
           </span>
@@ -287,7 +287,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       </div>
 
       {/* 3-Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-[30%_40%_30%] gap-6 h-[calc(100vh-180px)]">
+      <div className="grid grid-cols-1 lg:grid-cols-[30%_40%_30%] gap-4 md:gap-6 h-[calc(100vh-140px)] md:h-[calc(100vh-180px)] max-w-full">
         {/* Column 1: Top 5 Beers */}
         <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
