@@ -171,8 +171,8 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   // Leaderboard waiting state (shown after wrap-up completes)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
 
-  // Nudge notification state
-  const [showNudge, setShowNudge] = useState(false)
+  // Nudge notification state with timestamp to force re-renders on each nudge
+  const [nudgeTimestamp, setNudgeTimestamp] = useState<number | null>(null)
 
   const { setActiveTasting } = useActiveTasting()
 
@@ -206,7 +206,12 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       // Check if this participant is in the pending list
       if (data.pendingParticipantIds && data.pendingParticipantIds.includes(participantId)) {
         console.log('[Rate] Showing nudge notification')
-        setShowNudge(true)
+        setNudgeTimestamp(Date.now())
+
+        // Try to vibrate if supported
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200, 100, 200])
+        }
       }
     })
 
@@ -785,9 +790,11 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       )}
 
       {/* Nudge notification overlay */}
-      {showNudge && (
+      {nudgeTimestamp && (
         <NudgeNotification
-          onComplete={() => setShowNudge(false)}
+          key={nudgeTimestamp}
+          onComplete={() => setNudgeTimestamp(null)}
+          duration={3000}
         />
       )}
     </div>
