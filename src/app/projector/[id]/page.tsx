@@ -1,6 +1,7 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
+import Image from 'next/image'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 
 interface Beer {
@@ -14,6 +15,7 @@ interface Beer {
   averageRating?: number
   ratingCount?: number
   currentSince?: Date | string | null
+  imageUrl?: string | null
 }
 
 interface Tasting {
@@ -142,9 +144,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
       // Load pending raters if there's a current beer
       if (tastingData.currentBeerId) {
-        const pendingResponse = await fetch(`/api/tastings/${params.id}/current/pending-raters`)
-        const pendingData = await pendingResponse.json()
-        setPendingRaters(pendingData)
+        try {
+          const pendingResponse = await fetch(`/api/tastings/${params.id}/current/pending-raters`)
+          if (pendingResponse.ok) {
+            const pendingData = await pendingResponse.json()
+            setPendingRaters(pendingData)
+          } else {
+            console.error('Failed to load pending raters:', await pendingResponse.text())
+            setPendingRaters(null)
+          }
+        } catch (err) {
+          console.error('Error fetching pending raters:', err)
+          setPendingRaters(null)
+        }
       } else {
         setPendingRaters(null)
       }
@@ -338,8 +350,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
           {currentBeer ? (
             <div className="flex-1 space-y-4">
-              {/* Beer Name */}
+              {/* Beer Image & Name */}
               <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-xl border-2 border-green-500">
+                {currentBeer.imageUrl && (
+                  <div className="flex justify-center mb-3">
+                    <Image
+                      src={currentBeer.imageUrl}
+                      alt={currentBeer.name}
+                      width={120}
+                      height={120}
+                      className="rounded-lg object-contain"
+                    />
+                  </div>
+                )}
                 <h3 className="text-2xl md:text-3xl font-bold text-center leading-tight">
                   {currentBeer.name}
                 </h3>
