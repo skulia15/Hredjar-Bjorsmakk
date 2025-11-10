@@ -31,7 +31,7 @@ interface Tasting {
   title: string
   status: string
   currentBeerId?: string | null
-  beers: Beer[]
+  beers?: Beer[]
   participantCount: number
 }
 
@@ -268,7 +268,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
   const handleStartTasting = async () => {
     // Check if there are any beers
-    if (!tasting || tasting.beers.length === 0) {
+    if (!tasting || !tasting.beers || tasting.beers.length === 0) {
       setMessage('Please add at least one beer before starting')
       setTimeout(() => setMessage(''), 5000)
       return
@@ -355,13 +355,13 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     )
   }
 
-  const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
-  const untastedBeers = tasting.beers.filter(b => b.status === 'untasted')
-  const finishedBeers = tasting.beers.filter(b => b.status === 'finished')
+  const currentBeer = tasting.beers?.find(b => b.id === tasting.currentBeerId)
+  const untastedBeers = tasting.beers?.filter(b => b.status === 'untasted') || []
+  const finishedBeers = tasting.beers?.filter(b => b.status === 'finished') || []
 
   // Filter out beers that are already in the tasting (by matching name and brewery)
   const availableBeers = catalogBeers.filter(catalogBeer => {
-    return !tasting.beers.some(tastingBeer =>
+    return !tasting.beers?.some(tastingBeer =>
       tastingBeer.name === catalogBeer.name && tastingBeer.brewery === catalogBeer.brewery
     )
   })
@@ -381,7 +381,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-primary/10 rounded">{tasting.status}</span>
             <span>{tasting.participantCount} þátttakendur</span>
-            <span>{tasting.beers.length} bjórar</span>
+            <span>{tasting.beers?.length || 0} bjórar</span>
           </div>
           <div className="flex gap-2 flex-wrap">
             <Link
@@ -603,7 +603,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Tasting Controls */}
               <div className="bg-card p-4 rounded-lg border space-y-3">
                 <h3 className="font-semibold">Smökkunarstjórnun</h3>
-                {tasting.status === 'draft' && tasting.beers.length === 0 && (
+                {tasting.status === 'draft' && (!tasting.beers || tasting.beers.length === 0) && (
                   <p className="text-sm text-muted-foreground">
                     Bæta við að minnsta kosti einum bjór til að hefja smökkunina
                   </p>
@@ -612,9 +612,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   {tasting.status === 'draft' && (
                     <button
                       onClick={handleStartTasting}
-                      disabled={tasting.beers.length === 0}
+                      disabled={!tasting.beers || tasting.beers.length === 0}
                       className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title={tasting.beers.length === 0 ? 'Bættu við bjórum fyrst' : 'Hefja smökkun'}
+                      title={!tasting.beers || tasting.beers.length === 0 ? 'Bættu við bjórum fyrst' : 'Hefja smökkun'}
                     >
                       Hefja smökkun
                     </button>
