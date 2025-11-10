@@ -8,7 +8,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Jólabjór',
     brewery: 'Borg Brugghús',
-    style: 'Christmas Ale',
+    styles: ['Christmas Ale'],
     abv: 5.8,
     country: 'Iceland',
     description: 'Traditional Icelandic Christmas beer with warming spices and caramel malt character.',
@@ -20,7 +20,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Úlfur IPA',
     brewery: 'Borg Brugghús',
-    style: 'IPA',
+    styles: ['IPA'],
     abv: 5.9,
     country: 'Iceland',
     description: 'Hoppy India Pale Ale with citrus and pine notes.',
@@ -32,7 +32,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Garún nr. 19',
     brewery: 'Borg Brugghús',
-    style: 'Pilsner',
+    styles: ['Pilsner'],
     abv: 4.6,
     country: 'Iceland',
     description: 'Crisp and refreshing Icelandic pilsner.',
@@ -46,7 +46,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Jólasúð',
     brewery: 'Gæðingur',
-    style: 'Christmas Ale',
+    styles: ['Christmas Ale'],
     abv: 5.5,
     country: 'Iceland',
     description: 'Festive Christmas ale with notes of cinnamon and orange peel.',
@@ -58,7 +58,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Beljandi IPA',
     brewery: 'Gæðingur',
-    style: 'IPA',
+    styles: ['IPA'],
     abv: 6.2,
     country: 'Iceland',
     description: 'Bold IPA with tropical fruit aromas.',
@@ -72,7 +72,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Icelandic White Ale',
     brewery: 'Einstök',
-    style: 'Witbier',
+    styles: ['Witbier'],
     abv: 5.2,
     country: 'Iceland',
     description: 'Refreshing wheat beer brewed with coriander and orange peel.',
@@ -84,7 +84,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Arctic Pale Ale',
     brewery: 'Einstök',
-    style: 'Pale Ale',
+    styles: ['Pale Ale'],
     abv: 5.6,
     country: 'Iceland',
     description: 'Balanced pale ale with Icelandic water.',
@@ -96,7 +96,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Toasted Porter',
     brewery: 'Einstök',
-    style: 'Porter',
+    styles: ['Porter'],
     abv: 6.0,
     country: 'Iceland',
     description: 'Rich porter with chocolate and coffee notes.',
@@ -110,7 +110,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Jólaöl',
     brewery: 'Kaldi',
-    style: 'Christmas Lager',
+    styles: ['Christmas Lager'],
     abv: 5.0,
     country: 'Iceland',
     description: 'Classic Christmas lager with malty sweetness.',
@@ -122,7 +122,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Móri',
     brewery: 'Kaldi',
-    style: 'Stout',
+    styles: ['Stout'],
     abv: 5.2,
     country: 'Iceland',
     description: 'Dark stout with roasted malt character.',
@@ -136,7 +136,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Jólahefð',
     brewery: 'Bríó',
-    style: 'Christmas Spiced Ale',
+    styles: ['Christmas Spiced Ale'],
     abv: 6.5,
     country: 'Iceland',
     description: 'Heavily spiced Christmas ale with cloves, ginger, and cardamom.',
@@ -148,7 +148,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Austri',
     brewery: 'Bríó',
-    style: 'Lager',
+    styles: ['Lager'],
     abv: 4.5,
     country: 'Iceland',
     description: 'Clean and crisp Icelandic lager.',
@@ -162,7 +162,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Julebryg',
     brewery: 'Tuborg',
-    style: 'Christmas Lager',
+    styles: ['Christmas Lager'],
     abv: 5.6,
     country: 'Denmark',
     description: 'Danish Christmas lager, widely available in Iceland.',
@@ -174,7 +174,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Nisseøl',
     brewery: 'Nøgne Ø',
-    style: 'Christmas Ale',
+    styles: ['Christmas Ale'],
     abv: 7.5,
     country: 'Norway',
     description: 'Norwegian Christmas ale with rich malt profile.',
@@ -186,7 +186,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Juleøl',
     brewery: 'Mikkeller',
-    style: 'Christmas IPA',
+    styles: ['Christmas IPA'],
     abv: 6.9,
     country: 'Denmark',
     description: 'Hoppy Christmas IPA from renowned Danish brewery.',
@@ -201,7 +201,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Lava',
     brewery: 'Ölvisholt',
-    style: 'Imperial Stout',
+    styles: ['Imperial Stout'],
     abv: 9.5,
     country: 'Iceland',
     description: 'Bold imperial stout brewed with Icelandic spring water.',
@@ -213,7 +213,7 @@ const ICELANDIC_BEERS = [
   {
     name: 'Bruggsmiðjan Jólabjór',
     brewery: 'Bruggsmiðjan',
-    style: 'Christmas Ale',
+    styles: ['Christmas Ale'],
     abv: 6.0,
     country: 'Iceland',
     description: 'Small batch Christmas ale from Grindavík brewery.',
