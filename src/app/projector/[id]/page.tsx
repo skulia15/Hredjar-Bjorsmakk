@@ -262,7 +262,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const engagementStats = getEngagementStats()
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
+    <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
       {/* Nudge Notification Overlay */}
       {showNudge && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-300">
@@ -287,9 +287,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       </div>
 
       {/* 3-Column Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[30%_40%_30%] gap-4 md:gap-6 px-4 md:px-6 pb-4 md:pb-6 min-h-0">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 px-4 md:px-6 pb-4 md:pb-6 min-h-0 w-full">
         {/* Column 1: Top 5 Beers */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto">
+        <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto min-w-0">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
             <span>🏆</span>
             <span>Efstu 5</span>
@@ -342,7 +342,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </div>
 
         {/* Column 2: Current Beer Stats */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col overflow-y-auto">
+        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col overflow-y-auto min-w-0">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
             <span>🍺</span>
             <span>Núverandi bjór</span>
@@ -459,7 +459,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </div>
 
         {/* Column 3: Participation & Stats */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col gap-4">
+        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col gap-4 min-w-0">
           <h2 className="text-2xl font-bold text-center flex items-center justify-center gap-2">
             <span>👥</span>
             <span>Þátttaka</span>
