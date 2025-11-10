@@ -26,8 +26,9 @@ export function NudgeNotification({
     console.log('[NudgeNotification] Component mounted, will show for', duration, 'ms')
 
     // Play a sound if available (simple beep)
+    let audioContext: AudioContext | null = null
     try {
-      const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
       const oscillator = audioContext.createOscillator()
       const gainNode = audioContext.createGain()
 
@@ -42,9 +43,15 @@ export function NudgeNotification({
 
       oscillator.start(audioContext.currentTime)
       oscillator.stop(audioContext.currentTime + 0.3)
+
+      // Clean up audio context after the sound finishes
+      setTimeout(() => {
+        audioContext?.close()
+      }, 500)
     } catch (e) {
       // Ignore audio errors
       console.log('[NudgeNotification] Audio playback failed:', e)
+      audioContext?.close()
     }
 
     // Start fade out 500ms before completion
@@ -64,6 +71,8 @@ export function NudgeNotification({
       console.log('[NudgeNotification] Component unmounting, cleaning up timers')
       clearTimeout(fadeTimer)
       clearTimeout(completeTimer)
+      // Close audio context if it's still open
+      audioContext?.close()
     }
   }, [duration])
 
