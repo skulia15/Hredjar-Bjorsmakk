@@ -8,6 +8,13 @@ const nextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'www.vinbudin.is',
+        pathname: '/Portaldata/**',
+      },
+    ],
   },
   async headers() {
     return [
