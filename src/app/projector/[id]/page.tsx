@@ -77,6 +77,15 @@ interface AnalyticsData {
     range: number
     standardDeviation: number
   }>
+  participantRatingSpeed: Array<{
+    participantId: string
+    userName: string
+    ratingsCount: number
+    averageSeconds: number
+    fastestSeconds: number
+    slowestSeconds: number
+    averageMinutes: number
+  }>
 }
 
 export default function ProjectorDisplayPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -216,7 +225,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
     const biggestSpread = analytics.participantRatingSpread?.[0] || null
 
-    return { mostGenerous, toughestCritic, biggestSpread }
+    // Get fastest and slowest raters
+    const fastestRater = analytics.participantRatingSpeed?.[0] || null  // First in array (sorted by averageSeconds ascending)
+    const slowestRater = analytics.participantRatingSpeed?.[analytics.participantRatingSpeed.length - 1] || null  // Last in array
+
+    return { mostGenerous, toughestCritic, biggestSpread, fastestRater, slowestRater }
   }
 
   if (loading) {
@@ -537,34 +550,40 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               <div className="flex-[2] flex flex-col border-t-2 pt-4">
                 <h3 className="text-lg font-semibold mb-3 text-center">📊 Tölfræði</h3>
                 <div className="flex-1 grid grid-cols-2 gap-2 overflow-y-auto">
-                  {/* Total Beers Finished */}
-                  {totalBeersFinished > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🍻</div>
-                      <div className="text-base text-muted-foreground mb-1">Bjórar kláraðir</div>
-                      <div className="text-3xl font-bold text-blue-600">
-                        {totalBeersFinished}
+                  {/* Fastest Rater */}
+                  {engagementStats?.fastestRater && (
+                    <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-4xl mb-2">🚀</div>
+                      <div className="text-base text-muted-foreground mb-1">Hraðastur</div>
+                      <div className="text-xl font-bold text-green-600 truncate max-w-full">
+                        {engagementStats.fastestRater.userName}
+                      </div>
+                      <div className="text-base text-muted-foreground">
+                        ⌀ {engagementStats.fastestRater.averageMinutes} mín
                       </div>
                     </div>
                   )}
 
-                  {/* Total Ratings Given */}
-                  {totalRatingsGiven > 0 && (
-                    <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">📝</div>
-                      <div className="text-base text-muted-foreground mb-1">Samtals einkunnir</div>
-                      <div className="text-3xl font-bold text-green-600">
-                        {totalRatingsGiven}
+                  {/* Slowest Rater */}
+                  {engagementStats?.slowestRater && (
+                    <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-4xl mb-2">🐌</div>
+                      <div className="text-base text-muted-foreground mb-1">Hægastur</div>
+                      <div className="text-xl font-bold text-orange-600 truncate max-w-full">
+                        {engagementStats.slowestRater.userName}
+                      </div>
+                      <div className="text-base text-muted-foreground">
+                        ⌀ {engagementStats.slowestRater.averageMinutes} mín
                       </div>
                     </div>
                   )}
 
                   {/* Average Rating Across Tasting */}
                   {topBeers.length > 0 && (
-                    <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
                       <div className="text-4xl mb-2">📈</div>
                       <div className="text-base text-muted-foreground mb-1">Meðaleinkunn</div>
-                      <div className="text-3xl font-bold text-orange-600">
+                      <div className="text-3xl font-bold text-blue-600">
                         {(topBeers.reduce((sum, b) => sum + b.average, 0) / topBeers.length).toFixed(2)}
                       </div>
                     </div>

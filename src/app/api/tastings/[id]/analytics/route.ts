@@ -563,6 +563,44 @@ export async function GET(
     .filter((item): item is NonNullable<typeof item> => item !== null)
     .sort((a, b) => b.range - a.range);
 
+    // 7. Participant Rating Speed - how fast participants rate on average
+    const participantRatingSpeed = tasting.participants.map(p => {
+      // Get all ratings with timestamps for finished beers
+      const userRatingTimings = tasting.tastingBeers
+        .filter(beer => beer.status === 'finished' && beer.currentSince)
+        .flatMap(beer => {
+          const rating = beer.ratings.find(r => r.participantId === p.id);
+          if (!rating) return [];
+
+          const startTime = new Date(beer.currentSince!).getTime();
+          const submitTime = new Date(rating.createdAt).getTime();
+          const durationSeconds = (submitTime - startTime) / 1000;
+
+          return [{
+            beerId: beer.id,
+            durationSeconds: Math.max(0, durationSeconds)
+          }];
+        });
+
+      if (userRatingTimings.length === 0) return null;
+
+      const avgSeconds = userRatingTimings.reduce((sum, t) => sum + t.durationSeconds, 0) / userRatingTimings.length;
+      const fastestSeconds = Math.min(...userRatingTimings.map(t => t.durationSeconds));
+      const slowestSeconds = Math.max(...userRatingTimings.map(t => t.durationSeconds));
+
+      return {
+        participantId: p.id,
+        userName: p.user?.name || `Notandi ${p.code}`,
+        ratingsCount: userRatingTimings.length,
+        averageSeconds: Math.round(avgSeconds),
+        fastestSeconds: Math.round(fastestSeconds),
+        slowestSeconds: Math.round(slowestSeconds),
+        averageMinutes: Number((avgSeconds / 60).toFixed(1))
+      };
+    })
+    .filter((item): item is NonNullable<typeof item> => item !== null)
+    .sort((a, b) => a.averageSeconds - b.averageSeconds);
+
     // BREWERY-BASED ANALYTICS
 
     // Calculate brewery statistics
@@ -943,6 +981,7 @@ export async function GET(
       participantStylePreferences,
       unanimousRatings,
       participantRatingSpread,
+      participantRatingSpeed,
       // Brewery analytics
       breweryPerformanceRanking,
       breweryConsistency,
