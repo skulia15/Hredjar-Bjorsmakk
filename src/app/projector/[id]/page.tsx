@@ -539,9 +539,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 <div className="flex-1 grid grid-cols-2 gap-2 overflow-y-auto">
                   {/* Average Time */}
                   {timingStats && (
-                    <div className="bg-blue-50 dark:bg-blue-950/20 p-2 rounded-lg border border-blue-200 dark:border-blue-800">
-                      <div className="text-xs text-muted-foreground">Meðal tími</div>
-                      <div className="text-lg font-bold text-blue-600">
+                    <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">⏱️</div>
+                      <div className="text-xs text-muted-foreground mb-1">Meðal tími</div>
+                      <div className="text-xl font-bold text-blue-600">
                         {Math.floor(timingStats.avgSeconds / 60)}:{String(Math.floor(timingStats.avgSeconds % 60)).padStart(2, '0')}
                       </div>
                     </div>
@@ -549,9 +550,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
                   {/* Fastest */}
                   {timingStats && timingStats.fastest && (
-                    <div className="bg-green-50 dark:bg-green-950/20 p-2 rounded-lg border border-green-200 dark:border-green-800">
-                      <div className="text-xs text-muted-foreground">Hraðastur</div>
-                      <div className="text-sm font-bold text-green-600 truncate">
+                    <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">🚀</div>
+                      <div className="text-xs text-muted-foreground mb-1">Hraðastur</div>
+                      <div className="text-base font-bold text-green-600 truncate max-w-full">
                         {timingStats.fastest.name}
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -562,9 +564,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
                   {/* Slowest */}
                   {timingStats && timingStats.slowest && (
-                    <div className="bg-orange-50 dark:bg-orange-950/20 p-2 rounded-lg border border-orange-200 dark:border-orange-800">
-                      <div className="text-xs text-muted-foreground">Hægastur</div>
-                      <div className="text-sm font-bold text-orange-600 truncate">
+                    <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">🐌</div>
+                      <div className="text-xs text-muted-foreground mb-1">Hægastur</div>
+                      <div className="text-base font-bold text-orange-600 truncate max-w-full">
                         {timingStats.slowest.name}
                       </div>
                       <div className="text-xs text-muted-foreground">
@@ -575,12 +578,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
                   {/* Most Generous */}
                   {engagementStats?.mostGenerous && (
-                    <div className="bg-purple-50 dark:bg-purple-950/20 p-2 rounded-lg border border-purple-200 dark:border-purple-800">
-                      <div className="text-xs text-muted-foreground">Rausnarlegastur</div>
-                      <div className="text-sm font-bold text-purple-600 truncate">
+                    <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">🎁</div>
+                      <div className="text-xs text-muted-foreground mb-1">Rausnarlegastur</div>
+                      <div className="text-base font-bold text-purple-600 truncate max-w-full">
                         {engagementStats.mostGenerous.userName}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         ⌀ {engagementStats.mostGenerous.averageRating.toFixed(2)}
                       </div>
                     </div>
@@ -588,12 +592,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
                   {/* Toughest Critic */}
                   {engagementStats?.toughestCritic && (
-                    <div className="bg-red-50 dark:bg-red-950/20 p-2 rounded-lg border border-red-200 dark:border-red-800">
-                      <div className="text-xs text-muted-foreground">Strangastur</div>
-                      <div className="text-sm font-bold text-red-600 truncate">
+                    <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">🔍</div>
+                      <div className="text-xs text-muted-foreground mb-1">Strangastur</div>
+                      <div className="text-base font-bold text-red-600 truncate max-w-full">
                         {engagementStats.toughestCritic.userName}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         ⌀ {engagementStats.toughestCritic.averageRating.toFixed(2)}
                       </div>
                     </div>
@@ -601,12 +606,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
                   {/* Biggest Spread */}
                   {engagementStats?.biggestSpread && (
-                    <div className="bg-yellow-50 dark:bg-yellow-950/20 p-2 rounded-lg border border-yellow-200 dark:border-yellow-800">
-                      <div className="text-xs text-muted-foreground">Mest dreifing</div>
-                      <div className="text-sm font-bold text-yellow-600 truncate">
+                    <div className="bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-800 flex flex-col items-center justify-center text-center">
+                      <div className="text-2xl mb-1">📊</div>
+                      <div className="text-xs text-muted-foreground mb-1">Mest dreifing</div>
+                      <div className="text-base font-bold text-yellow-600 truncate max-w-full">
                         {engagementStats.biggestSpread.userName}
                       </div>
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-sm text-muted-foreground">
                         σ {engagementStats.biggestSpread.standardDeviation.toFixed(2)}
                       </div>
                     </div>
