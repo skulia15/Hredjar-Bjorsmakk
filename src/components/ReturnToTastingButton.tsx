@@ -63,9 +63,10 @@ export function ReturnToTastingButton() {
   // Check if we're on the main tasting rating page
   const isOnTastingRatePage = pathname === `/t/${activeTastingId}/rate`
   const isOnTastingAdminPage = pathname?.startsWith(`/t/${activeTastingId}/admin`)
+  const isOnProjectorPage = pathname?.startsWith('/projector')
 
-  // Don't show if we're already on the tasting page
-  if (isOnTastingRatePage || isOnTastingAdminPage) {
+  // Don't show if we're already on the tasting page or projector view
+  if (isOnTastingRatePage || isOnTastingAdminPage || isOnProjectorPage) {
     return null
   }
 

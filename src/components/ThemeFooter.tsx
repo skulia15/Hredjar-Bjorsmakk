@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 type UiStyle = 'default' | 'neo' | 'christmas'
 
 export function ThemeFooter() {
+  const pathname = usePathname()
   const [style, setStyle] = useState<UiStyle>('default')
   const [mounted, setMounted] = useState(false)
 
@@ -32,6 +34,11 @@ export function ThemeFooter() {
     setStyle(next)
     applyStyle(next)
     try { localStorage.setItem('uiStyle', next) } catch {}
+  }
+
+  // Hide footer on projector routes
+  if (pathname?.startsWith('/projector')) {
+    return null
   }
 
   return (

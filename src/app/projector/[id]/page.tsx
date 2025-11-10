@@ -270,7 +270,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   }
 
   const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
-  const topBeers = scores?.beers.slice(0, 5) || []
+  const topBeers = scores?.beers.slice(0, 6) || []
 
   // Calculate current beer stats
   const currentBeerRatings = pendingRaters?.rated || []
@@ -300,23 +300,14 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         />
       )}
 
-      {/* Header */}
-      <div className="flex-shrink-0 py-4 px-4 md:px-6 text-center">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{tasting.title}</h1>
-        <div className="flex items-center justify-center gap-4 text-base md:text-lg text-muted-foreground">
-          <span className="px-3 py-1 bg-green-500/10 text-green-600 rounded-lg font-medium">
-            {tasting.status === 'active' ? 'Í gangi' : tasting.status}
-          </span>
-        </div>
-      </div>
 
       {/* 3-Column Layout */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 px-4 md:px-6 pb-4 md:pb-6 min-h-0 w-full">
-        {/* Column 1: Top 5 Beers */}
+        {/* Column 1: Top 6 Beers */}
         <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto min-w-0">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
             <span>🏆</span>
-            <span>Efstu 5</span>
+            <span>Efstu 6</span>
           </h2>
 
           {topBeers.length === 0 ? (
@@ -395,9 +386,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <Image
                       src={currentBeer.imageUrl}
                       alt={currentBeer.name}
-                      width={120}
-                      height={120}
-                      className="rounded-lg object-contain"
+                      width={100}
+                      height={100}
+                      className="rounded-lg object-contain max-h-24"
                     />
                   </div>
                 )}
@@ -621,7 +612,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {engagementStats?.mostDeviant && (
                     <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
                       <div className="text-4xl mb-2">🎯</div>
-                      <div className="text-base text-muted-foreground mb-1">Mest frábrugðinn</div>
+                      <div className="text-base text-muted-foreground mb-1">Útlaginn</div>
                       <div className="text-xl font-bold text-blue-600 truncate max-w-full">
                         {engagementStats.mostDeviant.userName}
                       </div>

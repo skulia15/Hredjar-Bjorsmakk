@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { User } from 'lucide-react'
 
 export function UserDisplay() {
+  const pathname = usePathname()
   const [userName, setUserName] = useState<string | null>(null)
 
   useEffect(() => {
@@ -17,6 +19,11 @@ export function UserDisplay() {
       })
       .catch(err => console.error('Error loading user:', err))
   }, [])
+
+  // Hide on projector routes
+  if (pathname?.startsWith('/projector')) {
+    return null
+  }
 
   if (!userName) {
     return null
