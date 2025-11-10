@@ -92,7 +92,7 @@ export function NudgeNotification({
         fadeOut ? 'opacity-0' : 'opacity-100'
       }`}
       style={{
-        animation: fadeOut ? 'none' : 'blinkRedWhite 0.5s ease-in-out 4'
+        animation: fadeOut ? 'none' : 'blinkRedWhite 0.2s ease-in-out 10'
       }}
     >
       <div className="text-6xl md:text-8xl font-bold text-center px-4 drop-shadow-2xl">
