@@ -15,6 +15,7 @@ export function NudgeNotification({
 }: NudgeNotificationProps) {
   const [visible, setVisible] = useState(true)
   const [fadeOut, setFadeOut] = useState(false)
+  const [animationKey, setAnimationKey] = useState(0)
   const onCompleteRef = useRef(onComplete)
 
   // Keep onComplete ref up to date
@@ -24,6 +25,9 @@ export function NudgeNotification({
 
   useEffect(() => {
     console.log('[NudgeNotification] Component mounted, will show for', duration, 'ms')
+
+    // Force animation to restart by updating key
+    setAnimationKey(prev => prev + 1)
 
     // Play a sound if available (simple beep)
     let audioContext: AudioContext | null = null
@@ -83,6 +87,7 @@ export function NudgeNotification({
 
   return (
     <div
+      key={animationKey}
       className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${
         fadeOut ? 'opacity-0' : 'opacity-100'
       }`}
