@@ -60,6 +60,13 @@ export default async function HomePage() {
           </Link>
 
           <Link
+            href="/projector"
+            className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            Skjávarpasýn
+          </Link>
+
+          <Link
             href="/admin"
             className="block w-full px-4 py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           >
