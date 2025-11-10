@@ -83,12 +83,44 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const [pendingRaters, setPendingRaters] = useState<PendingRatersData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showNudge, setShowNudge] = useState(false)
 
   useEffect(() => {
     loadAllData()
     // Refresh every 5 seconds
     const interval = setInterval(loadAllData, 5000)
     return () => clearInterval(interval)
+  }, [params.id])
+
+  // Setup SSE connection for nudge notifications
+  useEffect(() => {
+    const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
+
+    eventSource.addEventListener('nudge', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data)
+        console.log('[Projector] Nudge received:', data)
+
+        // Show nudge notification
+        setShowNudge(true)
+
+        // Hide after 3 seconds
+        setTimeout(() => {
+          setShowNudge(false)
+        }, 3000)
+      } catch (error) {
+        console.error('[Projector] Error parsing nudge event:', error)
+      }
+    })
+
+    eventSource.onerror = (err) => {
+      console.error('[Projector] SSE connection error:', err)
+      eventSource.close()
+    }
+
+    return () => {
+      eventSource.close()
+    }
   }, [params.id])
 
   const loadAllData = async () => {
@@ -218,7 +250,20 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const engagementStats = getEngagementStats()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6">
+    <div className="min-h-screen bg-gradient-to-br from-background to-muted p-6 relative">
+      {/* Nudge Notification Overlay */}
+      {showNudge && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-300">
+          <div className="bg-red-600 text-white px-12 py-8 rounded-2xl shadow-2xl animate-in zoom-in duration-300">
+            <div className="text-center space-y-4">
+              <div className="text-8xl">⏰</div>
+              <div className="text-4xl font-bold">Drífa sig!</div>
+              <div className="text-2xl">Komið með einkunn!</div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-6 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-2">{tasting.title}</h1>
