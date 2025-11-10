@@ -30,13 +30,15 @@ interface PendingRatersProps {
   currentBeerId: string
   refreshInterval?: number
   onRemoveParticipant?: (participantId: string) => void
+  onNudge?: () => void
 }
 
 export function PendingRaters({
   tastingId,
   currentBeerId,
   refreshInterval = 3000,
-  onRemoveParticipant
+  onRemoveParticipant,
+  onNudge
 }: PendingRatersProps) {
   const [data, setData] = useState<PendingRatersData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -133,9 +135,19 @@ export function PendingRaters({
       {/* Pending Ratings */}
       {data.pendingCount > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-orange-600">
-            ⏳ Bíður ({data.pendingCount})
-          </h4>
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-medium text-orange-600">
+              ⏳ Bíður ({data.pendingCount})
+            </h4>
+            {onNudge && (
+              <button
+                onClick={onNudge}
+                className="px-3 py-1 text-sm bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors"
+              >
+                Drífa sig!
+              </button>
+            )}
+          </div>
           <div className="space-y-1 max-h-48 overflow-y-auto">
             {data.pending.map((participant) => (
               <div

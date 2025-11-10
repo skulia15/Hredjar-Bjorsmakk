@@ -7,6 +7,7 @@ import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
+import { SlideToConfirm } from '@/components/SlideToConfirm'
 
 interface Beer {
   id: string
@@ -187,8 +188,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleFinishBeer = async (beerId: string) => {
-    if (!confirm('Klára þennan bjór? Þátttakendur munu ekki geta gefið honum einkunn lengur.')) return
-
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}/finish`, {
         method: 'POST',
@@ -311,6 +310,24 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       loadTasting()
     } catch (error) {
       setMessage('Error completing tasting')
+    }
+  }
+
+  const handleNudge = async () => {
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/nudge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) throw new Error('Failed to send nudge')
+
+      const data = await response.json()
+      setMessage(data.message || 'Tilkynning send!')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error) {
+      setMessage('Villa við að senda tilkynningu')
+      setTimeout(() => setMessage(''), 3000)
     }
   }
 
@@ -497,12 +514,11 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                       </p>
                     )}
                   </div>
-                  <button
-                    onClick={() => handleFinishBeer(currentBeer.id)}
-                    className="w-full px-4 py-3 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 transition-colors"
-                  >
-                    Klára þennan bjór
-                  </button>
+                  <SlideToConfirm
+                    onConfirm={() => handleFinishBeer(currentBeer.id)}
+                    text="Strjúka til að klára bjór"
+                    confirmText="→"
+                  />
                 </div>
               )}
 
@@ -513,6 +529,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   currentBeerId={currentBeer.id}
                   refreshInterval={3000}
                   onRemoveParticipant={handleRemoveParticipant}
+                  onNudge={handleNudge}
                 />
               )}
 

@@ -9,6 +9,8 @@ import { LeaderboardWaiting } from '@/components/LeaderboardWaiting'
 import { StarRating } from '@/components/StarRating'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
+import { SlideToConfirm } from '@/components/SlideToConfirm'
+import { NudgeNotification } from '@/components/NudgeNotification'
 
 interface Beer {
   id: string
@@ -169,6 +171,9 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   // Leaderboard waiting state (shown after wrap-up completes)
   const [showLeaderboard, setShowLeaderboard] = useState(false)
 
+  // Nudge notification state
+  const [showNudge, setShowNudge] = useState(false)
+
   const { setActiveTasting } = useActiveTasting()
 
   // Set active tasting once on mount
@@ -180,6 +185,31 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top)
   }, [])
+
+  // Set up SSE connection for real-time updates
+  useEffect(() => {
+    if (!participantId) return
+
+    const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
+
+    eventSource.addEventListener('nudge', (event) => {
+      const data = JSON.parse(event.data)
+
+      // Check if this participant is in the pending list
+      if (data.pendingParticipantIds && data.pendingParticipantIds.includes(participantId)) {
+        setShowNudge(true)
+      }
+    })
+
+    eventSource.onerror = (error) => {
+      console.error('SSE connection error:', error)
+      eventSource.close()
+    }
+
+    return () => {
+      eventSource.close()
+    }
+  }, [params.id, participantId])
 
   const loadTasting = useCallback(async (showLoadingSpinner = false) => {
     if (showLoadingSpinner) {
@@ -378,7 +408,6 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
   // Leader control handlers
   const handleFinishBeer = async () => {
     if (!currentBeer) return
-    if (!confirm('Klára þennan bjór? Þátttakendur munu ekki geta gefið honum einkunn lengur.')) return
 
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers/${currentBeer.id}/finish`, {
@@ -394,6 +423,24 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       loadTasting(false)
     } catch (error) {
       setMessage('Villa við að klára bjór')
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
+  const handleNudge = async () => {
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/nudge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      })
+
+      if (!response.ok) throw new Error('Failed to send nudge')
+
+      const data = await response.json()
+      setMessage(data.message || 'Tilkynning send!')
+      setTimeout(() => setMessage(''), 3000)
+    } catch (error) {
+      setMessage('Villa við að senda tilkynningu')
       setTimeout(() => setMessage(''), 3000)
     }
   }
@@ -666,12 +713,19 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
               </svg>
               Leiðtogastýringar
             </div>
-            <button
-              onClick={handleFinishBeer}
-              className="w-full px-4 py-2.5 bg-orange-600 text-white rounded-md font-semibold hover:bg-orange-700 transition-colors"
-            >
-              Klára þennan bjór
-            </button>
+            {ratingStats && ratingStats.pendingCount > 0 && (
+              <button
+                onClick={handleNudge}
+                className="w-full px-4 py-2.5 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors"
+              >
+                Drífa sig! ({ratingStats.pendingCount})
+              </button>
+            )}
+            <SlideToConfirm
+              onConfirm={handleFinishBeer}
+              text="Strjúka til að klára bjór"
+              confirmText="→"
+            />
           </div>
         )}
 
@@ -713,6 +767,13 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
             })
           }}
           minDuration={5000}
+        />
+      )}
+
+      {/* Nudge notification overlay */}
+      {showNudge && (
+        <NudgeNotification
+          onComplete={() => setShowNudge(false)}
         />
       )}
     </div>

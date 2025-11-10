@@ -3,7 +3,7 @@
  * Manages real-time connections for tasting updates
  */
 
-export type SSEEventType = 'currentChanged' | 'finished' | 'scoresUpdated' | 'tastingClosed' | 'connected';
+export type SSEEventType = 'currentChanged' | 'finished' | 'scoresUpdated' | 'tastingClosed' | 'connected' | 'nudge';
 
 export interface SSEEventData {
   type: SSEEventType;
@@ -149,5 +149,15 @@ export function broadcastTastingClosed(tastingId: string, version: number) {
   sseManager.broadcast(tastingId, 'tastingClosed', {
     status: 'closed',
     version
+  });
+}
+
+/**
+ * Helper to broadcast nudge notification to pending participants
+ */
+export function broadcastNudge(tastingId: string, pendingParticipantIds: string[]) {
+  sseManager.broadcast(tastingId, 'nudge', {
+    pendingParticipantIds,
+    message: 'Drífa sig!'
   });
 }
