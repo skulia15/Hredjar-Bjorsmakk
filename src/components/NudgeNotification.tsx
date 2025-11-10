@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface NudgeNotificationProps {
   message?: string
@@ -14,8 +14,17 @@ export function NudgeNotification({
   duration = 3000
 }: NudgeNotificationProps) {
   const [visible, setVisible] = useState(true)
+  const [fadeOut, setFadeOut] = useState(false)
+  const onCompleteRef = useRef(onComplete)
+
+  // Keep onComplete ref up to date
+  useEffect(() => {
+    onCompleteRef.current = onComplete
+  }, [onComplete])
 
   useEffect(() => {
+    console.log('[NudgeNotification] Component mounted, will show for', duration, 'ms')
+
     // Play a sound if available (simple beep)
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
@@ -35,23 +44,41 @@ export function NudgeNotification({
       oscillator.stop(audioContext.currentTime + 0.3)
     } catch (e) {
       // Ignore audio errors
+      console.log('[NudgeNotification] Audio playback failed:', e)
     }
 
-    const timer = setTimeout(() => {
+    // Start fade out 500ms before completion
+    const fadeTimer = setTimeout(() => {
+      console.log('[NudgeNotification] Starting fade out')
+      setFadeOut(true)
+    }, duration - 500)
+
+    // Complete and unmount
+    const completeTimer = setTimeout(() => {
+      console.log('[NudgeNotification] Completing and calling onComplete')
       setVisible(false)
-      onComplete?.()
+      onCompleteRef.current?.()
     }, duration)
 
-    return () => clearTimeout(timer)
-  }, [duration, onComplete])
+    return () => {
+      console.log('[NudgeNotification] Component unmounting, cleaning up timers')
+      clearTimeout(fadeTimer)
+      clearTimeout(completeTimer)
+    }
+  }, [duration])
 
-  if (!visible) return null
+  if (!visible) {
+    console.log('[NudgeNotification] Not visible, returning null')
+    return null
+  }
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center animate-blink-red-white"
+      className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${
+        fadeOut ? 'opacity-0' : 'opacity-100'
+      }`}
       style={{
-        animation: 'blinkRedWhite 0.5s ease-in-out 4'
+        animation: fadeOut ? 'none' : 'blinkRedWhite 0.5s ease-in-out 4'
       }}
     >
       <div className="text-6xl md:text-8xl font-bold text-center px-4 drop-shadow-2xl">

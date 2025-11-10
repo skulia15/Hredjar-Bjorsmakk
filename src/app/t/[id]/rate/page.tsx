@@ -793,7 +793,10 @@ export default function RatePage({ params: paramsPromise }: { params: Promise<{ 
       {nudgeTimestamp && (
         <NudgeNotification
           key={nudgeTimestamp}
-          onComplete={() => setNudgeTimestamp(null)}
+          onComplete={() => {
+            console.log('[Rate] Nudge completed, clearing timestamp')
+            setNudgeTimestamp(null)
+          }}
           duration={3000}
         />
       )}
