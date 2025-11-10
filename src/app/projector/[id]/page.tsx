@@ -621,7 +621,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {totalRatingsGiven > 0 && (
                     <div className="bg-indigo-50 dark:bg-indigo-950/20 p-4 rounded-lg border border-indigo-200 dark:border-indigo-800 flex flex-col items-center justify-center text-center">
                       <div className="text-4xl mb-2">⭐</div>
-                      <div className="text-base text-muted-foreground mb-1">Fjöldi einkunna</div>
+                      <div className="text-base text-muted-foreground mb-1">Heildarfjöldi einkunna</div>
                       <div className="text-3xl font-bold text-indigo-600">
                         {totalRatingsGiven}
                       </div>
