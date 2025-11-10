@@ -169,27 +169,16 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   // Helper function to calculate score distribution
   const getScoreDistribution = (ratings: RatedParticipant[]) => {
-    // Group into ranges: 1-2, 3-4, 5-6, 7-8, 9-10
-    const distribution: Record<string, number> = {
-      '9-10': 0,
-      '7-8': 0,
-      '5-6': 0,
-      '3-4': 0,
-      '1-2': 0
+    // Count for each whole number 1-10
+    const distribution: Record<number, number> = {
+      1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
     }
 
     ratings.forEach(r => {
-      const score = r.score
-      if (score >= 9) {
-        distribution['9-10']++
-      } else if (score >= 7) {
-        distribution['7-8']++
-      } else if (score >= 5) {
-        distribution['5-6']++
-      } else if (score >= 3) {
-        distribution['3-4']++
-      } else if (score >= 1) {
-        distribution['1-2']++
+      // Round to nearest whole number
+      const roundedScore = Math.round(r.score)
+      if (roundedScore >= 1 && roundedScore <= 10) {
+        distribution[roundedScore]++
       }
     })
 
@@ -405,27 +394,28 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               {scoreDistribution && (
                 <div className="bg-card p-4 rounded-lg border">
                   <div className="text-sm font-medium mb-3 text-center">Einkunnir</div>
-                  <div className="space-y-2">
-                    {['9-10', '7-8', '5-6', '3-4', '1-2'].map(range => {
-                      const count = scoreDistribution[range]
-                      const percentage = currentBeerRatings.length > 0
-                        ? (count / currentBeerRatings.length) * 100
-                        : 0
+                  <div className="flex items-end justify-between gap-1 h-32">
+                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(score => {
+                      const count = scoreDistribution[score]
+                      const maxCount = Math.max(...Object.values(scoreDistribution))
+                      const heightPercentage = maxCount > 0 ? (count / maxCount) * 100 : 0
                       return (
-                        <div key={range} className="flex items-center gap-2">
-                          <span className="text-sm w-12 font-mono">{range}</span>
-                          <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
+                        <div key={score} className="flex-1 flex flex-col items-center gap-1">
+                          {/* Bar */}
+                          <div className="w-full flex flex-col justify-end items-center" style={{ height: '100px' }}>
                             <div
-                              className="bg-primary h-full transition-all duration-500 flex items-center justify-end px-2"
-                              style={{ width: `${percentage}%` }}
+                              className="w-full bg-primary rounded-t transition-all duration-500 flex items-start justify-center"
+                              style={{ height: `${heightPercentage}%`, minHeight: count > 0 ? '20px' : '0' }}
                             >
                               {count > 0 && (
-                                <span className="text-xs font-medium text-primary-foreground">
+                                <span className="text-xs font-bold text-primary-foreground pt-1">
                                   {count}
                                 </span>
                               )}
                             </div>
                           </div>
+                          {/* Label */}
+                          <span className="text-xs font-medium">{score}</span>
                         </div>
                       )
                     })}
