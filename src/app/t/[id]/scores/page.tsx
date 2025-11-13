@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import { NudgeNotification } from '@/components/NudgeNotification'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -131,6 +132,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
   const [loading, setLoading] = useState(true)
   const [isClient, setIsClient] = useState(false)
   const [showAllBeers, setShowAllBeers] = useState(false)
+  const [participantId, setParticipantId] = useState('')
+  const [nudgeTimestamp, setNudgeTimestamp] = useState<number | null>(null)
 
   useEffect(() => {
     setIsClient(true)
@@ -139,6 +142,59 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     const interval = setInterval(loadData, 5000)
     return () => clearInterval(interval)
   }, [params.id])
+
+  // Get participant ID from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem(`participant_${params.id}`)
+    if (stored) {
+      const data = JSON.parse(stored)
+      setParticipantId(data.participantId)
+    }
+  }, [params.id])
+
+  // Set up SSE connection for nudge notifications
+  useEffect(() => {
+    if (!participantId) return
+
+    console.log('[Scores] Setting up SSE connection for participant:', participantId)
+    const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
+
+    eventSource.addEventListener('nudge', (event) => {
+      console.log('[Scores] Nudge event received:', event.data)
+      const data = JSON.parse(event.data)
+
+      console.log('[Scores] Checking if participant is pending:', {
+        participantId,
+        pendingParticipantIds: data.pendingParticipantIds,
+        isPending: data.pendingParticipantIds?.includes(participantId)
+      })
+
+      // Check if this participant is in the pending list
+      if (data.pendingParticipantIds && data.pendingParticipantIds.includes(participantId)) {
+        console.log('[Scores] Showing nudge notification')
+        setNudgeTimestamp(Date.now())
+
+        // Try to vibrate if supported
+        if ('vibrate' in navigator) {
+          navigator.vibrate([200, 100, 200, 100, 200])
+        }
+      }
+    })
+
+    eventSource.addEventListener('connected', () => {
+      console.log('[Scores] SSE connection established')
+    })
+
+    eventSource.onerror = (error) => {
+      console.error('[Scores] SSE connection error:', error)
+      eventSource.close()
+    }
+
+    return () => {
+      console.log('[Scores] Closing SSE connection')
+      eventSource.close()
+    }
+  }, [params.id, participantId])
 
   const loadData = async () => {
     try {
@@ -431,6 +487,18 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           </Link>
         </div>
       </div>
+
+      {/* Nudge notification overlay */}
+      {nudgeTimestamp && (
+        <NudgeNotification
+          key={nudgeTimestamp}
+          onComplete={() => {
+            console.log('[Scores] Nudge completed, clearing timestamp')
+            setNudgeTimestamp(null)
+          }}
+          duration={3000}
+        />
+      )}
     </div>
   )
 }
