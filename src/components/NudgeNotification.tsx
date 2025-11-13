@@ -29,33 +29,16 @@ export function NudgeNotification({
     // Force animation to restart by updating key
     setAnimationKey(prev => prev + 1)
 
-    // Play a sound if available (simple beep)
-    let audioContext: AudioContext | null = null
+    // Play an airhorn sound from MP3 file
     try {
-      audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
-      const oscillator = audioContext.createOscillator()
-      const gainNode = audioContext.createGain()
-
-      oscillator.connect(gainNode)
-      gainNode.connect(audioContext.destination)
-
-      oscillator.frequency.value = 800
-      oscillator.type = 'sine'
-
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime)
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3)
-
-      oscillator.start(audioContext.currentTime)
-      oscillator.stop(audioContext.currentTime + 0.3)
-
-      // Clean up audio context after the sound finishes
-      setTimeout(() => {
-        audioContext?.close()
-      }, 500)
+      const audio = new Audio('/airhorn.mp3')
+      audio.volume = 0.5
+      audio.play().catch(e => {
+        console.log('[NudgeNotification] Audio playback failed:', e)
+      })
     } catch (e) {
       // Ignore audio errors
       console.log('[NudgeNotification] Audio playback failed:', e)
-      audioContext?.close()
     }
 
     // Start fade out 500ms before completion
@@ -75,8 +58,6 @@ export function NudgeNotification({
       console.log('[NudgeNotification] Component unmounting, cleaning up timers')
       clearTimeout(fadeTimer)
       clearTimeout(completeTimer)
-      // Close audio context if it's still open
-      audioContext?.close()
     }
   }, [duration])
 

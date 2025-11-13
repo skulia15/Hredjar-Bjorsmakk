@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airhorn Sound Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        button {
+            padding: 20px 40px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            background: #ff4444;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #ff2222;
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.3);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .info {
+            margin-top: 30px;
+            color: white;
+            text-align: center;
+            max-width: 500px;
+            padding: 0 20px;
+        }
+
+        .animation {
+            position: fixed;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            animation: blinkRedWhite 0.2s ease-in-out 10;
+            z-index: 9999;
+        }
+
+        .animation.active {
+            display: flex;
+        }
+
+        .message {
+            font-size: 72px;
+            font-weight: bold;
+            text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        @keyframes blinkRedWhite {
+            0%, 100% {
+                background-color: #ff0000;
+                color: #ffffff;
+            }
+            50% {
+                background-color: #ffffff;
+                color: #ff0000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button onclick="playAirhorn()">🔊 Test Airhorn Sound</button>
+
+    <div class="info">
+        <h2>Airhorn Test</h2>
+        <p>Click the button above to test the airhorn sound with the nudge animation.</p>
+        <p><strong>Note:</strong> Make sure your volume is not too high!</p>
+    </div>
+
+    <div class="animation" id="animation">
+        <div class="message">Drífa sig!</div>
+    </div>
+
+    <script>
+        function playAirhorn() {
+            // Show animation
+            const animation = document.getElementById('animation');
+            animation.classList.add('active');
+
+            // Play airhorn sound from MP3 file
+            try {
+                const audio = new Audio('airhorn.mp3');
+                audio.volume = 0.5;
+                audio.play().catch(e => {
+                    console.error('Audio playback failed:', e);
+                    alert('Audio playback failed: ' + e.message + '\n\nMake sure airhorn.mp3 exists in the same folder as this HTML file.');
+                });
+            } catch (e) {
+                console.error('Audio playback failed:', e);
+                alert('Audio playback failed: ' + e.message);
+            }
+
+            // Hide animation after 2 seconds
+            setTimeout(() => {
+                animation.classList.remove('active');
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
