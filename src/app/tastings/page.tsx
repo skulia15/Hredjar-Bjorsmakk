@@ -76,9 +76,7 @@ export default function TastingsPage() {
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Allar smakkanir</h1>
           <div className="flex items-center justify-between">
-            <p className="text-muted-foreground">
-              {tastings.length} smökkun{tastings.length !== 1 ? 'ar' : ''} tiltæk{tastings.length !== 1 ? 'ar' : ''}
-            </p>
+       
             {canCreate && (
               <Link
                 href="/create"
