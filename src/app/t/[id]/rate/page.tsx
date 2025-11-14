@@ -618,7 +618,7 @@ export default function RatePage({
 								<img
 									src={currentBeer.imageUrl}
 									alt={currentBeer.name}
-									className="h-32 w-auto object-contain"
+									className="h-[148px] w-auto object-contain"
 									onError={(e) => {
 										// Show placeholder if image fails to load
 										const parent = e.currentTarget.parentElement;
@@ -640,7 +640,7 @@ export default function RatePage({
 										: "beer-placeholder"
 								}
 							>
-								<BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
+								<BeerPlaceholder className="h-[148px] w-auto text-muted-foreground" />
 							</div>
 						</div>
 						<h2 className="text-4xl font-bold mb-2">{currentBeer.name}</h2>
