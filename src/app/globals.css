@@ -274,12 +274,6 @@
   mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
 }
 
-/* Christmas festive font for beer titles */
-.christmas .christmas-title {
-  font-family: var(--font-christmas);
-  letter-spacing: 0.02em;
-}
-
 /* Reset heading font weight for non-brutalist themes */
 body:not(.neo-brutalist) h1,
 body:not(.neo-brutalist) h2,

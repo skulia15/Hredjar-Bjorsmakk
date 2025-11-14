@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk } from 'next/font/google'
-import localFont from 'next/font/local'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { ReturnToTastingButton } from '@/components/ReturnToTastingButton'
@@ -9,10 +8,6 @@ import { ThemeFooter } from '@/components/ThemeFooter'
 import { ChristmasDecor } from '@/components/ChristmasDecor'
 
 const spaceGrotesk = Space_Grotesk({ subsets: ['latin'], weight: ['400', '700'] })
-const christmasFont = localFont({
-  src: '../../public/fonts/last_christmas/LastChristmas_PERSONAL_USE_ONLY.otf',
-  variable: '--font-christmas'
-})
 
 export const metadata: Metadata = {
   title: 'Hreðjar Bjórsmakk',
@@ -37,7 +32,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${spaceGrotesk.className} ${christmasFont.variable} christmas min-h-screen flex flex-col`} suppressHydrationWarning>
+      <body className={`${spaceGrotesk.className} christmas min-h-screen flex flex-col`} suppressHydrationWarning>
         <Providers>
           <main className="flex-1">
             {children}

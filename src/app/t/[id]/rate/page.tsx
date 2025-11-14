@@ -643,7 +643,7 @@ export default function RatePage({
 								<BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
 							</div>
 						</div>
-						<h2 className="text-4xl font-bold mb-2 christmas-title">{currentBeer.name}</h2>
+						<h2 className="text-4xl font-bold mb-2">{currentBeer.name}</h2>
 						<p className="text-xl text-muted-foreground mb-2">
 							{currentBeer.brewery}
 						</p>
