@@ -38,8 +38,8 @@ export function UserDisplay() {
     }
   }, [isOpen])
 
-  // Hide on projector routes
-  if (pathname?.startsWith('/projector')) {
+  // Hide on projector routes and rating page
+  if (pathname?.startsWith('/projector') || pathname?.match(/^\/t\/[^/]+\/rate$/)) {
     return null
   }
 
