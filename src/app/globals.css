@@ -279,3 +279,11 @@
   font-family: var(--font-christmas);
   letter-spacing: 0.02em;
 }
+
+/* Reset heading font weight for non-brutalist themes */
+body:not(.neo-brutalist) h1,
+body:not(.neo-brutalist) h2,
+body:not(.neo-brutalist) h3 {
+  font-weight: 700; /* bold instead of extrabold */
+  letter-spacing: normal;
+}
