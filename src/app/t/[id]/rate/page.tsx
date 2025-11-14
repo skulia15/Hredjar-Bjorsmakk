@@ -652,9 +652,11 @@ export default function RatePage({
 								{getCountryFlag(currentBeer.country)} {currentBeer.country}
 							</p>
 						)}
-						{currentBeer.style && (
+						{(currentBeer.style || currentBeer.abv) && (
 							<p className="text-base text-muted-foreground mt-1">
-								{currentBeer.style} {currentBeer.abv && `• ${currentBeer.abv}%`}
+								{currentBeer.style}
+								{currentBeer.style && currentBeer.abv && ' • '}
+								{currentBeer.abv && `${currentBeer.abv}%`}
 							</p>
 						)}
 						<div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
