@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { Settings, Trophy } from "lucide-react";
+import { Check, Plus, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -643,12 +643,12 @@ export default function RatePage({
 								<BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
 							</div>
 						</div>
-						<h2 className="text-3xl font-bold mb-2">{currentBeer.name}</h2>
+						<h2 className="text-3xl font-bold mb-2 christmas-title">{currentBeer.name}</h2>
 						<p className="text-xl text-muted-foreground mb-2">
 							{currentBeer.brewery}
 						</p>
 						{currentBeer.country && (
-							<p className="text-base text-muted-foreground mt-1">
+							<p className="text-lg text-muted-foreground mt-1">
 								{getCountryFlag(currentBeer.country)} {currentBeer.country}
 							</p>
 						)}
@@ -709,13 +709,25 @@ export default function RatePage({
 						<button
 							type="submit"
 							disabled={submitting}
-							className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
+							className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium disabled:opacity-50 transition-colors ${
+								hasRated
+									? "bg-primary text-white hover:bg-primary/90"
+									: "bg-primary text-primary-foreground hover:bg-primary/90"
+							}`}
 						>
-							{submitting
-								? "Skrái..."
-								: hasRated
-									? "Uppfæra einkunn"
-									: "Skrá einkunn"}
+							{submitting ? (
+								"Skrái..."
+							) : hasRated ? (
+								<>
+									<Check className="w-5 h-5" />
+									Uppfæra einkunn
+								</>
+							) : (
+								<>
+									<Plus className="w-5 h-5" />
+									Skrá einkunn
+								</>
+							)}
 						</button>
 					</form>
 				</div>
@@ -724,9 +736,9 @@ export default function RatePage({
 				{ratingStats && (
 					<div className="bg-card p-4 rounded-lg border space-y-3">
 						<div className="flex items-center justify-between text-sm">
-							<span className="font-medium">Framvinda þátttakenda</span>
+							<span className="font-medium">Einkunnargjafir</span>
 							<span className="text-muted-foreground">
-								{ratingStats.ratedCount} / {ratingStats.totalParticipants} gefin
+								{ratingStats.ratedCount} / {ratingStats.totalParticipants} hafa gefið
 								einkunn
 							</span>
 						</div>

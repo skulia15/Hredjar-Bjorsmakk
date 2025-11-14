@@ -269,7 +269,13 @@
 .xmas-star { position: absolute; top: 1.25rem; }
 
 /* Keep garland from covering content by fading into top edge */
-.xmas-garland-wrap { 
+.xmas-garland-wrap {
   -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
   mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
+}
+
+/* Christmas festive font for beer titles */
+.christmas .christmas-title {
+  font-family: var(--font-christmas);
+  letter-spacing: 0.02em;
 }

@@ -40,9 +40,14 @@ export function StarRating({
     setHoverValue(null);
   };
 
-  const handleTouchStart = (starIndex: number) => {
+  const handleTouchStart = (starIndex: number, e: React.TouchEvent) => {
     if (disabled) return;
     setIsLongPress(false);
+
+    // Store initial touch position
+    const touch = e.touches[0];
+    const startY = touch.clientY;
+    const startX = touch.clientX;
 
     const timer = setTimeout(() => {
       setIsLongPress(true);
@@ -56,17 +61,58 @@ export function StarRating({
     }, 500);
 
     setLongPressTimer(timer);
+
+    // Store start position on the element
+    (e.currentTarget as any)._startY = startY;
+    (e.currentTarget as any)._startX = startX;
   };
 
-  const handleTouchEnd = (starIndex: number) => {
+  const handleTouchMove = (e: React.TouchEvent) => {
+    // If user is scrolling (moved more than 10px vertically), cancel the rating action
+    const touch = e.touches[0];
+    const startY = (e.currentTarget as any)._startY;
+    const startX = (e.currentTarget as any)._startX;
+
+    if (startY !== undefined && startX !== undefined) {
+      const deltaY = Math.abs(touch.clientY - startY);
+      const deltaX = Math.abs(touch.clientX - startX);
+
+      // If vertical movement is greater than horizontal and more than 10px, it's a scroll
+      if (deltaY > 10 && deltaY > deltaX) {
+        if (longPressTimer) {
+          clearTimeout(longPressTimer);
+          setLongPressTimer(null);
+        }
+        setIsLongPress(false);
+      }
+    }
+  };
+
+  const handleTouchEnd = (starIndex: number, e: React.TouchEvent) => {
     if (disabled) return;
+
+    // Check if this was a scroll gesture
+    const touch = e.changedTouches[0];
+    const startY = (e.currentTarget as any)._startY;
+    const startX = (e.currentTarget as any)._startX;
 
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
     }
 
-    // If it wasn't a long press, it's a quick tap - set full star
+    // If there was significant vertical movement, don't register as a tap
+    if (startY !== undefined && startX !== undefined) {
+      const deltaY = Math.abs(touch.clientY - startY);
+      const deltaX = Math.abs(touch.clientX - startX);
+
+      if (deltaY > 10 && deltaY > deltaX) {
+        setIsLongPress(false);
+        return; // Don't change rating, user was scrolling
+      }
+    }
+
+    // If it wasn't a long press and wasn't a scroll, it's a quick tap - set full star
     if (!isLongPress) {
       const newValue = starIndex + 1;
       onChange(newValue);
@@ -118,10 +164,11 @@ export function StarRating({
           return (
             <div
               key={i}
-              className="relative touch-none select-none"
+              className="relative select-none"
               style={{ width: size, height: size }}
-              onTouchStart={() => handleTouchStart(i)}
-              onTouchEnd={() => handleTouchEnd(i)}
+              onTouchStart={(e) => handleTouchStart(i, e)}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={(e) => handleTouchEnd(i, e)}
               onTouchCancel={handleTouchCancel}
             >
               {/* Left half (for half-star clicks on desktop) */}
@@ -198,8 +245,10 @@ export function StarRating({
                 onChange(newValue);
               }
             }}
+            onWheel={(e) => e.currentTarget.blur()}
+            onTouchMove={(e) => e.preventDefault()}
             disabled={disabled}
-            className="w-20 px-3 py-2 border rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed bg-background"
+            className="w-20 px-3 py-2 border rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed bg-background touch-none"
             placeholder="0.0"
           />
           <span className="text-sm text-muted-foreground">/ {max}.0</span>
