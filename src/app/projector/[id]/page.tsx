@@ -529,7 +529,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   <div className="flex-1 flex flex-col min-h-0">
                     <h3 className="text-lg font-semibold text-orange-600 flex items-center gap-2 mb-2">
                       <span>⏳</span>
-                      <span>Bíður ({pendingRaters.pendingCount})</span>
+                      <span>Bíður eftir {pendingRaters.pendingCount} einkunnargjöfum</span>
                     </h3>
                     <div className="flex-1 space-y-1 overflow-y-auto">
                       {pendingRaters.pending.map((participant) => (
