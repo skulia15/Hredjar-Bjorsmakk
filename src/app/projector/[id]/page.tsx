@@ -284,6 +284,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const lowestScore = currentBeerRatings.length > 0
     ? Math.min(...currentBeerRatings.map(r => r.score))
     : null
+
+  // Get highest and lowest raters for the current beer
+  const highestRater = currentBeerRatings.length > 0
+    ? currentBeerRatings.reduce((max, r) => r.score > max.score ? r : max, currentBeerRatings[0])
+    : null
+  const lowestRater = currentBeerRatings.length > 0
+    ? currentBeerRatings.reduce((min, r) => r.score < min.score ? r : min, currentBeerRatings[0])
+    : null
+
   const engagementStats = getEngagementStats()
 
   // Calculate overall tasting stats
@@ -460,6 +469,35 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 text-center">
                     <div className="text-xs text-muted-foreground">Lægsta</div>
                     <div className="text-2xl font-bold text-orange-600">{lowestScore.toFixed(1)}</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Highest and Lowest Raters - shown when beer is finished */}
+              {currentBeer.status === 'finished' && highestRater && lowestRater && (
+                <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border-2 border-amber-500">
+                  <h3 className="text-lg font-semibold text-center mb-3 text-amber-700 dark:text-amber-400">
+                    🎯 Einkunnir bjórs
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                      <div className="text-xs text-muted-foreground text-center mb-1">Hæsta einkunn</div>
+                      <div className="text-2xl font-bold text-green-600 text-center mb-1">
+                        {highestRater.score.toFixed(1)}
+                      </div>
+                      <div className="text-sm font-medium text-center truncate">
+                        {highestRater.name}
+                      </div>
+                    </div>
+                    <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
+                      <div className="text-xs text-muted-foreground text-center mb-1">Lægsta einkunn</div>
+                      <div className="text-2xl font-bold text-orange-600 text-center mb-1">
+                        {lowestRater.score.toFixed(1)}
+                      </div>
+                      <div className="text-sm font-medium text-center truncate">
+                        {lowestRater.name}
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
