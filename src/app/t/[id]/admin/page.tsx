@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Home, Users, Trophy, Trash2 } from 'lucide-react'
+import { ChevronDown, Home, Trash2, Trophy, Users } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
@@ -35,16 +35,14 @@ interface Tasting {
   participantCount: number
 }
 
-type TabType = 'manage' | 'participation' | 'scores' | 'analytics'
-
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
-  const [activeTab, setActiveTab] = useState<TabType>('manage')
   const [loading, setLoading] = useState(true)
   const [userName] = useState('admin') // Admin user accessing admin page
   const [message, setMessage] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isFinishedBeersExpanded, setIsFinishedBeersExpanded] = useState(false)
 
   // Beer catalog state
   const [catalogBeers, setCatalogBeers] = useState<Array<{
@@ -371,49 +369,11 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="space-y-2">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold">{tasting.title}</h1>
-            <div className="bg-primary/10 px-3 py-1.5 rounded-lg border border-primary/20 text-sm">
-              <span className="text-muted-foreground">Admin: </span>
-              <span className="font-semibold text-primary">{userName}</span>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold">{tasting.title}</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span className="px-2 py-1 bg-primary/10 rounded">{tasting.status}</span>
             <span>{tasting.participantCount} þátttakendur</span>
             <span>{tasting.beers?.length || 0} bjórar</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Home className="w-4 h-4" />
-              Forsíða
-            </Link>
-            <Link
-              href={`/t/${params.id}/rate`}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Users className="w-4 h-4" />
-              Þátttakandasýn
-            </Link>
-            <Link
-              href={`/t/${params.id}/scores`}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-            >
-              <Trophy className="w-4 h-4" />
-              Stigatafla
-            </Link>
-            {isAdmin && (
-              <Link
-                href="/admin/users"
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
-              >
-                <Users className="w-4 h-4" />
-                Notendastjórnun
-              </Link>
-            )}
           </div>
         </div>
 
@@ -440,43 +400,50 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           </div>
         </div>
 
+        {/* Navigation Links */}
+        <div className="flex gap-2 flex-wrap">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            Forsíða
+          </Link>
+          <Link
+            href={`/t/${params.id}/rate`}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Þátttakandasýn
+          </Link>
+          <Link
+            href={`/t/${params.id}/scores`}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
+          >
+            <Trophy className="w-4 h-4" />
+            Stigatafla
+          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
+            >
+              <Users className="w-4 h-4" />
+              Notendastjórnun
+            </Link>
+          )}
+        </div>
+
         {message && (
           <div className="p-3 bg-green-500/10 border border-green-500 text-green-600 rounded-md text-sm text-center">
             {message}
           </div>
         )}
 
-        {/* Tabs */}
-        <div className="border-b">
-          <div className="flex gap-4">
-            {(['manage', 'participation', 'analytics', 'scores'] as TabType[]).map((tab) => {
-              const tabLabels = {
-                manage: 'Stjórna',
-                analytics: 'Tölfræði',
-                participation: 'Þátttaka',
-                scores: 'Einkunnir'
-              }
-              return (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-primary text-primary font-medium'
-                      : 'border-transparent text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  {tabLabels[tab]}
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Tab Content */}
+        {/* Management Section */}
         <div>
-          {activeTab === 'manage' && (
-            <div className="space-y-6">
+          <h2 className="text-2xl font-bold mb-6">Stjórna</h2>
+          <div className="space-y-6">
               {/* Current Beer - Highlighted */}
               {currentBeer && (
                 <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-2 border-green-500 shadow-lg space-y-3">
@@ -578,25 +545,34 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Finished Beers */}
               {finishedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold text-gray-600 dark:text-gray-400">✓ Smakkaðir bjórar ({finishedBeers.length})</h3>
-                  <div className="space-y-2">
-                    {finishedBeers.map((beer) => (
-                      <div key={beer.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-md opacity-75">
-                        <div>
-                          <h4 className="font-semibold text-lg">{beer.name}</h4>
-                          <p className="text-sm text-muted-foreground">{beer.brewery}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-primary">
-                            {beer.averageRating?.toFixed(2) || 'N/A'}
+                  <button
+                    type="button"
+                    onClick={() => setIsFinishedBeersExpanded(!isFinishedBeersExpanded)}
+                    className="w-full flex items-center justify-between hover:opacity-80 transition-opacity"
+                  >
+                    <h3 className="font-semibold text-gray-600 dark:text-gray-400">✓ Smakkaðir bjórar ({finishedBeers.length})</h3>
+                    <ChevronDown className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${isFinishedBeersExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+                  {isFinishedBeersExpanded && (
+                    <div className="space-y-2">
+                      {finishedBeers.map((beer) => (
+                        <div key={beer.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 rounded-md opacity-75">
+                          <div>
+                            <h4 className="font-semibold text-lg">{beer.name}</h4>
+                            <p className="text-sm text-muted-foreground">{beer.brewery}</p>
                           </div>
-                          <div className="text-xs text-muted-foreground">
-                            {beer.ratingCount || 0} einkunnir
+                          <div className="text-right">
+                            <div className="text-2xl font-bold text-primary">
+                              {beer.averageRating?.toFixed(2) || 'N/A'}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {beer.ratingCount || 0} einkunnir
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -643,40 +619,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   </a>
                 </div>
               </div>
-            </div>
-          )}
-
-          {activeTab === 'analytics' && (
-            <AnalyticsDashboard tastingId={params.id} />
-          )}
-
-          {activeTab === 'participation' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                Skoða þátttakendasýn
-              </p>
-              <Link
-                href={`/t/${params.id}/rate`}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
-              >
-                Opna þátttakandasíðu
-              </Link>
-            </div>
-          )}
-
-          {activeTab === 'scores' && (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                Skoða stigatöfluna
-              </p>
-              <Link
-                href={`/t/${params.id}/scores`}
-                className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90 inline-block"
-              >
-                Fara á einkunnasiðu
-              </Link>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>

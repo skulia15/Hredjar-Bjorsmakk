@@ -19,7 +19,7 @@ export function ChristmasDecor() {
     return () => observer.disconnect()
   }, [])
 
-  const flakes = useMemo(() => Array.from({ length: 22 }, (_, i) => i), [])
+  const flakes = useMemo(() => Array.from({ length: 5 }, (_, i) => i), [])
   const ornaments = useMemo(() => [
     '#d90429', '#ef233c', '#ffd166', '#06d6a0', '#118ab2', '#ffd166', '#ef233c', '#06d6a0', '#ffd166'
   ], [])
