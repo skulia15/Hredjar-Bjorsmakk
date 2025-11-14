@@ -492,7 +492,7 @@ export default function RatePage({
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<div className="text-4xl mb-4">🍺</div>
+					<img src="/logo.png" alt="Logo" className="w-24 h-24 mx-auto mb-4 animate-pulse" />
 					<p className="text-muted-foreground">Hleður...</p>
 				</div>
 			</div>
@@ -532,7 +532,7 @@ export default function RatePage({
 		return (
 			<div className="min-h-screen flex items-center justify-center">
 				<div className="text-center">
-					<div className="text-4xl mb-4">🍺</div>
+					<img src="/logo.png" alt="Logo" className="w-24 h-24 mx-auto mb-4 animate-pulse" />
 					<p className="text-muted-foreground">Hleður niðurstöðum...</p>
 				</div>
 			</div>
@@ -643,7 +643,7 @@ export default function RatePage({
 								<BeerPlaceholder className="h-32 w-auto text-muted-foreground" />
 							</div>
 						</div>
-						<h2 className="text-3xl font-bold mb-2 christmas-title">{currentBeer.name}</h2>
+						<h2 className="text-4xl font-bold mb-2 christmas-title">{currentBeer.name}</h2>
 						<p className="text-xl text-muted-foreground mb-2">
 							{currentBeer.brewery}
 						</p>
