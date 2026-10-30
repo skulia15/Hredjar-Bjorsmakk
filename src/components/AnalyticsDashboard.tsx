@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Award, BarChart3, Beer as BeerIcon, Clock, TrendingUp, Users } from 'lucide-react';
-import { RankMedal } from '@/components/RankMedal';
 
 interface AnalyticsData {
   overview: {
@@ -94,15 +93,15 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
     );
   }
 
-  const { overview, ratingDistribution, beerTimings, beerParticipation, topRatedBeers, participantStats } = data;
+  const { overview, beerParticipation, participantStats } = data;
 
-  // Calculate max value for rating distribution chart
-  const maxRatingCount = Math.max(...Object.values(ratingDistribution));
+  // Least engaged first: these are the people the host needs to chase
+  const participantsByEngagement = [...participantStats].sort((a, b) => a.engagementRate - b.engagementRate);
 
   return (
     <div className="space-y-6">
       {/* Overview Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
             <Users className="h-4 w-4" />
@@ -134,78 +133,41 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
           </div>
           <div className="text-2xl font-bold">{overview.overallAverage.toFixed(2)}</div>
         </div>
+
+        <div className="bg-card p-4 rounded-lg border">
+          <div className="flex items-center gap-2 text-muted-foreground mb-1">
+            <Clock className="h-4 w-4" />
+            <span className="text-sm">Mín / bjór</span>
+          </div>
+          <div className="text-2xl font-bold">{overview.averageTimePerBeer ?? '–'}</div>
+        </div>
       </div>
 
-      {/* Average Time Per Beer */}
-      {overview.averageTimePerBeer && (
-        <div className="bg-card p-4 rounded-lg border">
-          <div className="flex items-center gap-2 mb-2">
-            <Clock className="h-5 w-5 text-muted-foreground" />
-            <h3 className="font-semibold">Meðaltími á hvern bjór</h3>
-          </div>
-          <div className="text-3xl font-bold text-primary">{overview.averageTimePerBeer} mínútur</div>
-        </div>
-      )}
-
-      {/* Top Rated Beers */}
-      {topRatedBeers.length > 0 && (
+      {/* Participant Engagement */}
+      {participantsByEngagement.length > 0 && (
         <div className="bg-card p-4 rounded-lg border">
           <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Award className="h-5 w-5" />
-            Bestu bjórarnir
+            <Users className="h-5 w-5" />
+            Þátttaka
           </h3>
           <div className="space-y-2">
-            {topRatedBeers.slice(0, 5).map((beer, index) => (
-              <div key={beer.beerId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">
-                    {index < 3 ? <RankMedal rank={index + 1} className="h-6 w-6" /> : `${index + 1}.`}
-                  </span>
-                  <div>
-                    <div className="font-medium text-sm">{beer.name}</div>
-                    <div className="text-xs text-muted-foreground">{beer.brewery}</div>
-                  </div>
+            {participantsByEngagement.map((participant) => (
+              <div key={participant.participantId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                <div>
+                  <div className="font-medium text-sm">{participant.userName}</div>
+                  <div className="text-xs text-muted-foreground">Kóði: {participant.code}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-lg font-bold text-primary">{beer.average}</div>
-                  <div className="text-xs text-muted-foreground">{beer.ratingsCount} einkunnir</div>
+                  <div className="text-sm font-semibold">{participant.engagementRate}%</div>
+                  <div className="text-xs text-muted-foreground">
+                    {participant.ratingsCount}/{participant.possibleRatings} gefið einkunn
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
       )}
-
-      {/* Rating Distribution */}
-      <div className="bg-card p-4 rounded-lg border">
-        <h3 className="font-semibold mb-3 flex items-center gap-2">
-          <BarChart3 className="h-5 w-5" />
-          Dreifing einkunna
-        </h3>
-        <div className="space-y-1">
-          {Object.entries(ratingDistribution)
-            .reverse()
-            .filter(([_, count]) => count > 0)
-            .map(([rating, count]) => {
-              const percentage = maxRatingCount > 0 ? (count / maxRatingCount) * 100 : 0;
-              return (
-                <div key={rating} className="flex items-center gap-2">
-                  <span className="text-sm font-mono w-8 text-right">{rating}</span>
-                  <div className="flex-1 bg-muted rounded-full h-6 overflow-hidden">
-                    <div
-                      className="bg-primary h-full flex items-center justify-end pr-2 transition-all"
-                      style={{ width: `${percentage}%` }}
-                    >
-                      {count > 0 && (
-                        <span className="text-xs font-semibold text-primary-foreground">{count}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
 
       {/* Beer Participation Rates */}
       {beerParticipation.length > 0 && (
@@ -232,50 +194,6 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
                     style={{ width: `${beer.participationRate}%` }}
                   />
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Participant Engagement */}
-      {participantStats.length > 0 && (
-        <div className="bg-card p-4 rounded-lg border">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Þátttaka
-          </h3>
-          <div className="space-y-2">
-            {participantStats.map((participant) => (
-              <div key={participant.participantId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                <div>
-                  <div className="font-medium text-sm">{participant.userName}</div>
-                  <div className="text-xs text-muted-foreground">Kóði: {participant.code}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold">{participant.engagementRate}%</div>
-                  <div className="text-xs text-muted-foreground">
-                    {participant.ratingsCount}/{participant.possibleRatings} gefið einkunn
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Beer Timings */}
-      {beerTimings.length > 0 && (
-        <div className="bg-card p-4 rounded-lg border">
-          <h3 className="font-semibold mb-3 flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Tími á hvern bjór
-          </h3>
-          <div className="space-y-2">
-            {beerTimings.map((timing) => (
-              <div key={timing.beerId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                <div className="font-medium text-sm">{timing.name}</div>
-                <div className="text-sm font-semibold text-primary">{timing.durationMinutes} mín</div>
               </div>
             ))}
           </div>
