@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { Beer as BeerIcon, Check, EyeOff, Hourglass, PartyPopper, Plus, Settings, Trophy } from "lucide-react";
+import { Beer as BeerIcon, Brain, Check, EyeOff, Hourglass, PartyPopper, Plus, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -149,6 +149,7 @@ export default function RatePage({
 	const [rating, setRating] = useState<number>(0);
 	const [tags, setTags] = useState<string[]>([]);
 	const [note, setNote] = useState("");
+	const [groupGuess, setGroupGuess] = useState<number | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [message, setMessage] = useState("");
@@ -320,12 +321,14 @@ export default function RatePage({
 							score: number;
 							tags: string[];
 							note: string | null;
+							groupGuess: number | null;
 						} | null,
 					) => {
 						// Reset for a new beer
 						setRating(existingRating?.score ?? 0);
 						setTags(existingRating?.tags ?? []);
 						setNote(existingRating?.note ?? "");
+						setGroupGuess(existingRating?.groupGuess ?? null);
 						setHasRated(!!existingRating);
 					},
 				)
@@ -396,6 +399,8 @@ export default function RatePage({
 					score: rating,
 					tags,
 					note,
+					// Guesses only count while the group's scores are still hidden
+					...(ratingStats?.scoresHidden && { groupGuess }),
 				}),
 			});
 
@@ -717,6 +722,51 @@ export default function RatePage({
 								</p>
 							)}
 						</div>
+
+						{/* Guess the group average while it's hidden */}
+						{ratingStats?.scoresHidden && (
+							<div className="rounded-md border border-dashed p-3 space-y-2">
+								{groupGuess === null ? (
+									<button
+										type="button"
+										onClick={() => setGroupGuess(rating || 7)}
+										className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-primary"
+									>
+										<Brain className="h-4 w-4" />
+										Giskaðu á meðaltal hópsins
+									</button>
+								) : (
+									<>
+										<div className="flex items-center justify-between text-sm">
+											<span className="inline-flex items-center gap-1.5 font-medium">
+												<Brain className="h-4 w-4" />
+												Meðaltal hópsins verður
+											</span>
+											<span className="text-lg font-bold text-primary tabular-nums">
+												{groupGuess.toFixed(1)}
+											</span>
+										</div>
+										<input
+											type="range"
+											min={1}
+											max={10}
+											step={0.1}
+											value={groupGuess}
+											onChange={(e) => setGroupGuess(Number(e.target.value))}
+											aria-label="Gisk á meðaltal hópsins"
+											className="w-full accent-primary"
+										/>
+										<button
+											type="button"
+											onClick={() => setGroupGuess(null)}
+											className="text-xs text-muted-foreground hover:underline"
+										>
+											Sleppa giski
+										</button>
+									</>
+								)}
+							</div>
+						)}
 
 						{message && (
 							<div

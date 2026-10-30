@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import {
+  bestValue,
   buildAwards,
+  closestGuess,
   comparePairs,
+  guessAccuracy,
   extremeRaters,
   linearFit,
   personalStats,
@@ -156,6 +159,34 @@ describe('buildAwards', () => {
     expect(awards[6]).toMatchObject({ main: 'Anna', sub: '9.5 fyrir Sigurvegari' })
   })
 
+  it('adds the guessing, value and speed awards when there is competition', () => {
+    const awards = buildAwards({
+      participantStats: [],
+      beerControversy: [],
+      guessAccuracy: [
+        { participantId: 'a', userName: 'Anna', meanError: 0.25, guesses: 3 },
+        { participantId: 'b', userName: 'Jón', meanError: 1, guesses: 3 },
+      ],
+      bestValue: { name: 'Ódýr', average: 7.456, pricePerLiter: 649.6 },
+      ratingSpeed: [{ userName: 'Jón', averageMinutes: 1.2 }, { userName: 'Anna', averageMinutes: 3 }],
+    })
+    expect(awards.map(a => [a.kind, a.main, a.sub])).toEqual([
+      ['mindReader', 'Anna', 'Aðeins 0.25 frá meðaltalinu að jafnaði'],
+      ['bestValue', 'Ódýr', '7.46 fyrir 650 kr/L'],
+      ['fastest', 'Jón', '1.2 mín að meðaltali'],
+    ])
+  })
+
+  it('skips the guessing and speed awards with a single contender', () => {
+    const awards = buildAwards({
+      participantStats: [],
+      beerControversy: [],
+      guessAccuracy: [{ participantId: 'a', userName: 'Anna', meanError: 0, guesses: 1 }],
+      ratingSpeed: [{ userName: 'Jón', averageMinutes: 1.2 }],
+    })
+    expect(awards).toEqual([])
+  })
+
   it('does not reorder the caller’s participant list', () => {
     const list = [...participantStats]
     buildAwards({ participantStats: list, beerControversy: [] })
@@ -169,6 +200,52 @@ describe('buildAwards', () => {
   it('skips the controversy award when everyone agreed exactly', () => {
     const awards = buildAwards({ participantStats: [], beerControversy: [{ beerId: 'x', name: 'X', standardDeviation: 0 }] })
     expect(awards).toEqual([])
+  })
+})
+
+describe('guessAccuracy', () => {
+  it('averages each participant’s error and ranks the closest first', () => {
+    expect(guessAccuracy([
+      { participantId: 'a', userName: 'Anna', guess: 7, actual: 8 },
+      { participantId: 'a', userName: 'Anna', guess: 6, actual: 6 },
+      { participantId: 'b', userName: 'Jón', guess: 5, actual: 5.25 },
+    ])).toEqual([
+      { participantId: 'b', userName: 'Jón', meanError: 0.25, guesses: 1 },
+      { participantId: 'a', userName: 'Anna', meanError: 0.5, guesses: 2 },
+    ])
+  })
+
+  it('breaks ties in favour of more guesses', () => {
+    const ranked = guessAccuracy([
+      { participantId: 'a', userName: 'Anna', guess: 5, actual: 5 },
+      { participantId: 'b', userName: 'Jón', guess: 5, actual: 5 },
+      { participantId: 'b', userName: 'Jón', guess: 6, actual: 6 },
+    ])
+    expect(ranked.map(r => r.userName)).toEqual(['Jón', 'Anna'])
+  })
+})
+
+describe('closestGuess', () => {
+  it('picks the nearest guess', () => {
+    expect(closestGuess([{ userName: 'Anna', guess: 6 }, { userName: 'Jón', guess: 7.5 }], 7.2))
+      .toMatchObject({ userName: 'Jón', guess: 7.5 })
+  })
+
+  it('returns null without guesses', () => {
+    expect(closestGuess([], 7)).toBeNull()
+  })
+})
+
+describe('bestValue', () => {
+  it('picks the highest average per kr/L', () => {
+    expect(bestValue([
+      { name: 'Dýr', average: 9, pricePerLiter: 2000 },
+      { name: 'Ódýr', average: 6, pricePerLiter: 800 },
+    ])?.name).toBe('Ódýr')
+  })
+
+  it('needs two priced beers', () => {
+    expect(bestValue([{ name: 'Einn', average: 9, pricePerLiter: 900 }, { name: 'Ekkert verð', average: 5, pricePerLiter: 0 }])).toBeNull()
   })
 })
 

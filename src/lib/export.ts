@@ -50,6 +50,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
     { header: 'Rating', key: 'rating', width: 10 },
     { header: 'Tags', key: 'tags', width: 30 },
     { header: 'Note', key: 'note', width: 50 },
+    { header: 'Group Guess', key: 'groupGuess', width: 12 },
     { header: 'Timestamp', key: 'timestamp', width: 25 },
   ];
 
@@ -75,6 +76,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
         rating: rating.score,
         tags: rating.tags.map(flavorTagLabel).join(', '),
         note: rating.note ?? '',
+        groupGuess: rating.groupGuess ?? '',
         timestamp: formatDate(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),
       });
     });

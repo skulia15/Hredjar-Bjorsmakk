@@ -131,7 +131,71 @@ export function tasteTwins(pairs: TastePair[]) {
   return { closest: pairs[0], furthest: pairs[pairs.length - 1] }
 }
 
-export type AwardKind = 'generous' | 'harsh' | 'twins' | 'opposites' | 'controversial' | 'unanimous' | 'winnerFan'
+export interface GuessAccuracy {
+  participantId: string
+  userName: string
+  // Mean absolute distance between the guessed and actual group average
+  meanError: number
+  guesses: number
+}
+
+/** How close each participant's group-average guesses landed, best guesser first */
+export function guessAccuracy(
+  entries: Array<{ participantId: string; userName: string; guess: number; actual: number }>
+): GuessAccuracy[] {
+  const byParticipant = new Map<string, { userName: string; errors: number[] }>()
+  for (const { participantId, userName, guess, actual } of entries) {
+    const entry = byParticipant.get(participantId) ?? { userName, errors: [] }
+    entry.errors.push(Math.abs(guess - actual))
+    byParticipant.set(participantId, entry)
+  }
+  return [...byParticipant.entries()]
+    .map(([participantId, { userName, errors }]) => ({
+      participantId,
+      userName,
+      meanError: round2(mean(errors)),
+      guesses: errors.length,
+    }))
+    .sort((a, b) => a.meanError - b.meanError || b.guesses - a.guesses)
+}
+
+/** The guess nearest the actual group average for one beer; null when nobody guessed */
+export function closestGuess<T extends { guess: number }>(guesses: T[], actual: number): (T & { error: number }) | null {
+  let best: (T & { error: number }) | null = null
+  for (const g of guesses) {
+    const error = Math.abs(g.guess - actual)
+    if (!best || error < best.error) best = { ...g, error }
+  }
+  return best
+}
+
+export interface ValuePick {
+  name: string
+  average: number
+  pricePerLiter: number
+}
+
+/**
+ * Most score per króna: highest average per kr/L, the same ordering as the price
+ * analytics value score. Needs at least two priced beers to be a comparison.
+ */
+export function bestValue(beers: ValuePick[]): ValuePick | null {
+  const priced = beers.filter(b => b.pricePerLiter > 0)
+  if (priced.length < 2) return null
+  return priced.reduce((best, b) => (b.average / b.pricePerLiter > best.average / best.pricePerLiter ? b : best))
+}
+
+export type AwardKind =
+  | 'generous'
+  | 'harsh'
+  | 'twins'
+  | 'opposites'
+  | 'controversial'
+  | 'unanimous'
+  | 'winnerFan'
+  | 'mindReader'
+  | 'bestValue'
+  | 'fastest'
 
 export interface Award {
   kind: AwardKind
@@ -151,10 +215,22 @@ interface AwardInputs {
   }>
   winner?: { beerId: string; name: string }
   tasteTwins?: { closest: TastePair; furthest: TastePair } | null
+  guessAccuracy?: GuessAccuracy[]
+  bestValue?: ValuePick | null
+  // Sorted fastest first, as the analytics API returns it
+  ratingSpeed?: Array<{ userName: string; averageMinutes: number }>
 }
 
 /** Headline awards; each only included when there's enough data for it to mean something */
-export function buildAwards({ participantStats, beerControversy, winner, tasteTwins }: AwardInputs): Award[] {
+export function buildAwards({
+  participantStats,
+  beerControversy,
+  winner,
+  tasteTwins,
+  guessAccuracy = [],
+  bestValue,
+  ratingSpeed = [],
+}: AwardInputs): Award[] {
   const awards: Award[] = []
   const raters = participantStats
     .filter(p => p.ratingsCount > 0)
@@ -223,6 +299,36 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
       title: 'Stærsti aðdáandi sigurvegarans',
       main: winnerFan.userName,
       sub: `${winnerFan.score} fyrir ${winner.name}`,
+    })
+  }
+
+  // One guesser always wins, so only crown a mind reader when there was competition
+  if (guessAccuracy.length > 1) {
+    const reader = guessAccuracy[0]
+    awards.push({
+      kind: 'mindReader',
+      title: 'Hugsanalesarinn',
+      main: reader.userName,
+      sub: `Aðeins ${reader.meanError.toFixed(2)} frá meðaltalinu að jafnaði`,
+    })
+  }
+
+  if (bestValue) {
+    awards.push({
+      kind: 'bestValue',
+      title: 'Bestu kaupin',
+      main: bestValue.name,
+      sub: `${bestValue.average.toFixed(2)} fyrir ${Math.round(bestValue.pricePerLiter)} kr/L`,
+    })
+  }
+
+  if (ratingSpeed.length > 1) {
+    const fastest = ratingSpeed[0]
+    awards.push({
+      kind: 'fastest',
+      title: 'Hraðasti dómarinn',
+      main: fastest.userName,
+      sub: `${fastest.averageMinutes} mín að meðaltali`,
     })
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ratingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireParticipant } from '@/lib/auth';
+import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
 
 // GET /api/tastings/[id]/ratings?beerId=... - The signed-in participant's own rating for a beer (null if none)
 export async function GET(
@@ -18,13 +19,13 @@ export async function GET(
     const { participant } = await requireParticipant(id);
     const rating = await prisma.rating.findUnique({
       where: { tastingBeerId_participantId: { tastingBeerId, participantId: participant.id } },
-      select: { tastingId: true, score: true, tags: true, note: true }
+      select: { tastingId: true, score: true, tags: true, note: true, groupGuess: true }
     });
 
     if (!rating || rating.tastingId !== id) {
       return NextResponse.json(null);
     }
-    return NextResponse.json({ score: rating.score, tags: rating.tags, note: rating.note });
+    return NextResponse.json({ score: rating.score, tags: rating.tags, note: rating.note, groupGuess: rating.groupGuess });
 
   } catch (error) {
     const authResponse = authErrorResponse(error);
@@ -55,7 +56,7 @@ export async function POST(
       );
     }
 
-    const { beerId, score, tags, note } = validation.data;
+    const { beerId, score, tags, note, groupGuess: requestedGuess } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // The rater is always the signed-in user's participation; any participantId in the body is ignored
@@ -80,6 +81,10 @@ export async function POST(
       );
     }
 
+    // Guessing the group average only means something while it's hidden, so later guesses are dropped
+    const guessOpen = (await getHiddenTastingBeerId(id)) === tastingBeerId;
+    const groupGuess = guessOpen ? requestedGuess : undefined;
+
     // Upsert rating (create or update)
     const rating = await prisma.rating.upsert({
       where: {
@@ -92,6 +97,7 @@ export async function POST(
         score,
         ...(tags !== undefined && { tags }),
         ...(note !== undefined && { note }),
+        ...(groupGuess !== undefined && { groupGuess }),
         updatedAt: new Date()
       },
       create: {
@@ -100,7 +106,8 @@ export async function POST(
         participantId: participant.id,
         score,
         tags: tags ?? [],
-        note: note ?? null
+        note: note ?? null,
+        groupGuess: groupGuess ?? null
       }
     });
 
@@ -111,6 +118,7 @@ export async function POST(
       score: rating.score,
       tags: rating.tags,
       note: rating.note,
+      groupGuess: rating.groupGuess,
       createdAt: rating.createdAt,
       updatedAt: rating.updatedAt
     });

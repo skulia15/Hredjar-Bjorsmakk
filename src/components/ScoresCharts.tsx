@@ -2,7 +2,7 @@
 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
-import { buildAwards, linearFit, ratingDomain, type TastePair } from '@/lib/stats'
+import { buildAwards, type GuessAccuracy, linearFit, ratingDomain, type TastePair, type ValuePick } from '@/lib/stats'
 import { Brain, CircleCheck, Equal, Flame, Globe, type LucideIcon, MoveRight, Scale, Smile, ThumbsDown, ThumbsUp, TrendingDown, TrendingUp, TriangleAlert } from 'lucide-react'
 import { AwardIcon } from '@/components/AwardIcon'
 import { RankMedal } from '@/components/RankMedal'
@@ -297,6 +297,9 @@ interface AnalyticsData {
   unanimousRatings?: UnanimousRating[]
   participantRatingSpread?: ParticipantRatingSpread[]
   tasteTwins?: { closest: TastePair; furthest: TastePair } | null
+  guessAccuracy?: GuessAccuracy[]
+  bestValue?: ValuePick | null
+  participantRatingSpeed?: Array<{ userName: string; averageMinutes: number }>
   // Brewery analytics
   breweryPerformanceRanking?: BreweryPerformanceRanking[]
   breweryConsistency?: BreweryConsistency[]
@@ -484,6 +487,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
     beerControversy,
     winner,
     tasteTwins: analytics.tasteTwins,
+    guessAccuracy: analytics.guessAccuracy,
+    bestValue: analytics.bestValue,
+    ratingSpeed: analytics.participantRatingSpeed,
   })
 
   return (

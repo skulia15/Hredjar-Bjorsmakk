@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
-import { comparePairs, extremeRaters, summarizeScores, tasteTwins } from '@/lib/stats';
+import { bestValue, comparePairs, extremeRaters, guessAccuracy, summarizeScores, tasteTwins } from '@/lib/stats';
 
 /**
  * GET /api/tastings/[id]/analytics
@@ -954,6 +954,37 @@ export async function GET(
       participantNames
     ));
 
+    // Guess-the-group-average game, scored on finished beers once their average is final
+    const guessRanking = guessAccuracy(
+      tasting.tastingBeers
+        .filter(beer => beer.status === 'finished' && beer.ratings.length > 0)
+        .flatMap(beer => {
+          const actual = summarizeScores(beer.ratings.map(r => r.score)).average;
+          return beer.ratings
+            .filter(r => r.groupGuess !== null && r.participantId in participantNames)
+            .map(r => ({
+              participantId: r.participantId,
+              userName: participantNames[r.participantId],
+              guess: r.groupGuess as number,
+              actual
+            }));
+        })
+    );
+
+    // Best value; prefer the price snapshotted for this tasting, like the price analytics
+    const valuePick = bestValue(
+      tasting.tastingBeers
+        .filter(beer => beer.status === 'finished' && beer.ratings.length > 0)
+        .map(beer => {
+          const price = beer.priceISK != null || beer.pricePerLiter != null ? beer : beer.beer;
+          return {
+            name: beer.beer?.name || beer.customName || 'Unknown',
+            average: summarizeScores(beer.ratings.map(r => r.score)).average,
+            pricePerLiter: price?.pricePerLiter ?? 0
+          };
+        })
+    );
+
     return NextResponse.json({
       overview: {
         tastingId: tasting.id,
@@ -987,6 +1018,8 @@ export async function GET(
       participantRatingSpread,
       participantRatingSpeed,
       tasteTwins: twins,
+      guessAccuracy: guessRanking,
+      bestValue: valuePick,
       // Brewery analytics
       breweryPerformanceRanking,
       breweryConsistency,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores'
+import { countTags } from '@/lib/flavorTags'
 
 /**
  * GET /api/tastings/{id}/current/pending-raters
@@ -81,6 +82,7 @@ export async function GET(
       name: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
       code: rating.participant.code,
       score: scoresHidden ? null : rating.score,
+      groupGuess: scoresHidden ? null : rating.groupGuess,
       submittedAt: rating.updatedAt.toISOString()
     }))
 
@@ -99,6 +101,8 @@ export async function GET(
       ratedCount: rated.length,
       pendingCount: pending.length,
       scoresHidden,
+      // Tags say little about the score, so they show even while scores are hidden
+      tags: countTags(ratings),
       rated,
       pending
     })

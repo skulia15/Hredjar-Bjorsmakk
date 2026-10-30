@@ -1,4 +1,4 @@
-import { Flame, Gavel, HandHeart, Handshake, type LucideIcon, Swords, Trophy, Users } from 'lucide-react'
+import { Brain, Flame, Gavel, HandHeart, Handshake, type LucideIcon, PiggyBank, Rocket, Swords, Trophy, Users } from 'lucide-react'
 import type { AwardKind } from '@/lib/stats'
 
 const AWARD_ICONS: Record<AwardKind, LucideIcon> = {
@@ -9,6 +9,9 @@ const AWARD_ICONS: Record<AwardKind, LucideIcon> = {
   controversial: Flame,
   unanimous: Handshake,
   winnerFan: Trophy,
+  mindReader: Brain,
+  bestValue: PiggyBank,
+  fastest: Rocket,
 }
 
 export function AwardIcon({ kind, className }: { kind: AwardKind; className?: string }) {
