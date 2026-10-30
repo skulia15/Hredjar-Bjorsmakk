@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { countTags } from '@/lib/flavorTags';
 
 // GET /api/tastings/[id]/ratings-detail - Get detailed ratings for each beer and participant
 export async function GET(
@@ -82,7 +83,15 @@ export async function GET(
         brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
         average: Number(average.toFixed(2)),
         ratingsCount: ratings.length,
-        ratings: ratingsMap
+        ratings: ratingsMap,
+        tags: countTags(ratings),
+        notes: ratings
+          .filter(r => r.note)
+          .map(r => ({
+            participantId: r.participantId,
+            userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
+            note: r.note as string
+          }))
       };
     });
 

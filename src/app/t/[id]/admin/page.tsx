@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Beer as BeerIcon, ChevronDown, Home, Hourglass, Trash2, Trophy, Users } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, EyeOff, Home, Hourglass, Trash2, Trophy, Users } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
@@ -22,7 +22,7 @@ interface Beer {
   orderIndex: number
   currentSince?: Date | string | null
   finishedAt?: Date | string | null
-  averageRating?: number
+  averageRating?: number | null
   ratingCount?: number
 }
 
@@ -33,6 +33,7 @@ interface Tasting {
   currentBeerId?: string | null
   beers?: Beer[]
   participantCount: number
+  hideScoresUntilAllRated: boolean
 }
 
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -305,6 +306,23 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
+  const handleToggleHideScores = async (hideScoresUntilAllRated: boolean) => {
+    try {
+      const response = await fetch(`/api/tastings/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hideScoresUntilAllRated })
+      })
+
+      if (!response.ok) throw new Error('Failed to update setting')
+
+      loadTasting()
+    } catch (error) {
+      setMessage('Villa við að vista stillingu')
+      setTimeout(() => setMessage(''), 3000)
+    }
+  }
+
   const handleNudge = async () => {
     try {
       const response = await fetch(`/api/tastings/${params.id}/nudge`, {
@@ -393,6 +411,25 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             </button>
           </div>
         </div>
+
+        {/* Settings */}
+        <label className="flex items-start gap-3 bg-card p-4 rounded-lg border cursor-pointer">
+          <input
+            type="checkbox"
+            checked={tasting.hideScoresUntilAllRated}
+            onChange={(e) => handleToggleHideScores(e.target.checked)}
+            className="mt-1 h-4 w-4"
+          />
+          <span>
+            <span className="text-sm font-medium flex items-center gap-1.5">
+              <EyeOff className="h-4 w-4" />
+              Fela einkunnir þar til allir hafa gefið einkunn
+            </span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Enginn sér einkunnir núverandi bjórs, ekki heldur leiðtogar, fyrr en allir hafa skráð sína
+            </span>
+          </span>
+        </label>
 
         {/* Navigation Links */}
         <div className="flex gap-2 flex-wrap">

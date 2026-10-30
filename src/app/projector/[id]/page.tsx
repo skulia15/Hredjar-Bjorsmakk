@@ -7,7 +7,7 @@ import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, type Rater, type TastePair } from '@/lib/stats'
-import { BarChart3, Beer as BeerIcon, Gift, Hourglass, Medal, PartyPopper, Pause, Rocket, Search, Snail, Star, Target, Trophy } from 'lucide-react'
+import { BarChart3, Beer as BeerIcon, EyeOff, Gift, Hourglass, Medal, PartyPopper, Pause, Rocket, Search, Snail, Star, Target, Trophy } from 'lucide-react'
 import { RankMedal } from '@/components/RankMedal'
 import { JoinQrCode } from '@/components/JoinQrCode'
 
@@ -51,7 +51,7 @@ interface RatedParticipant {
   participantId: string
   name: string
   code: string
-  score: number
+  score: number | null  // null while the tasting hides scores until everyone has rated
   submittedAt: string
 }
 
@@ -66,6 +66,7 @@ interface PendingRatersData {
   totalParticipants: number
   ratedCount: number
   pendingCount: number
+  scoresHidden: boolean
   rated: RatedParticipant[]
   pending: PendingParticipant[]
 }
@@ -176,7 +177,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   }
 
   // Helper function to calculate score distribution
-  const getScoreDistribution = (ratings: RatedParticipant[]) => {
+  const getScoreDistribution = (ratings: Array<{ score: number }>) => {
     // Count for each whole number 1-10
     const distribution: Record<number, number> = {
       1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0
@@ -269,7 +270,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     : []
 
   // Calculate current beer stats
-  const currentBeerRatings = pendingRaters?.rated || []
+  const currentBeerRatings = (pendingRaters?.rated || [])
+    .filter((r): r is RatedParticipant & { score: number } => r.score !== null)
   const scoreDistribution = currentBeerRatings.length > 0 ? getScoreDistribution(currentBeerRatings) : null
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
@@ -427,7 +429,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               </div>
 
               {/* Live Average Score */}
-              {liveAverage !== null ? (
+              {pendingRaters?.scoresHidden ? (
+                <div className="bg-muted/50 p-6 rounded-lg text-center">
+                  <EyeOff className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
+                  <div className="text-muted-foreground">Einkunnir birtast þegar allir hafa gefið einkunn</div>
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
+                  </div>
+                </div>
+              ) : liveAverage !== null ? (
                 <div className="bg-primary/10 p-6 rounded-lg border-2 border-primary text-center">
                   <div className="text-sm text-muted-foreground mb-1">Meðaleinkunn</div>
                   <div className="text-5xl font-bold text-primary">

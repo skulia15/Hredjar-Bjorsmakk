@@ -17,6 +17,17 @@ describe('ratingSchema', () => {
   it('rejects non-uuid ids', () => {
     expect(ratingSchema.safeParse({ ...ids, beerId: 'nope', score: 5 }).success).toBe(false)
   })
+
+  it('dedupes tags and rejects unknown ones', () => {
+    expect(ratingSchema.parse({ ...ids, score: 5, tags: ['hoppy', 'hoppy', 'sour'] }).tags).toEqual(['hoppy', 'sour'])
+    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['delicious'] }).success).toBe(false)
+  })
+
+  it('trims notes and stores blank ones as null', () => {
+    expect(ratingSchema.parse({ ...ids, score: 5, note: '  nice  ' }).note).toBe('nice')
+    expect(ratingSchema.parse({ ...ids, score: 5, note: '   ' }).note).toBeNull()
+    expect(ratingSchema.safeParse({ ...ids, score: 5, note: 'x'.repeat(281) }).success).toBe(false)
+  })
 })
 
 describe('updateUserSchema', () => {

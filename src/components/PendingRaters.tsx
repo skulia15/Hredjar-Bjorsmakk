@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Hourglass, PartyPopper, Star } from 'lucide-react'
+import { EyeOff, Hourglass, PartyPopper, Star } from 'lucide-react'
 
 interface RatedParticipant {
   participantId: string
   name: string
   code: string
-  score: number
+  score: number | null  // null while the tasting hides scores until everyone has rated
   submittedAt: string
 }
 
@@ -124,9 +124,13 @@ export function PendingRaters({
                   <span className="font-medium">{participant.name}</span>
                   <span className="text-xs text-muted-foreground">({participant.code})</span>
                 </div>
-                <span className="font-bold text-primary">
-                  {participant.score.toFixed(1)} <Star className="inline h-3.5 w-3.5 -mt-0.5 fill-yellow-400 text-yellow-400" />
-                </span>
+                {participant.score === null ? (
+                  <EyeOff className="h-4 w-4 text-muted-foreground" aria-label="Falið" />
+                ) : (
+                  <span className="font-bold text-primary">
+                    {participant.score.toFixed(1)} <Star className="inline h-3.5 w-3.5 -mt-0.5 fill-yellow-400 text-yellow-400" />
+                  </span>
+                )}
               </div>
             ))}
           </div>

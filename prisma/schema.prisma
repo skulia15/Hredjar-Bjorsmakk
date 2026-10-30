@@ -92,6 +92,7 @@ model Tasting {
   version            Int      @default(1)  // Increments on state changes
   nudgedAt           DateTime?  // Last nudge; clients poll and fire when it changes
   nudgedParticipantIds String[] @default([])  // Pending participants at time of last nudge
+  hideScoresUntilAllRated Boolean @default(false)  // Current beer's scores stay hidden until every active participant has rated
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -151,6 +152,8 @@ model Rating {
   participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   score           Float       // 1.0 to 10.0, step 0.5
+  tags            String[]    @default([])  // Flavor tag keys from src/lib/flavorTags.ts
+  note            String?     // Optional free-text tasting note
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 

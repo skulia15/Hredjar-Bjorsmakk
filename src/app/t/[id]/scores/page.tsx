@@ -9,6 +9,7 @@ import { useNudge } from '@/hooks/useNudge'
 import { PersonalStats } from '@/components/PersonalStats'
 import { Beer as BeerIcon } from 'lucide-react'
 import { RankMedal } from '@/components/RankMedal'
+import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -131,6 +132,8 @@ interface RatingsDetailData {
     average: number
     ratingsCount: number
     ratings: Record<string, number | null>
+    tags: BeerTagCount[]
+    notes: Array<{ participantId: string; userName: string; note: string }>
   }>
 }
 
@@ -295,6 +298,12 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                           )}
                         </p>
                       )}
+                      <div className="mt-2">
+                        <TagChips
+                          tags={ratingsDetail?.beers.find(b => b.beerId === beer.beerId)?.tags ?? []}
+                          limit={3}
+                        />
+                      </div>
                     </div>
                     <div className="text-right flex-shrink-0">
                       <div className="text-3xl font-bold text-primary">
@@ -366,6 +375,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
             <RatingsTable participants={ratingsDetail.participants} beers={ratingsDetail.beers} />
           </div>
         )}
+
+        {isClient && ratingsDetail && <TastingNotes beers={ratingsDetail.beers} />}
 
         {/* User Statistics - Only show for closed tastings */}
         {scores.status === 'closed' && analytics && analytics.participantStats.length > 0 && (

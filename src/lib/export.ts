@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { prisma } from './prisma';
 import { format as formatDate } from 'date-fns';
+import { flavorTagLabel } from './flavorTags';
 
 export type ExportFormat = 'csv' | 'xlsx';
 
@@ -47,6 +48,8 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
     { header: 'Participant', key: 'participant', width: 20 },
     { header: 'Code', key: 'code', width: 10 },
     { header: 'Rating', key: 'rating', width: 10 },
+    { header: 'Tags', key: 'tags', width: 30 },
+    { header: 'Note', key: 'note', width: 50 },
     { header: 'Timestamp', key: 'timestamp', width: 25 },
   ];
 
@@ -70,6 +73,8 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
         participant: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
         code: rating.participant.code,
         rating: rating.score,
+        tags: rating.tags.map(flavorTagLabel).join(', '),
+        note: rating.note ?? '',
         timestamp: formatDate(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),
       });
     });
