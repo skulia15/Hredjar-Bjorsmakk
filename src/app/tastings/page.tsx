@@ -133,16 +133,6 @@ export default function TastingsPage() {
             )}
           </div>
         )}
-
-        {/* Navigation */}
-        <div className="flex justify-center">
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Aftur á forsíðu
-          </Link>
-        </div>
       </div>
     </div>
   )

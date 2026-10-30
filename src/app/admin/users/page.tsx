@@ -144,12 +144,6 @@ export default function AdminUsersPage() {
             >
               Skoða Smakkanir
             </Link>
-            <Link
-              href="/"
-              className="px-4 py-2 border rounded hover:bg-accent"
-            >
-              ← Forsíða
-            </Link>
           </div>
         </div>
 
