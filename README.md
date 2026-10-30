@@ -277,29 +277,23 @@ Rating
 ### Run Tests
 
 ```bash
-# Unit tests
-npm run test
+# Unit tests (src/**/*.test.ts): validation, export helpers, useNudge
+npm test
 
-# Integration tests
-npm run test:integration
+# Integration tests (tests/integration): route handlers against a real Postgres.
+# Every test truncates all tables, so it only accepts a local TEST_DATABASE_URL
+docker run -d --rm --name bt-test -e POSTGRES_PASSWORD=pw -p 55432:5432 postgres:17
+TEST_DATABASE_URL=postgresql://postgres:pw@localhost:55432/postgres npm run test:integration
 
-# E2E tests (requires running dev server)
-npm run test:e2e
-
-# All tests
-npm run test:all
-
-# Coverage report
+# Coverage report (unit)
 npm run test:coverage
 ```
 
-### E2E Test Scenarios
+### CI
 
-1. Admin promotes leader
-2. Leader creates tasting → adds beers → starts
-3. Participant joins → rates → sees wrap-up
-4. Leader finishes beer → selects next
-5. Export CSV/XLSX
+`.github/workflows/ci.yml` runs on every push to `main` and every PR: type check, lint, unit tests,
+integration tests (Postgres 17 service, schema built from `prisma/migrations`), a check that
+`schema.prisma` has no changes missing a migration, and `next build`.
 
 ## 📦 Database Management
 
