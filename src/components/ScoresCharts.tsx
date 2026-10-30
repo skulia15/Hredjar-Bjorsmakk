@@ -1,6 +1,6 @@
 'use client'
 
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis } from 'recharts'
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
 
 interface BeerScore {
@@ -41,6 +41,8 @@ interface BeerControversy {
   standardDeviation: number
   ratingsCount: number
   controversy: string
+  highestRater?: { userName: string; score: number }
+  lowestRater?: { userName: string; score: number }
 }
 
 interface AbvVsRating {
@@ -261,6 +263,7 @@ interface ParticipantBreweryPreferences {
 
 interface AnalyticsData {
   overview: {
+    overallAverage: number
     averageTimePerBeer: number | null
   }
   participantStats: ParticipantStats[]
@@ -299,6 +302,33 @@ interface ScoresChartsProps {
   scores: { beers: BeerScore[] }
   analytics: AnalyticsData
 }
+
+// Least-squares fit through the points; slope is rating change per x unit
+function linearFit(points: Array<{ x: number; y: number }>) {
+  const n = points.length
+  const meanX = points.reduce((sum, p) => sum + p.x, 0) / n
+  const meanY = points.reduce((sum, p) => sum + p.y, 0) / n
+  const covXY = points.reduce((sum, p) => sum + (p.x - meanX) * (p.y - meanY), 0)
+  const varX = points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0)
+  const varY = points.reduce((sum, p) => sum + (p.y - meanY) ** 2, 0)
+  const slope = varX > 0 ? covXY / varX : 0
+  return {
+    slope,
+    intercept: meanY - slope * meanX,
+    // Pearson correlation; 0 when either axis has no spread
+    r: varX > 0 && varY > 0 ? covXY / Math.sqrt(varX * varY) : 0,
+  }
+}
+
+// Zoomed y-axis for line/scatter charts so small differences are visible
+function ratingDomain(values: number[]): [number, number] {
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  return [Math.max(0, Math.floor(min - 0.5)), Math.min(10, Math.ceil(max + 0.5))]
+}
+
+// Single-beer styles/breweries just repeat the leaderboard
+const MIN_BEERS_PER_GROUP = 2
 
 // Which analytics sections to render. Data is still computed by the API;
 // flip a flag to bring a section back.
@@ -434,10 +464,86 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
     return flagMap[country] || '🌍'
   }
 
+  const ratingTrend = analytics.ratingTrend ?? []
+  const trendFit = ratingTrend.length > 1
+    ? linearFit(ratingTrend.map(p => ({ x: p.beerIndex, y: p.average })))
+    : null
+  const trendData = ratingTrend.map(p => ({
+    ...p,
+    fitted: trendFit ? Number((trendFit.intercept + trendFit.slope * p.beerIndex).toFixed(2)) : null,
+  }))
+
+  const abvVsRating = analytics.abvVsRating ?? []
+  const abvFit = abvVsRating.length > 2
+    ? linearFit(abvVsRating.map(b => ({ x: b.abv, y: b.averageRating })))
+    : null
+  const abvMin = Math.min(...abvVsRating.map(b => b.abv))
+  const abvMax = Math.max(...abvVsRating.map(b => b.abv))
+
+  const participantsByAverage = analytics.participantStats
+    .filter(p => p.ratingsCount > 0)
+    .sort((a, b) => b.averageRating - a.averageRating)
+
+  const beerControversy = analytics.beerControversy ?? []
+  const styleRanking = (analytics.stylePerformanceRanking ?? []).filter(s => s.beersCount >= MIN_BEERS_PER_GROUP)
+  const breweryRanking = (analytics.breweryPerformanceRanking ?? []).filter(b => b.beersCount >= MIN_BEERS_PER_GROUP)
+
+  // Headline awards; each only shown when there's enough data for it to mean something
+  const winner = scores.beers[0]
+  const winnerFan = winner && beerControversy.find(b => b.beerId === winner.beerId)?.highestRater
+  const awards = [
+    participantsByAverage.length > 1 && {
+      emoji: '😇',
+      title: 'Örlátasti dómarinn',
+      main: participantsByAverage[0].userName,
+      sub: `Meðaleinkunn ${participantsByAverage[0].averageRating.toFixed(2)}`,
+    },
+    participantsByAverage.length > 1 && {
+      emoji: '😈',
+      title: 'Strangasti dómarinn',
+      main: participantsByAverage[participantsByAverage.length - 1].userName,
+      sub: `Meðaleinkunn ${participantsByAverage[participantsByAverage.length - 1].averageRating.toFixed(2)}`,
+    },
+    beerControversy.length > 0 && beerControversy[0].standardDeviation > 0 && {
+      emoji: '🔥',
+      title: 'Umdeildasti bjórinn',
+      main: beerControversy[0].name,
+      sub: beerControversy[0].highestRater && beerControversy[0].lowestRater
+        ? `${beerControversy[0].highestRater.userName} ${beerControversy[0].highestRater.score} vs ${beerControversy[0].lowestRater.userName} ${beerControversy[0].lowestRater.score}`
+        : `Staðalfrávik ${beerControversy[0].standardDeviation.toFixed(2)}`,
+    },
+    beerControversy.length > 1 && {
+      emoji: '🤝',
+      title: 'Mest sammála um',
+      main: beerControversy[beerControversy.length - 1].name,
+      sub: `Staðalfrávik ${beerControversy[beerControversy.length - 1].standardDeviation.toFixed(2)}`,
+    },
+    winner && winnerFan && {
+      emoji: '🏆',
+      title: 'Stærsti aðdáandi sigurvegarans',
+      main: winnerFan.userName,
+      sub: `${winnerFan.score} fyrir ${winner.name}`,
+    },
+  ].filter((award): award is { emoji: string; title: string; main: string; sub: string } => Boolean(award))
+
   return (
     <div className="mt-8 space-y-8">
+      {/* Headline awards */}
+      {awards.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {awards.map(award => (
+            <div key={award.title} className="bg-card p-4 rounded-lg border text-center">
+              <div className="text-3xl mb-1">{award.emoji}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wide">{award.title}</div>
+              <div className="font-bold mt-1 truncate" title={award.main}>{award.main}</div>
+              <div className="text-xs text-muted-foreground mt-1">{award.sub}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Rating Trend Over Time Chart */}
-      {VISIBLE_SECTIONS.ratingTrend && analytics.ratingTrend && analytics.ratingTrend.length > 1 && (
+      {VISIBLE_SECTIONS.ratingTrend && trendFit && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunna í gegnum smökkunina</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -445,7 +551,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           </p>
           <ResponsiveContainer width="100%" height={350}>
             <LineChart
-              data={analytics.ratingTrend}
+              data={trendData}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} stroke={chart.grid} />
@@ -456,7 +562,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 stroke={chart.axis}
               />
               <YAxis
-                domain={[0, 10]}
+                domain={ratingDomain(ratingTrend.map(p => p.average))}
                 label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
                 stroke={chart.axis}
@@ -484,16 +590,25 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 strokeWidth={3}
                 dot={{ fill: chart.primary, r: 5 }}
                 activeDot={{ r: 7 }}
+              >
+                <LabelList dataKey="average" position="top" fontSize={11} formatter={(v) => Number(v).toFixed(1)} />
+              </Line>
+              <Line
+                type="linear"
+                dataKey="fitted"
+                stroke={chart.secondary}
+                strokeWidth={2}
+                strokeDasharray="6 4"
+                dot={false}
+                activeDot={false}
               />
             </LineChart>
           </ResponsiveContainer>
           <div className="mt-4 text-center text-sm text-muted-foreground">
             {(() => {
-              const firstRating = analytics.ratingTrend[0].average
-              const lastRating = analytics.ratingTrend[analytics.ratingTrend.length - 1].average
-              const change = lastRating - firstRating
-              const changePerBeer = change / (analytics.ratingTrend.length - 1)
-              const percentChange = (change / firstRating) * 100
+              // Regression slope uses every beer, not just first vs last
+              const changePerBeer = trendFit.slope
+              const totalChange = changePerBeer * (ratingTrend.length - 1)
 
               if (Math.abs(changePerBeer) < 0.05) {
                 return (
@@ -504,17 +619,18 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               } else if (changePerBeer > 0) {
                 return (
                   <p className="text-green-600 font-medium">
-                    📈 Hækkandi þróun: Einkunnir hækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({percentChange > 0 ? '+' : ''}{percentChange.toFixed(0)}%)
+                    📈 Hækkandi þróun: Einkunnir hækka að meðaltali um {changePerBeer.toFixed(2)} stig á hvern bjór (+{totalChange.toFixed(1)} yfir kvöldið)
                   </p>
                 )
               } else {
                 return (
                   <p className="text-orange-600 font-medium">
-                    📉 Lækkandi þróun: Einkunnir lækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({percentChange.toFixed(0)}%)
+                    📉 Lækkandi þróun: Einkunnir lækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({totalChange.toFixed(1)} yfir kvöldið)
                   </p>
                 )
               }
             })()}
+            <p className="text-xs mt-1">Brotalínan sýnir leitnilínu yfir alla bjóra</p>
           </div>
         </div>
       )}
@@ -746,17 +862,17 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Engagement Chart */}
-      {VISIBLE_SECTIONS.participantAverages && analytics.participantStats && analytics.participantStats.length > 0 && (
+      {VISIBLE_SECTIONS.participantAverages && participantsByAverage.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Meðaleinkunnir þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Meðaleinkunn hvers þátttakanda
+            Frá þeim örlátasta til þess strangasta. Brotalínan er meðaltal hópsins ({analytics.overview.overallAverage.toFixed(2)})
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(300, analytics.participantStats.length * 50)}>
+          <ResponsiveContainer width="100%" height={Math.max(300, participantsByAverage.length * 50)}>
             <BarChart
-              data={analytics.participantStats}
+              data={participantsByAverage}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 40, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
@@ -787,24 +903,33 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Bar dataKey="averageRating" fill="#3b82f6" />
+              <ReferenceLine x={analytics.overview.overallAverage} stroke={chart.axis} strokeDasharray="4 4" />
+              <Bar dataKey="averageRating">
+                {participantsByAverage.map(p => (
+                  <Cell
+                    key={p.participantId}
+                    fill={p.averageRating >= analytics.overview.overallAverage ? chart.success : chart.warning}
+                  />
+                ))}
+                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
       )}
 
       {/* Beer Controversy Index Chart */}
-      {VISIBLE_SECTIONS.beerControversy && analytics.beerControversy && analytics.beerControversy.length > 0 && (
+      {VISIBLE_SECTIONS.beerControversy && beerControversy.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Umdeildir bjórar</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
             Hvaða bjórar vöktu mest ágreining (hár staðalfrávik = meiri ágreiningur)
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(300, analytics.beerControversy.length * 40)}>
+          <ResponsiveContainer width="100%" height={Math.max(300, beerControversy.length * 40)}>
             <BarChart
-              data={analytics.beerControversy}
+              data={beerControversy}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 40, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
@@ -828,6 +953,11 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                         <p className="text-xs text-muted-foreground mb-2">{data.brewery}</p>
                         <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.average.toFixed(2)}</span></p>
                         <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
+                        {data.highestRater && data.lowestRater && (
+                          <p className="text-sm">
+                            👍 {data.highestRater.userName} {data.highestRater.score} · 👎 {data.lowestRater.userName} {data.lowestRater.score}
+                          </p>
+                        )}
                         <p className="text-xs mt-1">
                           <span className={
                             data.controversy === 'High' ? 'text-red-600 font-semibold' :
@@ -861,9 +991,27 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     />
                   )
                 }}
-              />
+              >
+                <LabelList dataKey="standardDeviation" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
+          {/* Who disagreed on the most divisive beers */}
+          <div className="mt-6 space-y-2">
+            {beerControversy
+              .filter(b => b.controversy !== 'Low' && b.highestRater && b.lowestRater)
+              .slice(0, 3)
+              .map(b => (
+                <div key={b.beerId} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/50 rounded">
+                  <div className="font-medium text-sm">{b.name}</div>
+                  <div className="text-sm">
+                    <span className="text-green-600 font-semibold">👍 {b.highestRater!.userName} {b.highestRater!.score}</span>
+                    <span className="text-muted-foreground mx-2">vs</span>
+                    <span className="text-red-600 font-semibold">👎 {b.lowestRater!.userName} {b.lowestRater!.score}</span>
+                  </div>
+                </div>
+              ))}
+          </div>
           <p className="text-center text-sm text-muted-foreground mt-4">
             Hærra staðalfrávik þýðir meiri ágreiningur um bjórinn
           </p>
@@ -871,7 +1019,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* ABV vs Rating Scatter Plot */}
-      {VISIBLE_SECTIONS.abvVsRating && analytics.abvVsRating && analytics.abvVsRating.length > 0 && (
+      {VISIBLE_SECTIONS.abvVsRating && abvVsRating.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Áfengisstyrkur vs. Einkunn</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -891,7 +1039,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 dataKey="averageRating"
                 name="Einkunn"
-                domain={[0, 10]}
+                domain={ratingDomain(abvVsRating.map(b => b.averageRating))}
                 label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
                 tick={{ fontSize: 12 }}
               />
@@ -911,13 +1059,31 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Scatter data={analytics.abvVsRating} fill="#3b82f6">
-                {analytics.abvVsRating.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Scatter>
+              {abvFit && abvMax > abvMin && (
+                <ReferenceLine
+                  segment={[
+                    { x: abvMin, y: abvFit.intercept + abvFit.slope * abvMin },
+                    { x: abvMax, y: abvFit.intercept + abvFit.slope * abvMax },
+                  ]}
+                  stroke={chart.secondary}
+                  strokeDasharray="6 4"
+                  strokeWidth={2}
+                  ifOverflow="extendDomain"
+                />
+              )}
+              <Scatter data={abvVsRating} fill={chart.primary} />
             </ScatterChart>
           </ResponsiveContainer>
+          {abvFit && (
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              {Math.abs(abvFit.r) < 0.3
+                ? '➡️ Lítið samband milli áfengisstyrks og einkunnar'
+                : abvFit.r > 0
+                ? `📈 Sterkari bjórar fengu hærri einkunnir (+${abvFit.slope.toFixed(2)} stig á hvert %)`
+                : `📉 Sterkari bjórar fengu lægri einkunnir (${abvFit.slope.toFixed(2)} stig á hvert %)`}
+              <span className="block text-xs opacity-70">Fylgni r = {abvFit.r.toFixed(2)}</span>
+            </p>
+          )}
         </div>
       )}
 
@@ -1118,20 +1284,20 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* NEW ANALYTICS - Style Performance Ranking */}
-      {VISIBLE_SECTIONS.stylePerformanceRanking && analytics.stylePerformanceRanking && analytics.stylePerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.stylePerformanceRanking && styleRanking.length > 1 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Besti og versti bjórstíllinn</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Hvaða bjórstíllar fengu hæstu og lægstu meðaleinkunnir?
+            Hvaða bjórstíllar fengu hæstu og lægstu meðaleinkunnir? (stílar með {MIN_BEERS_PER_GROUP}+ bjóra)
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(300, analytics.stylePerformanceRanking.length * 40)}>
+          <ResponsiveContainer width="100%" height={Math.max(300, styleRanking.length * 40)}>
             <BarChart
-              data={analytics.stylePerformanceRanking.map(({ style: _style, ...item }) => ({
+              data={styleRanking.map(({ style: _style, ...item }) => ({
                 ...item,
                 beerStyle: _style
               }))}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 40, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
@@ -1152,7 +1318,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     const data = payload[0].payload
                     return (
                       <div className="bg-card border rounded-lg p-3 shadow-lg">
-                        <p className="font-bold text-sm mb-2">{data.style}</p>
+                        <p className="font-bold text-sm mb-2">{data.beerStyle}</p>
                         <p className="text-sm">Meðaleinkunn: <span className="text-primary font-semibold">{data.averageRating.toFixed(2)}</span></p>
                         <p className="text-sm">Bjórar: <span className="font-semibold">{data.beersCount}</span></p>
                         <p className="text-sm">Einkunnir: <span className="font-semibold">{data.ratingsCount}</span></p>
@@ -1163,7 +1329,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   return null
                 }}
               />
-              <Bar dataKey="averageRating" fill="#3b82f6" />
+              <Bar dataKey="averageRating" fill={chart.primary}>
+                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -1432,17 +1600,17 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* BREWERY ANALYTICS - Brewery Performance Ranking */}
-      {VISIBLE_SECTIONS.breweryPerformanceRanking && analytics.breweryPerformanceRanking && analytics.breweryPerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.breweryPerformanceRanking && breweryRanking.length > 1 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Bestu og verstu brugghús</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
-            Hvaða brugghús framleiða bjóra sem fengu hæstu og lægstu meðaleinkunnir?
+            Hvaða brugghús framleiða bjóra sem fengu hæstu og lægstu meðaleinkunnir? (brugghús með {MIN_BEERS_PER_GROUP}+ bjóra)
           </p>
-          <ResponsiveContainer width="100%" height={Math.max(300, analytics.breweryPerformanceRanking.length * 40)}>
+          <ResponsiveContainer width="100%" height={Math.max(300, breweryRanking.length * 40)}>
             <BarChart
-              data={analytics.breweryPerformanceRanking}
+              data={breweryRanking}
               layout="vertical"
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 40, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
               <XAxis
@@ -1492,7 +1660,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     />
                   )
                 }}
-              />
+              >
+                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
           <div className="mt-4 flex items-center justify-center gap-4 text-sm">

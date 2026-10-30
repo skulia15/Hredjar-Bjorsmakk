@@ -199,6 +199,13 @@ export async function GET(
         const name = beer.beer?.name || beer.customName || 'Unknown';
         const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
 
+        // Who pulled the beer furthest in each direction
+        const sortedRatings = [...beer.ratings].sort((a, b) => b.score - a.score);
+        const toRater = (r: typeof beer.ratings[number]) => ({
+          userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
+          score: r.score
+        });
+
         return {
           beerId: beer.id,
           name,
@@ -206,7 +213,9 @@ export async function GET(
           average: Number(average.toFixed(2)),
           standardDeviation: Number(stdDev.toFixed(2)),
           ratingsCount: ratings.length,
-          controversy: stdDev > 2 ? 'High' : stdDev > 1 ? 'Medium' : 'Low'
+          controversy: stdDev > 2 ? 'High' : stdDev > 1 ? 'Medium' : 'Low',
+          highestRater: toRater(sortedRatings[0]),
+          lowestRater: toRater(sortedRatings[sortedRatings.length - 1])
         };
       })
       .sort((a, b) => b.standardDeviation - a.standardDeviation);
