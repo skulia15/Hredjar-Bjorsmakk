@@ -21,7 +21,7 @@
 - [ ] **Neon Account** - PostgreSQL database (free tier available)
 
 ### Local Requirements
-- [ ] Node.js 18+ installed (`node --version`)
+- [ ] Node.js 24 installed (`node --version`)
 - [ ] Git installed and configured
 - [ ] Project committed to GitHub repository
 

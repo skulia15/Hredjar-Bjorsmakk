@@ -32,7 +32,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 ## 🏗️ Tech Stack
 
 ### Frontend
-- **Framework:** Next.js 15 (App Router)
+- **Framework:** Next.js 16 (App Router)
 - **React:** 19
 - **Language:** TypeScript
 - **UI:** shadcn/ui + Tailwind CSS
@@ -56,7 +56,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 24 (pinned in `mise.toml`)
 - PostgreSQL database (local or Neon/Supabase)
 - npm or pnpm
 
@@ -153,7 +153,9 @@ See [`.env.example`](.env.example) for complete configuration.
 
 ## 📖 Documentation
 
-- **[PRD.md](PRD.md)** — Complete product requirements document
+- **[PRD](docs/PRD.md)** — Complete product requirements document
+- **[Deployment guide](docs/DEPLOYMENT_GUIDE.md)** / **[Quick deploy](docs/QUICK_DEPLOY.md)**
+- **[Future enhancements](docs/FUTURE_ENHANCEMENTS.md)**
 - **API Documentation** — See PRD Section 8
 - **Data Model** — See PRD Section 5
 
@@ -463,7 +465,7 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 
 - **Issues:** [GitHub Issues](link-to-issues)
 - **Email:** support@beerrating.app
-- **Docs:** [PRD.md](PRD.md)
+- **Docs:** [PRD](docs/PRD.md)
 
 ---
 
