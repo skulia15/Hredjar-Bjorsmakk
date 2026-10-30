@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { comparePairs, extremeRaters, summarizeScores, tasteTwins } from '@/lib/stats';
 
 /**
  * GET /api/tastings/[id]/analytics
@@ -191,31 +192,24 @@ export async function GET(
     const beerControversy = tasting.tastingBeers
       .filter(beer => beer.status === 'finished' && beer.ratings.length > 1)
       .map(beer => {
-        const ratings = beer.ratings.map(r => r.score);
-        const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
-        const variance = ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / ratings.length;
-        const stdDev = Math.sqrt(variance);
+        const { average, standardDeviation } = summarizeScores(beer.ratings.map(r => r.score));
 
         const name = beer.beer?.name || beer.customName || 'Unknown';
         const brewery = beer.beer?.brewery || beer.customBrewery || 'Unknown';
-
-        // Who pulled the beer furthest in each direction
-        const sortedRatings = [...beer.ratings].sort((a, b) => b.score - a.score);
-        const toRater = (r: typeof beer.ratings[number]) => ({
-          userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
-          score: r.score
-        });
 
         return {
           beerId: beer.id,
           name,
           brewery,
-          average: Number(average.toFixed(2)),
-          standardDeviation: Number(stdDev.toFixed(2)),
-          ratingsCount: ratings.length,
-          controversy: stdDev > 2 ? 'High' : stdDev > 1 ? 'Medium' : 'Low',
-          highestRater: toRater(sortedRatings[0]),
-          lowestRater: toRater(sortedRatings[sortedRatings.length - 1])
+          average,
+          standardDeviation,
+          ratingsCount: beer.ratings.length,
+          controversy: standardDeviation > 2 ? 'High' : standardDeviation > 1 ? 'Medium' : 'Low',
+          // Who pulled the beer furthest in each direction
+          ...extremeRaters(beer.ratings.map(r => ({
+            userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
+            score: r.score
+          })))
         };
       })
       .sort((a, b) => b.standardDeviation - a.standardDeviation);
@@ -397,24 +391,16 @@ export async function GET(
     // 1. Style Performance Ranking - which styles got highest/lowest average ratings
     const stylePerformanceRanking = Object.entries(styleStats)
       .map(([style, data]) => {
-        const average = data.ratings.length > 0
-          ? data.totalRating / data.ratings.length
-          : 0;
-
-        // Calculate standard deviation for this style
-        const variance = data.ratings.length > 1
-          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
-          : 0;
-        const stdDev = Math.sqrt(variance);
+        const summary = summarizeScores(data.ratings);
 
         return {
           style,
           beersCount: data.count,
           ratingsCount: data.ratings.length,
-          averageRating: Number(average.toFixed(2)),
-          standardDeviation: Number(stdDev.toFixed(2)),
-          minRating: data.ratings.length > 0 ? Math.min(...data.ratings) : 0,
-          maxRating: data.ratings.length > 0 ? Math.max(...data.ratings) : 0
+          averageRating: summary.average,
+          standardDeviation: summary.standardDeviation,
+          minRating: summary.min,
+          maxRating: summary.max
         };
       })
       .filter(s => s.beersCount > 0)
@@ -639,25 +625,17 @@ export async function GET(
     // 1. Brewery Performance Ranking - which breweries got highest/lowest average ratings
     const breweryPerformanceRanking = Object.entries(breweryStats)
       .map(([brewery, data]) => {
-        const average = data.ratings.length > 0
-          ? data.totalRating / data.ratings.length
-          : 0;
-
-        // Calculate standard deviation for this brewery
-        const variance = data.ratings.length > 1
-          ? data.ratings.reduce((sum, score) => sum + Math.pow(score - average, 2), 0) / data.ratings.length
-          : 0;
-        const stdDev = Math.sqrt(variance);
+        const summary = summarizeScores(data.ratings);
 
         return {
           brewery,
           country: data.country,
           beersCount: data.count,
           ratingsCount: data.ratings.length,
-          averageRating: Number(average.toFixed(2)),
-          standardDeviation: Number(stdDev.toFixed(2)),
-          minRating: data.ratings.length > 0 ? Math.min(...data.ratings) : 0,
-          maxRating: data.ratings.length > 0 ? Math.max(...data.ratings) : 0
+          averageRating: summary.average,
+          standardDeviation: summary.standardDeviation,
+          minRating: summary.min,
+          maxRating: summary.max
         };
       })
       .filter(b => b.beersCount > 0 && b.brewery !== 'Unknown')
@@ -959,6 +937,20 @@ export async function GET(
       .filter((item): item is NonNullable<typeof item> => item !== null && item.country !== 'Unknown')
       .sort((a, b) => a.standardDeviation - b.standardDeviation);
 
+    // Taste twins - which pair of participants rated most/least alike
+    const participantNames = Object.fromEntries(
+      tasting.participants.map(p => [p.id, p.user?.name || `Notandi ${p.code}`])
+    );
+    const twins = tasteTwins(comparePairs(
+      tasting.tastingBeers.flatMap(beer =>
+        beer.ratings
+          // Ratings from removed participants would show up as unnamed ids
+          .filter(r => r.participantId in participantNames)
+          .map(r => ({ participantId: r.participantId, beerId: beer.id, score: r.score }))
+      ),
+      participantNames
+    ));
+
     return NextResponse.json({
       overview: {
         tastingId: tasting.id,
@@ -991,6 +983,7 @@ export async function GET(
       unanimousRatings,
       participantRatingSpread,
       participantRatingSpeed,
+      tasteTwins: twins,
       // Brewery analytics
       breweryPerformanceRanking,
       breweryConsistency,

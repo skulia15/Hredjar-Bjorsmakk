@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
+import { PersonalStats } from '@/components/PersonalStats'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -93,6 +94,13 @@ interface AnalyticsData {
     averageTimePerBeer: number | null
   }
   participantStats: ParticipantStats[]
+  participantStylePreferences?: Array<{
+    participantId: string
+    userName: string
+    favoriteStyle: { style: string; average: number; count: number } | null
+    leastFavoriteStyle: { style: string; average: number; count: number } | null
+    allStylePreferences: Array<{ style: string; average: number; count: number }>
+  }>
   ratingDistribution: Record<string, number>
   beerTimings: BeerTiming[]
   topRatedBeers: Array<{
@@ -331,6 +339,16 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
               </div>
             )}
           </div>
+        )}
+
+        {/* Personal stats for the viewer once the tasting is over */}
+        {isClient && scores.status === 'closed' && participantId && ratingsDetail && (
+          <PersonalStats
+            participantId={participantId}
+            participants={ratingsDetail.participants}
+            beers={ratingsDetail.beers}
+            favoriteStyle={analytics?.participantStylePreferences?.find(p => p.participantId === participantId)?.favoriteStyle}
+          />
         )}
 
         {/* Charts and Analytics */}

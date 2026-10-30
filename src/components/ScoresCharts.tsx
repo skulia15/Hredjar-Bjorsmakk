@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
+import { buildAwards, linearFit, ratingDomain, type TastePair } from '@/lib/stats'
 
 interface BeerScore {
   beerId: string
@@ -283,6 +284,7 @@ interface AnalyticsData {
   participantStylePreferences?: ParticipantStylePreferences[]
   unanimousRatings?: UnanimousRating[]
   participantRatingSpread?: ParticipantRatingSpread[]
+  tasteTwins?: { closest: TastePair; furthest: TastePair } | null
   // Brewery analytics
   breweryPerformanceRanking?: BreweryPerformanceRanking[]
   breweryConsistency?: BreweryConsistency[]
@@ -301,30 +303,6 @@ interface AnalyticsData {
 interface ScoresChartsProps {
   scores: { beers: BeerScore[] }
   analytics: AnalyticsData
-}
-
-// Least-squares fit through the points; slope is rating change per x unit
-function linearFit(points: Array<{ x: number; y: number }>) {
-  const n = points.length
-  const meanX = points.reduce((sum, p) => sum + p.x, 0) / n
-  const meanY = points.reduce((sum, p) => sum + p.y, 0) / n
-  const covXY = points.reduce((sum, p) => sum + (p.x - meanX) * (p.y - meanY), 0)
-  const varX = points.reduce((sum, p) => sum + (p.x - meanX) ** 2, 0)
-  const varY = points.reduce((sum, p) => sum + (p.y - meanY) ** 2, 0)
-  const slope = varX > 0 ? covXY / varX : 0
-  return {
-    slope,
-    intercept: meanY - slope * meanX,
-    // Pearson correlation; 0 when either axis has no spread
-    r: varX > 0 && varY > 0 ? covXY / Math.sqrt(varX * varY) : 0,
-  }
-}
-
-// Zoomed y-axis for line/scatter charts so small differences are visible
-function ratingDomain(values: number[]): [number, number] {
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  return [Math.max(0, Math.floor(min - 0.5)), Math.min(10, Math.ceil(max + 0.5))]
 }
 
 // Single-beer styles/breweries just repeat the leaderboard
@@ -488,49 +466,19 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   const styleRanking = (analytics.stylePerformanceRanking ?? []).filter(s => s.beersCount >= MIN_BEERS_PER_GROUP)
   const breweryRanking = (analytics.breweryPerformanceRanking ?? []).filter(b => b.beersCount >= MIN_BEERS_PER_GROUP)
 
-  // Headline awards; each only shown when there's enough data for it to mean something
   const winner = scores.beers[0]
-  const winnerFan = winner && beerControversy.find(b => b.beerId === winner.beerId)?.highestRater
-  const awards = [
-    participantsByAverage.length > 1 && {
-      emoji: '😇',
-      title: 'Örlátasti dómarinn',
-      main: participantsByAverage[0].userName,
-      sub: `Meðaleinkunn ${participantsByAverage[0].averageRating.toFixed(2)}`,
-    },
-    participantsByAverage.length > 1 && {
-      emoji: '😈',
-      title: 'Strangasti dómarinn',
-      main: participantsByAverage[participantsByAverage.length - 1].userName,
-      sub: `Meðaleinkunn ${participantsByAverage[participantsByAverage.length - 1].averageRating.toFixed(2)}`,
-    },
-    beerControversy.length > 0 && beerControversy[0].standardDeviation > 0 && {
-      emoji: '🔥',
-      title: 'Umdeildasti bjórinn',
-      main: beerControversy[0].name,
-      sub: beerControversy[0].highestRater && beerControversy[0].lowestRater
-        ? `${beerControversy[0].highestRater.userName} ${beerControversy[0].highestRater.score} vs ${beerControversy[0].lowestRater.userName} ${beerControversy[0].lowestRater.score}`
-        : `Staðalfrávik ${beerControversy[0].standardDeviation.toFixed(2)}`,
-    },
-    beerControversy.length > 1 && {
-      emoji: '🤝',
-      title: 'Mest sammála um',
-      main: beerControversy[beerControversy.length - 1].name,
-      sub: `Staðalfrávik ${beerControversy[beerControversy.length - 1].standardDeviation.toFixed(2)}`,
-    },
-    winner && winnerFan && {
-      emoji: '🏆',
-      title: 'Stærsti aðdáandi sigurvegarans',
-      main: winnerFan.userName,
-      sub: `${winnerFan.score} fyrir ${winner.name}`,
-    },
-  ].filter((award): award is { emoji: string; title: string; main: string; sub: string } => Boolean(award))
+  const awards = buildAwards({
+    participantStats: analytics.participantStats,
+    beerControversy,
+    winner,
+    tasteTwins: analytics.tasteTwins,
+  })
 
   return (
     <div className="mt-8 space-y-8">
       {/* Headline awards */}
       {awards.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {awards.map(award => (
             <div key={award.title} className="bg-card p-4 rounded-lg border text-center">
               <div className="text-3xl mb-1">{award.emoji}</div>

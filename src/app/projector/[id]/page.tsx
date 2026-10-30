@@ -5,6 +5,8 @@ import Image from 'next/image'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
+import { AwardsReveal } from '@/components/AwardsReveal'
+import { buildAwards, type Rater, type TastePair } from '@/lib/stats'
 
 interface Beer {
   id: string
@@ -96,6 +98,14 @@ interface AnalyticsData {
     deviation: number
     ratingsCount: number
   }>
+  beerControversy?: Array<{
+    beerId: string
+    name: string
+    standardDeviation: number
+    highestRater?: Rater
+    lowestRater?: Rater
+  }>
+  tasteTwins?: { closest: TastePair; furthest: TastePair } | null
 }
 
 export default function ProjectorDisplayPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -106,6 +116,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [showNudge, setShowNudge] = useState(false)
+  const [awardsDismissed, setAwardsDismissed] = useState(false)
+  const closeAwards = useCallback(() => setAwardsDismissed(true), [])
 
   useEffect(() => {
     loadAllData()
@@ -245,6 +257,14 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
   const topBeers = scores?.beers.slice(0, 6) || []
+  const awards = tasting.status === 'closed' && analytics
+    ? buildAwards({
+        participantStats: analytics.participantStats,
+        beerControversy: analytics.beerControversy ?? [],
+        winner: scores?.beers[0],
+        tasteTwins: analytics.tasteTwins,
+      })
+    : []
 
   // Calculate current beer stats
   const currentBeerRatings = pendingRaters?.rated || []
@@ -275,6 +295,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   return (
     <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
+      {/* Awards reveal once the tasting is closed */}
+      {awards.length > 0 && !awardsDismissed && (
+        <AwardsReveal awards={awards} winnerName={scores?.beers[0]?.name} onClose={closeAwards} />
+      )}
+      {awards.length > 0 && awardsDismissed && (
+        <button
+          onClick={() => setAwardsDismissed(false)}
+          className="fixed bottom-4 right-4 z-40 px-4 py-2 rounded-lg border bg-card hover:bg-muted font-medium shadow"
+        >
+          🏅 Sýna verðlaun
+        </button>
+      )}
+
       {/* Nudge Notification Overlay */}
       {showNudge && (
         <NudgeNotification
