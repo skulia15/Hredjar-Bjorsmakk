@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createTastingSchema, validateInput } from '@/lib/validation';
-import { getOrCreateUser, generateUniqueParticipantCode } from '@/lib/auth';
-import { createParticipantSession, requireAdminSession } from '@/lib/session';
+import { authErrorResponse, generateUniqueParticipantCode, requireLeader } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 
 // GET /api/tastings - List all tastings
@@ -40,8 +39,7 @@ export async function GET() {
 // POST /api/tastings - Create new tasting
 export async function POST(request: NextRequest) {
   try {
-    // Verify admin session
-    await requireAdminSession();
+    const user = await requireLeader();
 
     const body = await request.json();
     const validation = validateInput(createTastingSchema, body);
@@ -53,10 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, creatorName } = validation.data;
-
-    // Get or create user
-    const user = await getOrCreateUser(creatorName);
+    const { title } = validation.data;
 
     // Create tasting
     const tasting = await prisma.tasting.create({
@@ -70,19 +65,15 @@ export async function POST(request: NextRequest) {
 
     // Create participant for creator
     const participantCode = await generateUniqueParticipantCode(tasting.id);
-    const rejoinToken = randomUUID();
-
     const participant = await prisma.participant.create({
       data: {
         tastingId: tasting.id,
         userId: user.id,
         code: participantCode,
-        rejoinToken
+        // Legacy column from cookie sessions; no longer used as a credential
+        rejoinToken: randomUUID()
       }
     });
-
-    // Set session cookie
-    await createParticipantSession(rejoinToken);
 
     return NextResponse.json({
       id: tasting.id,
@@ -93,18 +84,13 @@ export async function POST(request: NextRequest) {
         id: participant.id,
         userId: participant.userId,
         code: participant.code,
-        rejoinToken: participant.rejoinToken,
-        isLeader: user.isLeader
+        isLeader: true
       }
     }, { status: 201 });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error creating tasting:', error);
     return NextResponse.json(

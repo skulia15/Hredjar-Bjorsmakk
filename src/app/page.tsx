@@ -1,10 +1,11 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { isAdminSession, canCreateTastings } from '@/lib/session'
+import { getCurrentUser, isLeaderOrAdmin } from '@/lib/auth'
 
 export default async function HomePage() {
-  const isAdmin = await isAdminSession();
-  const canCreate = await canCreateTastings();
+  const user = await getCurrentUser();
+  const isAdmin = user?.isAdmin ?? false;
+  const canCreate = user ? isLeaderOrAdmin(user) : false;
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
@@ -66,12 +67,14 @@ export default async function HomePage() {
             Skjávarpasýn
           </Link>
 
-          <Link
-            href="/admin"
-            className="block w-full px-4 py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            Innskráning Stjórnanda →
-          </Link>
+          {isAdmin && (
+            <Link
+              href="/admin/users"
+              className="block w-full px-4 py-2 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              Notendastjórnun →
+            </Link>
+          )}
         </div>
 
       </div>

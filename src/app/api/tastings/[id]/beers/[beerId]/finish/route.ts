@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { finishBeerSchema, validateInput } from '@/lib/validation';
-import { requireLeader } from '@/lib/auth';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // POST /api/tastings/[id]/beers/[beerId]/finish - Mark beer as finished
 export async function POST(
@@ -11,27 +10,15 @@ export async function POST(
   try {
     const { id, beerId } = await params;
 
-    const body = await request.json();
-    const validation = validateInput(finishBeerSchema, body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
-    }
-
-    const { userName } = validation.data;
-
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Verify beer is current
     const tastingBeer = await prisma.tastingBeer.findUnique({
       where: { id: beerId }
     });
 
-    if (!tastingBeer) {
+    if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -87,12 +74,8 @@ export async function POST(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error finishing beer:', error);
     return NextResponse.json(

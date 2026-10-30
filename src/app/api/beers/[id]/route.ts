@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { authErrorResponse, requireAdmin, requireLeader } from '@/lib/auth'
 
 /**
  * GET /api/beers/[id]
@@ -42,6 +43,8 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    await requireLeader()
+
     const { id } = await params
     const body = await request.json()
 
@@ -114,6 +117,9 @@ export async function PATCH(
       message: 'Beer updated successfully'
     })
   } catch (error) {
+    const authResponse = authErrorResponse(error)
+    if (authResponse) return authResponse
+
     console.error('Error updating beer:', error)
     return NextResponse.json(
       { error: 'Failed to update beer' },
@@ -131,6 +137,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Deleting a catalog beer unlinks it from past tastings, so admins only
+    await requireAdmin()
+
     const { id } = await params
 
     if (!id || typeof id !== 'string') {
@@ -191,6 +200,9 @@ export async function DELETE(
       message: `Beer "${beer.name}" deleted successfully`
     })
   } catch (error) {
+    const authResponse = authErrorResponse(error)
+    if (authResponse) return authResponse
+
     console.error('Error deleting beer:', error)
     
     // Handle Prisma errors

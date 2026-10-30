@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { setCurrentBeerSchema, validateInput } from '@/lib/validation';
-import { requireLeader } from '@/lib/auth';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // PATCH /api/tastings/[id]/current - Set current beer
 export async function PATCH(
@@ -21,18 +21,18 @@ export async function PATCH(
       );
     }
 
-    const { beerId, userName } = validation.data;
+    const { beerId } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Verify tasting beer exists and is untasted
     const tastingBeer = await prisma.tastingBeer.findUnique({
       where: { id: tastingBeerId }
     });
 
-    if (!tastingBeer) {
+    if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -91,12 +91,8 @@ export async function PATCH(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error setting current beer:', error);
     return NextResponse.json(

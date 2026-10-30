@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireLeader } from '@/lib/auth';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // POST /api/tastings/[id]/beers - Add beer to tasting
 // Supports two modes:
-// 1. From catalog: { beerId: "uuid", userName: "admin" }
-// 2. Custom beer: { name: "...", brewery: "...", style?: "...", abv?: 6.5, userName: "admin" }
+// 1. From catalog: { beerId: "uuid" }
+// 2. Custom beer: { name: "...", brewery: "...", style?: "...", abv?: 6.5 }
 //    Note: Custom beers are automatically added to the beer catalog
 export async function POST(
   request: NextRequest,
@@ -15,17 +15,10 @@ export async function POST(
     const { id } = await params;
 
     const body = await request.json();
-    const { beerId, name, brewery, style, abv, productNumber, userName } = body;
-
-    if (!userName) {
-      return NextResponse.json(
-        { error: 'userName is required' },
-        { status: 400 }
-      );
-    }
+    const { beerId, name, brewery, style, abv, productNumber } = body;
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Validate input: either beerId OR name+brewery required
     if (!beerId && (!name || !brewery)) {
@@ -102,12 +95,8 @@ export async function POST(
     }, { status: 201 });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error adding beer:', error);
     return NextResponse.json(

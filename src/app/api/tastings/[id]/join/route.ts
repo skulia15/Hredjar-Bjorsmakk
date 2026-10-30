@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { joinTastingSchema, validateInput } from '@/lib/validation';
-import { getOrCreateUser, generateUniqueParticipantCode } from '@/lib/auth';
-import { createParticipantSession } from '@/lib/session';
+import { authErrorResponse, generateUniqueParticipantCode, isLeaderOrAdmin, requireUser } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 
-// POST /api/tastings/[id]/join - Join tasting as participant
+// POST /api/tastings/[id]/join - Join tasting as the signed-in user
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-
-    const body = await request.json();
-    const validation = validateInput(joinTastingSchema, body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
-    }
-
-    const { name } = validation.data;
+    const user = await requireUser();
 
     // Verify tasting exists
     const tasting = await prisma.tasting.findUnique({
@@ -37,9 +24,6 @@ export async function POST(
       );
     }
 
-    // Get or create user
-    const user = await getOrCreateUser(name);
-
     // Check if user already has a participant record for this tasting
     let participant = await prisma.participant.findUnique({
       where: {
@@ -51,43 +35,42 @@ export async function POST(
     });
 
     if (participant) {
-      // User already joined - update last seen and return existing participant
+      // User already joined (or was removed and is rejoining) - update last seen
       participant = await prisma.participant.update({
         where: { id: participant.id },
-        data: { lastSeenAt: new Date() }
+        data: { lastSeenAt: new Date(), active: true }
       });
     } else {
       // Create new participant
       const code = await generateUniqueParticipantCode(id);
-      const rejoinToken = randomUUID();
 
       participant = await prisma.participant.create({
         data: {
           tastingId: id,
           userId: user.id,
           code,
-          rejoinToken
+          // Legacy column from cookie sessions; no longer used as a credential
+          rejoinToken: randomUUID()
         }
       });
     }
 
-    // Set session cookie
-    await createParticipantSession(participant.rejoinToken);
-
     return NextResponse.json({
       participantId: participant.id,
       userId: user.id,
-      rejoinToken: participant.rejoinToken,
       code: participant.code,
-      isLeader: user.isLeader,
+      isLeader: isLeaderOrAdmin(user),
       user: {
         id: user.id,
         name: user.name,
-        isLeader: user.isLeader
+        isLeader: isLeaderOrAdmin(user)
       }
     });
 
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error joining tasting:', error);
     return NextResponse.json(
       { error: 'Failed to join tasting' },

@@ -1,14 +1,16 @@
 import { afterAll, beforeEach, vi } from 'vitest'
 import { prisma } from '@/lib/prisma'
-import { cookieStore, resetCookies } from './helpers'
+import { clerkSession, signOut } from './helpers'
 
-// Route handlers read cookies via next/headers, which needs a Next request scope
-vi.mock('next/headers', () => ({
-  cookies: async () => cookieStore,
+// Stand-in for Clerk: route handlers see whoever the test signed in via helpers.signInAs
+vi.mock('@clerk/nextjs/server', () => ({
+  auth: async () => ({ userId: clerkSession.user?.id ?? null }),
+  currentUser: async () => clerkSession.user,
 }))
 
 beforeEach(async () => {
-  resetCookies()
+  signOut()
+  delete process.env.ADMIN_EMAILS
   await prisma.$executeRawUnsafe(
     'TRUNCATE "Rating", "TastingBeer", "Participant", "Tasting", "Beer", "User", "admin_auth" CASCADE'
   )

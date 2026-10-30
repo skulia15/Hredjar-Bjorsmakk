@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAdminSession } from '@/lib/session'
+import { authErrorResponse, requireAdmin } from '@/lib/auth'
 
 /**
  * GET /api/admin/tastings
@@ -11,7 +11,7 @@ import { requireAdminSession } from '@/lib/session'
 export async function GET(request: NextRequest) {
   try {
     // Verify admin access
-    await requireAdminSession()
+    await requireAdmin()
 
     // Get all tastings with aggregated data
     const tastings = await prisma.tasting.findMany({
@@ -81,12 +81,8 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     // Check if it's an auth error
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      )
-    }
+    const authResponse = authErrorResponse(error)
+    if (authResponse) return authResponse
 
     console.error('Error fetching admin tastings:', error)
 

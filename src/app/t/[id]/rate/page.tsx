@@ -388,10 +388,15 @@ export default function RatePage({
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
 					beerId: currentBeer.id,
-					participantId,
 					score: rating,
 				}),
 			});
+
+			// Signed out, or this browser's stored participation belongs to another account
+			if (response.status === 401 || response.status === 403) {
+				router.push(`/t/${params.id}`);
+				return;
+			}
 
 			if (!response.ok) {
 				const data = await response.json();
@@ -421,7 +426,6 @@ export default function RatePage({
 				{
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ userName: participantInfo?.name || "leader" }),
 				},
 			);
 
@@ -514,7 +518,6 @@ export default function RatePage({
 			<LeaderboardWaiting
 				tastingId={params.id}
 				isLeader={tasting.currentUserIsLeader}
-				participantName={participantInfo?.name}
 			/>
 		);
 	}

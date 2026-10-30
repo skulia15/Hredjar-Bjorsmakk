@@ -46,39 +46,6 @@ async function cleanup() {
       }
     }
 
-    // Ensure required users exist
-    console.log('\n📝 Ensuring required users exist...')
-
-    // Ensure "admin" user exists with admin and leader privileges
-    const adminUser = await prisma.user.upsert({
-      where: { name: 'admin' },
-      update: {
-        isAdmin: true,
-        isLeader: true
-      },
-      create: {
-        name: 'admin',
-        isAdmin: true,
-        isLeader: true
-      }
-    })
-    console.log(`✓ Admin user ensured: ${adminUser.name}`)
-
-    // Ensure "skuli" user exists with admin and leader privileges
-    const skuliUser = await prisma.user.upsert({
-      where: { name: 'skuli' },
-      update: {
-        isAdmin: true,
-        isLeader: true
-      },
-      create: {
-        name: 'skuli',
-        isAdmin: true,
-        isLeader: true
-      }
-    })
-    console.log(`✓ Skuli user ensured: ${skuliUser.name}`)
-
     // Count preserved records
     const beerCount = await prisma.beer.count()
     const userCount = await prisma.user.count()

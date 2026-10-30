@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { authErrorResponse, requireParticipantOrLeader } from '@/lib/auth'
 
 /**
  * GET /api/tastings/{id}/nudge
@@ -43,7 +44,7 @@ export async function GET(
  * POST /api/tastings/{id}/nudge
  * Send a nudge notification to participants who haven't rated the current beer
  *
- * Auth: Public (no authentication required - relies on frontend checking)
+ * Auth: participants of the tasting, or any leader/admin
  */
 export async function POST(
   request: NextRequest,
@@ -51,6 +52,7 @@ export async function POST(
 ) {
   try {
     const { id } = await params
+    await requireParticipantOrLeader(id)
 
     // Get tasting with current beer
     const tasting = await prisma.tasting.findUnique({
@@ -116,6 +118,9 @@ export async function POST(
     })
 
   } catch (error: unknown) {
+    const authResponse = authErrorResponse(error)
+    if (authResponse) return authResponse
+
     console.error('Error sending nudge:', error)
 
     return NextResponse.json(

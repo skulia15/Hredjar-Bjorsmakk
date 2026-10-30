@@ -17,17 +17,17 @@ A mobile-first web application for synchronized beer tastings where groups can r
 - 📱 **Mobile-first** — responsive design for iOS/Android browsers
 - 📤 **Export results** — CSV/XLSX with individual ratings and summaries
 - 🔄 **Session persistence** — never lose your session across refreshes
-- 🎨 **No accounts** — join with just your name, no passwords
+- 🔐 **Google / Discord sign-in** — accounts via Clerk; everyone signs in to join and rate
 
 ## 👥 User Roles
 
 | Role | Access | Capabilities |
 |------|--------|--------------|
-| **Admin** | `/admin` (name: "admin" or "skúli") | Manage users, promote/demote leaders and admins, manage beer catalog, view all tastings |
+| **Admin** | `/admin/users` | Manage users and roles, link accounts to old name-only users, delete catalog beers, view all tastings |
 | **Leader** | Global flag (`User.isLeader`) | Create tastings, manage beers, see pending raters, export, **also rate** |
 | **Participant** | Join via link | Rate beers, view scores |
 
-**Note:** Anyone named "skúli" is automatically granted admin privileges. Admins can also promote other users to admin status via the user management interface.
+**Note:** Verified emails in `ADMIN_EMAILS` are admin on first sign-in and can't be demoted from the dashboard. Admins can promote anyone else to leader or admin in the user management dashboard.
 
 ## 🏗️ Tech Stack
 
@@ -44,7 +44,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 - **API:** Next.js API Routes
 - **Database:** PostgreSQL (Neon or Supabase)
 - **ORM:** Prisma
-- **Auth:** Simple name-based + httpOnly cookies
+- **Auth:** Clerk (Google + Discord), mapped to `User` rows by `clerkId`
 - **Export:** exceljs
 
 ### Infrastructure
@@ -145,8 +145,10 @@ DATABASE_URL=postgresql://user:password@host:5432/database
 NEXT_PUBLIC_APP_NAME=BeerTasting
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# Optional
-ADMIN_PASSWORD=admin
+# Auth (from the Clerk integration: vercel env pull .env.local)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+ADMIN_EMAILS=you@example.com
 ```
 
 See [`.env.example`](.env.example) for complete configuration.
@@ -163,16 +165,18 @@ See [`.env.example`](.env.example) for complete configuration.
 
 ```
 User (global)
-  ├── name (unique, case-insensitive)
+  ├── clerkId (unique; null for legacy name-only users)
+  ├── name (display name, not unique)
+  ├── email (verified, from Clerk)
   ├── isLeader (boolean)
-  ├── isAdmin (boolean, auto-true for "skúli")
+  ├── isAdmin (boolean; always true for ADMIN_EMAILS)
   └── participations (many Participants)
 
 Participant (per-tasting)
   ├── userId → User
   ├── tastingId → Tasting
   ├── code (4-char alphanumeric)
-  ├── rejoinToken (session persistence)
+  ├── rejoinToken (legacy, unused)
   └── ratings (many Ratings)
 
 Tasting
@@ -212,11 +216,10 @@ Rating
 
 ```typescript
 // User Management (/admin/users)
-// 1. Admin authenticates at /admin (name: "admin" or "skúli")
-// 2. Navigate to /admin/users
-// 3. Toggle "Leader" or "Admin" status on any user
-// 4. User.isLeader = true or User.isAdmin = true
-// 5. Next time they join any tasting, they see appropriate controls
+// 1. Sign in with Google/Discord as an admin, open /admin/users
+// 2. Toggle "Leader" or "Admin" on any account
+// 3. Link a new account to an old name-only user to keep their rating history
+// 4. Roles apply on the next request; every API route re-checks them
 
 // Beer Catalog Management (/beers)
 // 1. Navigate to /beers
@@ -230,7 +233,7 @@ Rating
 
 ```typescript
 // 1. Visit homepage → "Create New Tasting"
-// 2. Enter tasting name + your name
+// 2. Enter tasting name (you must be signed in as a leader)
 // 3. System creates Tasting (draft) + links to your User
 // 4. Add beers (name + brewery)
 // 5. Click "Start Tasting" (draft → active)
@@ -247,11 +250,8 @@ Rating
 
 ```typescript
 // 1. Receive link: beerrating.app/t/{id}
-// 2. Enter your name
-// 3. System:
-//    - Checks if User exists (case-insensitive)
-//    - Creates Participant record
-//    - Stores rejoinToken in cookie
+// 2. Sign in with Google or Discord (account created on first sign-in)
+// 3. System creates the Participant record for your account
 // 4. See current beer
 // 5. Rate it (1.0-10.0 via numeric input)
 // 6. Submit (upsert to database)
@@ -358,7 +358,8 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 2. **Set environment variables:**
    - `DATABASE_URL` (Neon connection string)
    - `NEXT_PUBLIC_APP_URL` (production URL)
-   - Optional: `SENTRY_DSN`, `ADMIN_PASSWORD`
+   - `ADMIN_EMAILS`; Clerk keys come from the Clerk Marketplace integration
+   - Optional: `SENTRY_DSN`
 3. **Deploy:** Push to `main` branch
 4. **Run migrations:**
    ```bash
@@ -373,14 +374,13 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 3. Add to Vercel environment variables
 4. Run migrations (see above)
 
-## 🔐 Security Notes (MVP)
+## 🔐 Security Notes
 
-- **Admin auth:** Name-only ("admin") — simple for friend groups
-- **Leader auth:** Global `User.isLeader` flag
-- **Participant auth:** Rejoin token in httpOnly cookie
-- **Rating spam:** Prevented by unique constraint (one rating per beer per participant)
-- **Trust model:** Designed for small, trusted friend groups
-- **Future:** Add bcrypt password for admin, email recovery
+- **Identity:** Clerk session only (`src/lib/auth.ts`); request bodies never carry who is acting
+- **Roles:** `requireUser` / `requireParticipant` / `requireLeader` / `requireAdmin` guard every mutation route
+- **Leaders:** Global `User.isLeader` flag; admins have leader rights
+- **Ratings:** Always recorded for the signed-in user's own participation; beers are checked to belong to the tasting
+- **Reads:** Tasting/scores GET endpoints stay public so projector screens work without signing in
 
 ## 📊 Performance Targets
 
@@ -399,10 +399,8 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 - Check connection pooling limits (max 20 for Vercel)
 - Consider using Prisma Data Proxy
 
-### Session lost on refresh?
-- Check if `participant_token` cookie exists
-- Verify `rejoinToken` in database
-- Check `SESSION_COOKIE_NAME` in environment
+### Signed in but "Join this tasting first"?
+- Open the tasting link (`/t/{id}`) once; joining is per tasting
 
 ### Real-time lag?
 - Polling syncs within ≤5s

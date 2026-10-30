@@ -1,58 +1,49 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireAdminSession } from '@/lib/session';
+import { authErrorResponse, isEnvAdminEmail, requireAdmin } from '@/lib/auth';
 
 // GET /api/admin/users - List all users
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Verify admin session
-    await requireAdminSession();
+    await requireAdmin();
 
-    const users = await prisma.user.findMany({
-      include: {
-        _count: {
-          select: {
-            participations: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
-
-    // Get rating counts for each user
-    const usersWithStats = await Promise.all(
-      users.map(async (user) => {
-        const ratingCount = await prisma.rating.count({
-          where: {
-            participant: {
-              userId: user.id
-            }
-          }
-        });
-
-        return {
-          id: user.id,
-          name: user.name,
-          isLeader: user.isLeader,
-          isAdmin: user.isAdmin,
-          createdAt: user.createdAt,
-          tastingCount: user._count.participations,
-          ratingCount
-        };
+    const [users, ratingCounts] = await Promise.all([
+      prisma.user.findMany({
+        include: { _count: { select: { participations: true } } },
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.participant.findMany({
+        where: { userId: { not: null } },
+        select: { userId: true, _count: { select: { ratings: true } } }
       })
-    );
+    ]);
+
+    const ratingCountByUser = new Map<string, number>();
+    for (const participant of ratingCounts) {
+      const userId = participant.userId!;
+      ratingCountByUser.set(userId, (ratingCountByUser.get(userId) ?? 0) + participant._count.ratings);
+    }
 
     return NextResponse.json({
-      users: usersWithStats
+      users: users.map((user) => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        imageUrl: user.imageUrl,
+        // Legacy users joined by name only and can't sign in until linked to an account
+        hasAccount: user.clerkId !== null,
+        isLeader: user.isLeader,
+        isAdmin: user.isAdmin,
+        isEnvAdmin: isEnvAdminEmail(user.email),
+        createdAt: user.createdAt,
+        tastingCount: user._count.participations,
+        ratingCount: ratingCountByUser.get(user.id) ?? 0
+      }))
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error fetching users:', error);
     return NextResponse.json(

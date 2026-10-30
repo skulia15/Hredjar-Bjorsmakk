@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { generateTastingExport, getExportContentType, getExportFilename, type ExportFormat } from '@/lib/export';
-import { requireLeader } from '@/lib/auth';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // GET /api/tastings/[id]/export?format=csv|xlsx - Export tasting results
 export async function GET(
@@ -14,15 +14,6 @@ export async function GET(
     // Get format from query params
     const searchParams = request.nextUrl.searchParams;
     const format = (searchParams.get('format') || 'xlsx') as ExportFormat;
-    const userName = searchParams.get('userName');
-
-    if (!userName) {
-      return NextResponse.json(
-        { error: 'userName query parameter required' },
-        { status: 400 }
-      );
-    }
-
     // Verify format
     if (format !== 'csv' && format !== 'xlsx') {
       return NextResponse.json(
@@ -32,7 +23,7 @@ export async function GET(
     }
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Get tasting to verify it exists and get title
     const tasting = await prisma.tasting.findUnique({
@@ -63,12 +54,8 @@ export async function GET(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error exporting tasting:', error);
     return NextResponse.json(

@@ -25,6 +25,8 @@
     "db:cleanup": "tsx prisma/cleanup.ts"
   },
   "dependencies": {
+    "@clerk/localizations": "^4.24.3",
+    "@clerk/nextjs": "^7.9.22",
     "@hookform/resolvers": "^3.9.0",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
@@ -36,8 +38,8 @@
     "exceljs": "^4.4.0",
     "lucide-react": "^0.441.0",
     "next": "^16.4.3",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-hook-form": "^7.53.0",
     "recharts": "^3.3.0",
     "tailwind-merge": "^2.5.2",

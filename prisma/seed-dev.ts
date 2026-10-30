@@ -16,72 +16,80 @@ async function main() {
 
   // Create users
   const skuli = await prisma.user.upsert({
-    where: { name: 'skuli' },
+    where: { id: 'seed-skuli' },
     update: {},
     create: {
+      id: 'seed-skuli',
       name: 'skuli',
       isLeader: true,
     },
   });
 
   const anna = await prisma.user.upsert({
-    where: { name: 'anna' },
+    where: { id: 'seed-anna' },
     update: {},
     create: {
+      id: 'seed-anna',
       name: 'anna',
       isLeader: true,
     },
   });
 
   const jon = await prisma.user.upsert({
-    where: { name: 'jon' },
+    where: { id: 'seed-jon' },
     update: {},
     create: {
+      id: 'seed-jon',
       name: 'jon',
       isLeader: true,
     },
   });
 
   const eiki = await prisma.user.upsert({
-    where: { name: 'eiki' },
+    where: { id: 'seed-eiki' },
     update: {},
     create: {
+      id: 'seed-eiki',
       name: 'eiki',
       isLeader: false,
     },
   });
 
   const maria = await prisma.user.upsert({
-    where: { name: 'maria' },
+    where: { id: 'seed-maria' },
     update: {},
     create: {
+      id: 'seed-maria',
       name: 'maria',
       isLeader: false,
     },
   });
 
   const olafur = await prisma.user.upsert({
-    where: { name: 'olafur' },
+    where: { id: 'seed-olafur' },
     update: {},
     create: {
+      id: 'seed-olafur',
       name: 'olafur',
       isLeader: false,
     },
   });
 
   const sara = await prisma.user.upsert({
-    where: { name: 'sara' },
+    where: { id: 'seed-sara' },
     update: {},
     create: {
+      id: 'seed-sara',
       name: 'sara',
       isLeader: false,
     },
   });
 
   const emma = await prisma.user.upsert({
-    where: { name: 'emma' },
+    where: { id: 'seed-emma' },
     update: {},
     create: {
+      id: 'seed-emma',
       name: 'emma',
       isLeader: false,
     },

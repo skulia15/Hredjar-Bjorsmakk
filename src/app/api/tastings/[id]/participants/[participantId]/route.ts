@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { authErrorResponse, requireLeader } from '@/lib/auth'
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; participantId: string }> }
 ) {
   try {
+    await requireLeader()
+
     const { id: tastingId, participantId } = await params
     const { searchParams } = new URL(request.url)
     const keepRatings = searchParams.get('keepRatings') === 'true'
@@ -59,6 +62,9 @@ export async function DELETE(
       })
     }
   } catch (error) {
+    const authResponse = authErrorResponse(error)
+    if (authResponse) return authResponse
+
     console.error('Error deleting participant:', error)
     return NextResponse.json(
       { error: 'Failed to delete participant' },

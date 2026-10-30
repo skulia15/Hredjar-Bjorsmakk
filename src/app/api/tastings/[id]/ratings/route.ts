@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ratingSchema, validateInput } from '@/lib/validation';
+import { authErrorResponse, requireParticipant } from '@/lib/auth';
 
-// POST /api/tastings/[id]/ratings - Submit or update rating
+// POST /api/tastings/[id]/ratings - Submit or update the signed-in participant's rating
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,15 +20,18 @@ export async function POST(
       );
     }
 
-    const { beerId, participantId, score } = validation.data;
+    const { beerId, score } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
-    // Verify tasting beer exists and is not untasted
+    // The rater is always the signed-in user's participation; any participantId in the body is ignored
+    const { participant } = await requireParticipant(id);
+
+    // Verify tasting beer belongs to this tasting and is not untasted
     const tastingBeer = await prisma.tastingBeer.findUnique({
       where: { id: tastingBeerId }
     });
 
-    if (!tastingBeer) {
+    if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -41,24 +45,12 @@ export async function POST(
       );
     }
 
-    // Verify participant exists
-    const participant = await prisma.participant.findUnique({
-      where: { id: participantId }
-    });
-
-    if (!participant) {
-      return NextResponse.json(
-        { error: 'Participant not found' },
-        { status: 404 }
-      );
-    }
-
     // Upsert rating (create or update)
     const rating = await prisma.rating.upsert({
       where: {
         tastingBeerId_participantId: {
           tastingBeerId,
-          participantId
+          participantId: participant.id
         }
       },
       update: {
@@ -68,7 +60,7 @@ export async function POST(
       create: {
         tastingId: id,
         tastingBeerId,
-        participantId,
+        participantId: participant.id,
         score
       }
     });
@@ -83,6 +75,9 @@ export async function POST(
     });
 
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error submitting rating:', error);
     return NextResponse.json(
       { error: 'Failed to submit rating' },

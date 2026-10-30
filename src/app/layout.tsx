@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from 'next'
+import { ClerkProvider } from '@clerk/nextjs'
+import { isIS } from '@clerk/localizations'
 import { Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
@@ -32,6 +34,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
+    <ClerkProvider localization={isIS} signInUrl="/sign-in" signUpUrl="/sign-up">
     <html lang="en">
       <body className={`${spaceGrotesk.className} christmas min-h-screen flex flex-col`} suppressHydrationWarning>
         <Providers>
@@ -45,5 +48,6 @@ export default function RootLayout({
         <UserDisplay />
       </body>
     </html>
+    </ClerkProvider>
   )
 }

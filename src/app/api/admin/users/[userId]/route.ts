@@ -1,18 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { updateUserSchema, validateInput } from '@/lib/validation';
-import { requireAdminSession } from '@/lib/session';
+import { authErrorResponse, isEnvAdminEmail, requireAdmin } from '@/lib/auth';
 
-// PATCH /api/admin/users/[userId] - Update user (promote/demote leader)
+// PATCH /api/admin/users/[userId] - Change roles or display name
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
     const { userId } = await params;
-
-    // Verify admin session
-    await requireAdminSession();
+    const admin = await requireAdmin();
 
     const body = await request.json();
     const validation = validateInput(updateUserSchema, body);
@@ -24,17 +22,25 @@ export async function PATCH(
       );
     }
 
-    const { isLeader, isAdmin } = validation.data;
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
 
-    // Build update data object with only provided fields
-    const updateData: { isLeader?: boolean; isAdmin?: boolean } = {};
-    if (isLeader !== undefined) updateData.isLeader = isLeader;
-    if (isAdmin !== undefined) updateData.isAdmin = isAdmin;
+    const { isLeader, isAdmin, name } = validation.data;
 
-    // Update user
+    if (isAdmin === false) {
+      if (target.id === admin.id) {
+        return NextResponse.json({ error: 'You cannot remove your own admin role' }, { status: 400 });
+      }
+      if (isEnvAdminEmail(target.email)) {
+        return NextResponse.json({ error: 'This admin is set by ADMIN_EMAILS and cannot be demoted here' }, { status: 400 });
+      }
+    }
+
     const user = await prisma.user.update({
       where: { id: userId },
-      data: updateData
+      data: { isLeader, isAdmin, name: name?.trim() }
     });
 
     return NextResponse.json({
@@ -48,12 +54,8 @@ export async function PATCH(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error updating user:', error);
     return NextResponse.json(
@@ -70,11 +72,12 @@ export async function DELETE(
 ) {
   try {
     const { userId } = await params;
+    const admin = await requireAdmin();
 
-    // Verify admin session
-    await requireAdminSession();
+    if (userId === admin.id) {
+      return NextResponse.json({ error: 'You cannot delete yourself' }, { status: 400 });
+    }
 
-    // Delete the user
     // Due to onDelete: SetNull on Participant.userId,
     // the participant records will remain but with userId = null
     // Ratings remain connected to participants
@@ -88,12 +91,8 @@ export async function DELETE(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Admin access required') {
-      return NextResponse.json(
-        { error: 'Admin access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error deleting user:', error);
     return NextResponse.json(

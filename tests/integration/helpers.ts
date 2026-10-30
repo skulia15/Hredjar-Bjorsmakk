@@ -2,29 +2,38 @@ import { randomUUID } from 'node:crypto'
 import { NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-const jar = new Map<string, string>()
-
-// Minimal stand-in for the next/headers cookie store
-export const cookieStore = {
-  get: (name: string) => (jar.has(name) ? { name, value: jar.get(name)! } : undefined),
-  set: (name: string, value: string) => {
-    jar.set(name, value)
-  },
-  delete: (name: string) => {
-    jar.delete(name)
-  },
+// The subset of Clerk's backend User that src/lib/auth.ts reads
+interface FakeClerkUser {
+  id: string
+  fullName: string | null
+  username: string | null
+  imageUrl: string
+  primaryEmailAddress: { emailAddress: string; verification: { status: string } | null } | null
 }
 
-export function resetCookies() {
-  jar.clear()
+export const clerkSession: { user: FakeClerkUser | null } = { user: null }
+
+export function signOut() {
+  clerkSession.user = null
 }
 
-export function setCookie(name: string, value: string) {
-  jar.set(name, value)
-}
-
-export function getCookie(name: string) {
-  return jar.get(name)
+/**
+ * Sign in as a Clerk user. Pass an existing DB user (with clerkId) or a new Clerk identity.
+ */
+export function signInAs(
+  who: { clerkId: string | null; name?: string; email?: string | null },
+  { emailVerified = true }: { emailVerified?: boolean } = {}
+) {
+  if (!who.clerkId) throw new Error('signInAs needs a user with a clerkId')
+  clerkSession.user = {
+    id: who.clerkId,
+    fullName: who.name ?? null,
+    username: null,
+    imageUrl: `https://img.clerk.test/${who.clerkId}.png`,
+    primaryEmailAddress: who.email
+      ? { emailAddress: who.email, verification: { status: emailVerified ? 'verified' : 'unverified' } }
+      : null,
+  }
 }
 
 type Handler<P> = (request: NextRequest, context: { params: Promise<P> }) => Promise<Response>
@@ -47,21 +56,30 @@ export async function callRoute<P extends Record<string, string>>(
   return { status: response.status, json, response }
 }
 
+export function createAccount(name: string, roles: { isLeader?: boolean; isAdmin?: boolean } = {}) {
+  return prisma.user.create({
+    data: { name, clerkId: `clerk_${name}`, email: `${name}@example.com`, ...roles },
+  })
+}
+
 /**
- * An active tasting with a leader, some participants and untasted beers
+ * An active tasting with a leader account, joined participant accounts and untasted beers
  */
 export async function createTastingFixture({
   participantNames = ['anna', 'bjarni', 'gunna'],
   beerCount = 3,
 }: { participantNames?: string[]; beerCount?: number } = {}) {
-  const leader = await prisma.user.create({ data: { name: 'leader', isLeader: true } })
+  const leader = await createAccount(`leader${randomUUID().slice(0, 6)}`, { isLeader: true })
   const tasting = await prisma.tasting.create({
     data: { title: 'Test tasting', status: 'active', createdBy: leader.id },
   })
 
   const participants = []
+  const users = []
   for (const [index, name] of participantNames.entries()) {
-    const user = await prisma.user.create({ data: { name } })
+    const user =
+      (await prisma.user.findUnique({ where: { clerkId: `clerk_${name}` } })) ?? (await createAccount(name))
+    users.push(user)
     participants.push(
       await prisma.participant.create({
         data: { tastingId: tasting.id, userId: user.id, code: `P${index}00`, rejoinToken: randomUUID() },
@@ -78,5 +96,5 @@ export async function createTastingFixture({
     )
   }
 
-  return { leader, tasting, participants, beers }
+  return { leader, tasting, participants, users, beers }
 }

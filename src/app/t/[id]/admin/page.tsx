@@ -39,7 +39,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [loading, setLoading] = useState(true)
-  const [userName] = useState('admin') // Admin user accessing admin page
   const [message, setMessage] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [isFinishedBeersExpanded, setIsFinishedBeersExpanded] = useState(false)
@@ -64,14 +63,11 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     return () => clearInterval(interval)
   }, [params.id])
 
-  // Check if user is admin
+  // Only admins see the user management link
   useEffect(() => {
-    fetch('/api/admin/check')
+    fetch('/api/session')
       .then(res => res.json())
-      .then(data => {
-        console.log('[Admin Check Response]', data)
-        setIsAdmin(data.isAdmin || false)
-      })
+      .then(data => setIsAdmin(data.isAdmin || false))
       .catch(err => console.error('Error checking admin status:', err))
   }, [])
 
@@ -101,7 +97,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}/beers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beerId, userName })
+        body: JSON.stringify({ beerId })
       })
 
       if (!response.ok) throw new Error('Failed to add beer')
@@ -124,7 +120,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           fetch(`/api/tastings/${params.id}/beers`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ beerId, userName })
+            body: JSON.stringify({ beerId })
           })
         )
       )
@@ -153,7 +149,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}/beers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, userName })
+        body: JSON.stringify(data)
       })
 
       if (!response.ok) throw new Error('Failed to add beer')
@@ -172,7 +168,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}/current`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beerId, userName })
+        body: JSON.stringify({ beerId })
       })
 
       if (!response.ok) throw new Error('Failed to set current beer')
@@ -190,7 +186,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}/finish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName })
       })
 
       if (!response.ok) throw new Error('Failed to finish beer')
@@ -210,7 +205,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}/beers/${beerId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userName })
       })
 
       if (!response.ok) {
@@ -277,7 +271,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'active', userName })
+        body: JSON.stringify({ status: 'active' })
       })
 
       if (!response.ok) throw new Error('Failed to start tasting')
@@ -298,7 +292,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
       const response = await fetch(`/api/tastings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'closed', userName })
+        body: JSON.stringify({ status: 'closed' })
       })
 
       if (!response.ok) throw new Error('Failed to complete tasting')
@@ -604,14 +598,14 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                     </button>
                   )}
                   <a
-                    href={`/api/tastings/${params.id}/export?format=xlsx&userName=${userName}`}
+                    href={`/api/tastings/${params.id}/export?format=xlsx`}
                     download
                     className="px-4 py-2 bg-primary text-primary-foreground rounded hover:bg-primary/90"
                   >
                     Flytja út XLSX
                   </a>
                   <a
-                    href={`/api/tastings/${params.id}/export?format=csv&userName=${userName}`}
+                    href={`/api/tastings/${params.id}/export?format=csv`}
                     download
                     className="px-4 py-2 border rounded hover:bg-accent"
                   >

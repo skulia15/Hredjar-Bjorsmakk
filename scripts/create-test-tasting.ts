@@ -51,11 +51,9 @@ async function createTestTasting() {
     console.log('👥 Creating 15 dummy users...')
     const users = []
     for (const name of dummyUsers) {
-      const user = await prisma.user.upsert({
-        where: { name },
-        create: { name },
-        update: {}
-      })
+      const user =
+        (await prisma.user.findFirst({ where: { name, clerkId: null } })) ??
+        (await prisma.user.create({ data: { name } }))
       users.push(user)
     }
     console.log(`✓ Created/found ${users.length} users\n`)

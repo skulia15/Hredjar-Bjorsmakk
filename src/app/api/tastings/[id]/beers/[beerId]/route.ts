@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { editBeerSchema, deleteBeerSchema, validateInput } from '@/lib/validation';
-import { requireLeader } from '@/lib/auth';
+import { editBeerSchema, validateInput } from '@/lib/validation';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // PATCH /api/tastings/[id]/beers/[beerId] - Edit beer
 export async function PATCH(
@@ -20,11 +20,11 @@ export async function PATCH(
       );
     }
 
-    const { name, brewery, style, abv, userName } = validation.data;
+    const { name, brewery, style, abv } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Check if this is a custom beer (can only edit custom beers)
     const tastingBeer = await prisma.tastingBeer.findUnique({
@@ -32,7 +32,7 @@ export async function PATCH(
       include: { beer: true }
     });
 
-    if (!tastingBeer) {
+    if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -66,12 +66,8 @@ export async function PATCH(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error editing beer:', error);
     return NextResponse.json(
@@ -88,21 +84,10 @@ export async function DELETE(
 ) {
   try {
     const { id, beerId } = await params;
-    const body = await request.json();
-    const validation = validateInput(deleteBeerSchema, body);
-
-    if (!validation.success) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
-    }
-
-    const { userName } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Check beer status and ratings
     const tastingBeer = await prisma.tastingBeer.findUnique({
@@ -114,7 +99,7 @@ export async function DELETE(
       }
     });
 
-    if (!tastingBeer) {
+    if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
@@ -139,12 +124,8 @@ export async function DELETE(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error deleting beer:', error);
     return NextResponse.json(

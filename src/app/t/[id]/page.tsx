@@ -2,130 +2,78 @@
 
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { SignInButton, useAuth } from '@clerk/nextjs'
 import { Beer as BeerIcon } from 'lucide-react'
 
 export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const router = useRouter()
-  const [name, setName] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { isLoaded, isSignedIn } = useAuth()
   const [error, setError] = useState('')
   const [tastingTitle, setTastingTitle] = useState('')
-  const [checkingSession, setCheckingSession] = useState(true)
+  const [tastingStatus, setTastingStatus] = useState<string | null>(null)
 
+  // Fetch tasting details
   useEffect(() => {
-    const checkSessionAndJoin = async () => {
-      try {
-        // Check for existing session
-        const sessionResponse = await fetch('/api/session')
-        const sessionData = await sessionResponse.json()
-
-        if (sessionData.hasSession && sessionData.name) {
-          // User has a session, auto-join with their stored name
-          setName(sessionData.name)
-
-          // Auto-join the tasting
-          const joinResponse = await fetch(`/api/tastings/${params.id}/join`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: sessionData.name })
-          })
-
-          if (joinResponse.ok) {
-            const joinData = await joinResponse.json()
-
-            // Store participant info in localStorage
-            localStorage.setItem(`participant_${params.id}`, JSON.stringify({
-              participantId: joinData.participantId,
-              userId: joinData.userId,
-              rejoinToken: joinData.rejoinToken,
-              code: joinData.code
-            }))
-
-            // Redirect based on role
-            if (joinData.isLeader) {
-              router.push(`/t/${params.id}/admin`)
-            } else {
-              router.push(`/t/${params.id}/rate`)
-            }
-            return
-          }
-        }
-      } catch (err) {
-        console.error('Error checking session:', err)
-      }
-
-      // No session or auto-join failed, show the form
-      setCheckingSession(false)
-    }
-
-    // Fetch tasting details
     fetch(`/api/tastings/${params.id}`)
       .then(res => res.json())
       .then(data => {
         if (data.title) {
           setTastingTitle(data.title)
+          setTastingStatus(data.status)
+        } else {
+          setError('Smökkun fannst ekki')
         }
         // Redirect to scores if tasting is closed
         if (data.status === 'closed') {
           router.push(`/t/${params.id}/scores`)
-        } else {
-          // Only check session if tasting is not closed
-          checkSessionAndJoin()
         }
       })
-      .catch(() => {
-        setError('Smökkun fannst ekki')
-        setCheckingSession(false)
-      })
+      .catch(() => setError('Smökkun fannst ekki'))
   }, [params.id, router])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  // Signed-in users join as themselves; identity comes from the session
+  useEffect(() => {
+    if (!isSignedIn || !tastingStatus || tastingStatus === 'closed') return
 
-    try {
-      const response = await fetch(`/api/tastings/${params.id}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name })
-      })
-
-      if (!response.ok) {
+    const join = async () => {
+      try {
+        const response = await fetch(`/api/tastings/${params.id}/join`, { method: 'POST' })
         const data = await response.json()
-        throw new Error(data.error || 'Failed to join tasting')
+        if (!response.ok) throw new Error(data.error || 'Failed to join tasting')
+
+        // Rate page reads this for UI; the server never trusts it
+        localStorage.setItem(`participant_${params.id}`, JSON.stringify({
+          participantId: data.participantId,
+          userId: data.userId,
+          code: data.code
+        }))
+
+        // Redirect based on role
+        router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
       }
-
-      const data = await response.json()
-
-      // Store participant info in localStorage for rating submission
-      localStorage.setItem(`participant_${params.id}`, JSON.stringify({
-        participantId: data.participantId,
-        userId: data.userId,
-        rejoinToken: data.rejoinToken,
-        code: data.code
-      }))
-
-      // Redirect based on role
-      if (data.isLeader) {
-        router.push(`/t/${params.id}/admin`)
-      } else {
-        router.push(`/t/${params.id}/rate`)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred')
-    } finally {
-      setLoading(false)
     }
+    join()
+  }, [isSignedIn, tastingStatus, params.id, router])
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
+          {error}
+        </div>
+      </div>
+    )
   }
 
-  if (checkingSession) {
+  if (!isLoaded || isSignedIn) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-muted-foreground">Athuga auðkenningu...</p>
+          <p className="text-muted-foreground">Hleypir inn...</p>
         </div>
       </div>
     )
@@ -138,44 +86,23 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
           <BeerIcon className="h-12 w-12 mx-auto text-amber-500" />
           <h2 className="text-2xl font-bold">{tastingTitle || 'Taka þátt í smökkunni'}</h2>
           <p className="text-muted-foreground">
-            Sláðu inn nafn til að taka þátt í smökkunni
+            Skráðu þig inn með Google eða Discord til að taka þátt
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6 bg-card p-6 rounded-lg border">
-          <div className="space-y-2">
-            <label htmlFor="name" className="block text-sm font-medium">
-              Þitt nafn
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Sláðu inn nafn"
-              required
-              autoFocus
-              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <p className="text-xs text-muted-foreground">
-              Ef þú hefur takið þátt áður, notaðu sama nafn
-            </p>
-          </div>
-
-          {error && (
-            <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? 'Hleypir inn...' : 'Taka þátt'}
-          </button>
-        </form>
+        <div className="space-y-6 bg-card p-6 rounded-lg border">
+          <SignInButton mode="modal" forceRedirectUrl={`/t/${params.id}`} signUpForceRedirectUrl={`/t/${params.id}`}>
+            <button
+              type="button"
+              className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+            >
+              Skrá inn og taka þátt
+            </button>
+          </SignInButton>
+          <p className="text-xs text-muted-foreground text-center">
+            Nýr hér? Aðgangur er búinn til sjálfkrafa við fyrstu innskráningu
+          </p>
+        </div>
       </div>
     </div>
   )

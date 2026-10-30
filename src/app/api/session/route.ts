@@ -1,24 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getParticipantFromSession, canCreateTastings } from '@/lib/session';
+import { getCurrentUser, isLeaderOrAdmin } from '@/lib/auth';
 
-// GET /api/session - Get current user session info
+// GET /api/session - Current signed-in user and their roles
 export async function GET() {
   try {
-    const participant = await getParticipantFromSession();
-    const canCreate = await canCreateTastings();
+    const user = await getCurrentUser();
 
-    if (!participant) {
+    if (!user) {
       return NextResponse.json({
         hasSession: false,
-        canCreateTastings: canCreate
-      }, { status: 200 });
+        canCreateTastings: false,
+        isLeader: false,
+        isAdmin: false
+      });
     }
 
     return NextResponse.json({
       hasSession: true,
-      name: participant.user?.name,
-      userId: participant.userId,
-      canCreateTastings: canCreate
+      name: user.name,
+      userId: user.id,
+      imageUrl: user.imageUrl,
+      isLeader: isLeaderOrAdmin(user),
+      isAdmin: user.isAdmin,
+      canCreateTastings: isLeaderOrAdmin(user)
     });
   } catch (error) {
     console.error('Error getting session:', error);

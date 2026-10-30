@@ -1,9 +1,10 @@
 import { z } from 'zod';
 
+// Identity (who is acting) always comes from the Clerk session, never from these bodies
+
 // Rating validation
 export const ratingSchema = z.object({
   beerId: z.string().uuid(),
-  participantId: z.string().uuid(),
   score: z.number()
     .min(1.0, 'Score must be at least 1.0')
     .max(10.0, 'Score must be at most 10.0')
@@ -12,64 +13,36 @@ export const ratingSchema = z.object({
 
 // Tasting operations
 export const createTastingSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100),
-  creatorName: z.string().min(1, 'Name is required').max(50)
+  title: z.string().min(1, 'Title is required').max(100)
 });
 
 export const updateTastingSchema = z.object({
-  status: z.enum(['draft', 'active', 'closed']),
-  userName: z.string().min(1)
+  status: z.enum(['draft', 'active', 'closed'])
 });
 
 // Beer operations
-export const addBeerSchema = z.object({
-  name: z.string().min(1, 'Beer name is required').max(100),
-  brewery: z.string().min(1, 'Brewery is required').max(100),
-  style: z.string().max(50).optional(),
-  abv: z.number().min(0).max(100).optional(),
-  userName: z.string().min(1, 'User name is required')
-});
-
 export const editBeerSchema = z.object({
   name: z.string().min(1).max(100),
   brewery: z.string().min(1).max(100),
   style: z.string().max(50).optional(),
-  abv: z.number().min(0).max(100).optional(),
-  userName: z.string().min(1)
+  abv: z.number().min(0).max(100).optional()
 });
 
 export const setCurrentBeerSchema = z.object({
-  beerId: z.string().uuid(),
-  userName: z.string().min(1)
-});
-
-export const finishBeerSchema = z.object({
-  userName: z.string().min(1)
-});
-
-export const deleteBeerSchema = z.object({
-  userName: z.string().min(1)
-});
-
-// Participant operations
-export const joinTastingSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(50)
-});
-
-export const reclaimSessionSchema = z.object({
-  rejoinToken: z.string().uuid()
+  beerId: z.string().uuid()
 });
 
 // Admin operations
-export const adminAuthSchema = z.object({
-  name: z.string().min(1)
-});
-
 export const updateUserSchema = z.object({
   isLeader: z.boolean().optional(),
-  isAdmin: z.boolean().optional()
-}).refine((data) => data.isLeader !== undefined || data.isAdmin !== undefined, {
-  message: "At least one field (isLeader or isAdmin) must be provided"
+  isAdmin: z.boolean().optional(),
+  name: z.string().trim().min(1).max(50).optional()
+}).refine((data) => data.isLeader !== undefined || data.isAdmin !== undefined || data.name !== undefined, {
+  message: "At least one field (isLeader, isAdmin or name) must be provided"
+});
+
+export const linkUserSchema = z.object({
+  legacyUserId: z.string().uuid()
 });
 
 // Helper to validate and return parsed data or error

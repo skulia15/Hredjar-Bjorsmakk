@@ -1,9 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // POST /api/beers/update-images - Update beer images from Vínbúðin
 export async function POST() {
   try {
+    await requireLeader();
+
     // Find all beers with productNumbers but no imageUrl
     const beersToUpdate = await prisma.beer.findMany({
       where: {
@@ -34,6 +37,9 @@ export async function POST() {
       total: beersToUpdate.length
     });
   } catch (error) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('Error updating beer images:', error);
     return NextResponse.json(
       { error: 'Failed to update beer images' },

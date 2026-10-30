@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { updateTastingSchema, validateInput } from '@/lib/validation';
-import { requireLeader } from '@/lib/auth';
-import { getParticipantFromTasting } from '@/lib/session';
+import { authErrorResponse, getCurrentUser, isLeaderOrAdmin, requireLeader } from '@/lib/auth';
 
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
@@ -40,9 +39,9 @@ export async function GET(
       );
     }
 
-    // Check if current user is a leader
-    const participant = await getParticipantFromTasting(id);
-    const currentUserIsLeader = participant?.user?.isLeader ?? false;
+    // Public read (projector screens); the leader flag only drives UI, the mutations re-check
+    const currentUser = await getCurrentUser();
+    const currentUserIsLeader = currentUser ? isLeaderOrAdmin(currentUser) : false;
 
     // Fetch all ratings for this tasting in one query (eliminates N+1 problem)
     const allRatings = await prisma.rating.findMany({
@@ -139,10 +138,10 @@ export async function PATCH(
       );
     }
 
-    const { status, userName } = validation.data;
+    const { status } = validation.data;
 
     // Verify user is leader
-    await requireLeader(userName);
+    await requireLeader();
 
     // Update tasting
     const tasting = await prisma.tasting.update({
@@ -160,12 +159,8 @@ export async function PATCH(
     });
 
   } catch (error) {
-    if (error instanceof Error && error.message === 'Leader access required') {
-      return NextResponse.json(
-        { error: 'Leader access required' },
-        { status: 403 }
-      );
-    }
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
 
     console.error('Error updating tasting:', error);
     return NextResponse.json(

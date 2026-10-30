@@ -40,14 +40,12 @@ interface LeaderboardWaitingProps {
   tastingId: string
   refreshInterval?: number
   isLeader?: boolean
-  participantName?: string
 }
 
 export function LeaderboardWaiting({
   tastingId,
   refreshInterval = 5000,
-  isLeader = false,
-  participantName
+  isLeader = false
 }: LeaderboardWaitingProps) {
   const [beers, setBeers] = useState<LeaderboardBeer[]>([])
   const [loading, setLoading] = useState(true)
@@ -95,7 +93,7 @@ export function LeaderboardWaiting({
       const response = await fetch(`/api/tastings/${tastingId}/current`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beerId, userName: participantName || 'leader' })
+        body: JSON.stringify({ beerId })
       })
 
       if (!response.ok) throw new Error('Failed to set current beer')

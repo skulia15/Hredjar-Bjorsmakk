@@ -3,7 +3,6 @@ import { ratingSchema, updateUserSchema, validateInput } from './validation'
 
 const ids = {
   beerId: '0549947f-21b4-4feb-8783-56b06cfd0608',
-  participantId: '8914fb72-ed2b-4a47-8025-130085fde5d7',
 }
 
 describe('ratingSchema', () => {
@@ -21,9 +20,14 @@ describe('ratingSchema', () => {
 })
 
 describe('updateUserSchema', () => {
-  it('requires at least one flag', () => {
+  it('requires at least one field', () => {
     expect(updateUserSchema.safeParse({}).success).toBe(false)
     expect(updateUserSchema.safeParse({ isLeader: true }).success).toBe(true)
+    expect(updateUserSchema.safeParse({ name: 'Jón' }).success).toBe(true)
+  })
+
+  it('rejects a blank name', () => {
+    expect(updateUserSchema.safeParse({ name: '   ' }).success).toBe(false)
   })
 })
 
@@ -33,6 +37,16 @@ describe('validateInput', () => {
       success: true,
       data: { ...ids, score: 8 },
     })
+  })
+
+  it('drops identity fields a client tries to smuggle in', () => {
+    const result = validateInput(ratingSchema, {
+      ...ids,
+      score: 8,
+      participantId: '8914fb72-ed2b-4a47-8025-130085fde5d7',
+      userName: 'skúli',
+    })
+    expect(result).toEqual({ success: true, data: { ...ids, score: 8 } })
   })
 
   it('joins zod issues as "path: message"', () => {
