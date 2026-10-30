@@ -9,6 +9,7 @@ import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, type Rater, type TastePair } from '@/lib/stats'
 import { BarChart3, Beer as BeerIcon, Gift, Hourglass, Medal, PartyPopper, Pause, Rocket, Search, Snail, Star, Target, Trophy } from 'lucide-react'
 import { RankMedal } from '@/components/RankMedal'
+import { JoinQrCode } from '@/components/JoinQrCode'
 
 interface Beer {
   id: string
@@ -321,7 +322,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       {/* 3-Column Layout */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 px-4 md:px-6 pb-4 md:pb-6 min-h-0 w-full">
         {/* Column 1: Top 6 Beers */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto min-w-0">
+        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col min-h-0 min-w-0">
+          <div className="flex-1 min-h-0 overflow-y-auto">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
             <Trophy className="h-6 w-6 text-yellow-500" />
             <span>Efstu 6</span>
@@ -381,6 +383,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+          </div>
+
+          {/* Latecomers can still join while a beer is on screen; in flow so it never covers the list */}
+          {currentBeer && tasting.status !== 'closed' && (
+            <div className="pt-4 mt-4 border-t flex items-center gap-4 shrink-0">
+              <JoinQrCode tastingId={tasting.id} size={96} />
+              <p className="text-lg font-semibold leading-tight">Skannaðu til<br />að taka þátt</p>
             </div>
           )}
         </div>
@@ -507,6 +518,18 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   </div>
                 </div>
               )}
+            </div>
+          ) : tasting.status !== 'closed' ? (
+            // Between beers (and before the start) the screen is a lobby: big scan-to-join code
+            <div className="flex-1 flex items-center justify-center">
+              <div className="text-center space-y-4">
+                <p className="text-3xl font-bold">Skannaðu til að taka þátt</p>
+                <JoinQrCode tastingId={tasting.id} size={260} showUrl />
+                <p className="text-lg text-muted-foreground flex items-center justify-center gap-2">
+                  <Pause className="h-5 w-5" />
+                  Enginn bjór valinn
+                </p>
+              </div>
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
