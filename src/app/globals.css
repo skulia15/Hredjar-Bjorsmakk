@@ -230,6 +230,13 @@
     border: 2px solid hsl(var(--accent));
     box-shadow: none;
   }
+
+  /* ...but toggles still need to look selected, e.g. flavor tags on the rate page */
+  .christmas button[aria-pressed="true"] {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+  }
 }
 
 /* Christmas decorative animations */
