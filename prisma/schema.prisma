@@ -115,6 +115,10 @@ model TastingBeer {
   customStyle   String?
   customAbv     Float?
 
+  // Price at the time of the tasting - catalog prices change every year
+  priceISK      Float?
+  pricePerLiter Float?
+
   orderIndex    Int      @default(0)
   status        String   @default("untasted")  // "untasted" | "current" | "finished"
 

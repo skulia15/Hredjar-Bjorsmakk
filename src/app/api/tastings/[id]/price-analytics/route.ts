@@ -35,8 +35,14 @@ export async function GET(
     })
 
     // Filter beers that have both ratings and price data
+    // Prefer the price snapshotted for this tasting over the current catalog price
     const beersWithData = tastingBeers
-      .filter(tb => tb.beer && tb.beer.pricePerLiter && tb.ratings.length > 0)
+      .map(tb => ({
+        ...tb,
+        priceISK: tb.priceISK ?? tb.beer?.priceISK ?? null,
+        pricePerLiter: tb.pricePerLiter ?? tb.beer?.pricePerLiter ?? null
+      }))
+      .filter(tb => tb.beer && tb.pricePerLiter && tb.ratings.length > 0)
       .map(tb => {
         const ratings = tb.ratings.map(r => r.score)
         const average = ratings.reduce((sum, r) => sum + r, 0) / ratings.length
@@ -45,8 +51,8 @@ export async function GET(
           beerId: tb.beer!.id,
           name: tb.beer!.name,
           brewery: tb.beer!.brewery,
-          priceISK: tb.beer!.priceISK || 0,
-          pricePerLiter: tb.beer!.pricePerLiter!,
+          priceISK: tb.priceISK || 0,
+          pricePerLiter: tb.pricePerLiter!,
           containerSize: tb.beer!.containerSize,
           containerType: tb.beer!.containerType,
           averageRating: average,

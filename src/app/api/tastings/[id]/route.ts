@@ -76,7 +76,7 @@ export async function GET(
       const country = tastingBeer.beer?.country || null;
       const containerSize = tastingBeer.beer?.containerSize || null;
       const containerType = tastingBeer.beer?.containerType || null;
-      const priceISK = tastingBeer.beer?.priceISK || null;
+      const priceISK = tastingBeer.priceISK ?? tastingBeer.beer?.priceISK ?? null;
       const imageUrl = tastingBeer.beer?.imageUrl || null;
 
       return {

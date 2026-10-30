@@ -65,11 +65,21 @@ export async function POST(
       finalBeerId = newBeer.id;
     }
 
+    // Snapshot the current price so later catalog syncs don't rewrite this tasting's stats
+    const catalogPrice = beerId
+      ? await prisma.beer.findUnique({
+          where: { id: beerId },
+          select: { priceISK: true, pricePerLiter: true }
+        })
+      : null;
+
     // Create tasting beer
     const tastingBeer = await prisma.tastingBeer.create({
       data: {
         tastingId: id,
         beerId: finalBeerId, // Always reference a catalog beer now
+        priceISK: catalogPrice?.priceISK ?? null,
+        pricePerLiter: catalogPrice?.pricePerLiter ?? null,
         orderIndex: nextOrderIndex,
         status: 'untasted'
       },
