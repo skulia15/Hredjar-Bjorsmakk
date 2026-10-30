@@ -180,6 +180,12 @@ export function getExportContentType(format: ExportFormat): string {
 export function getExportFilename(tastingTitle: string, format: ExportFormat): string {
   const sanitized = tastingTitle
     .toLowerCase()
+    // Transliterate Icelandic letters that NFD can't decompose, then strip accents
+    .replace(/ð/g, 'd')
+    .replace(/þ/g, 'th')
+    .replace(/æ/g, 'ae')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '');
 
