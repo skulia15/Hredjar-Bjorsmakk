@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Rating" ADD COLUMN IF NOT EXISTS "groupGuess" DOUBLE PRECISION;

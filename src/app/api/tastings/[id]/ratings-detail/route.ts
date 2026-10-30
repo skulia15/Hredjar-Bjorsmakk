@@ -85,6 +85,13 @@ export async function GET(
         ratingsCount: ratings.length,
         ratings: ratingsMap,
         tags: countTags(ratings),
+        guesses: ratings
+          .filter(r => r.groupGuess !== null)
+          .map(r => ({
+            participantId: r.participantId,
+            userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
+            guess: r.groupGuess as number
+          })),
         notes: ratings
           .filter(r => r.note)
           .map(r => ({

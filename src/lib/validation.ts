@@ -19,6 +19,13 @@ export const ratingSchema = z.object({
     .max(NOTE_MAX_LENGTH, `Note must be at most ${NOTE_MAX_LENGTH} characters`)
     .transform((note) => note || null)
     .nullable()
+    .optional(),
+  // Guess at the group average; ignored once the beer's scores are visible
+  groupGuess: z.number()
+    .min(1, 'Guess must be at least 1')
+    .max(10, 'Guess must be at most 10')
+    .transform((guess) => Math.round(guess * 10) / 10)
+    .nullable()
     .optional()
 });
 
