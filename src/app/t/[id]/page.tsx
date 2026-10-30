@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { Beer as BeerIcon } from 'lucide-react'
 
 export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -123,7 +124,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Athuga auðkenningu...</p>
         </div>
       </div>
@@ -134,7 +135,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-2">
-          <h1 className="text-4xl font-bold">🍺</h1>
+          <BeerIcon className="h-12 w-12 mx-auto text-amber-500" />
           <h2 className="text-2xl font-bold">{tastingTitle || 'Taka þátt í smökkunni'}</h2>
           <p className="text-muted-foreground">
             Sláðu inn nafn til að taka þátt í smökkunni

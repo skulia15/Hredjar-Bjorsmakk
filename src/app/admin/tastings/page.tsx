@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Beer as BeerIcon } from 'lucide-react'
 
 interface Tasting {
   id: string
@@ -73,7 +74,7 @@ export default function AdminTastingsPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður smökkunum...</p>
         </div>
       </div>
@@ -177,7 +178,7 @@ export default function AdminTastingsPage() {
           </div>
         ) : (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🍺</div>
+            <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">Engar smakkanir fundust</p>
           </div>
         )}

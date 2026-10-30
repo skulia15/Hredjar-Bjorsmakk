@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Beer as BeerIcon, Star } from 'lucide-react'
 
 interface WrapUpOverlayProps {
   beerName: string
@@ -45,7 +46,7 @@ export function WrapUpOverlay({
       <div className="bg-card rounded-lg border-2 border-primary max-w-md w-full p-8 space-y-6 animate-in zoom-in-95 duration-300">
         {/* Beer Finished Header */}
         <div className="text-center space-y-2">
-          <div className="text-6xl mb-4">🍺</div>
+          <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <h2 className="text-2xl font-bold">Bjór kláraður!</h2>
         </div>
 
@@ -68,14 +69,12 @@ export function WrapUpOverlay({
         {/* Stars Visual */}
         <div className="flex justify-center gap-1">
           {Array.from({ length: 10 }).map((_, i) => (
-            <span
+            <Star
               key={i}
-              className={`text-2xl ${
+              className={`h-6 w-6 fill-yellow-400 text-yellow-400 ${
                 i < Math.round(average) ? 'opacity-100' : 'opacity-20'
               }`}
-            >
-              ⭐
-            </span>
+            />
           ))}
         </div>
 

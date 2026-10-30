@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Beer as BeerIcon } from 'lucide-react'
+import { RankMedal } from '@/components/RankMedal'
 
 interface LeaderboardBeer {
   beerId: string
@@ -107,20 +109,11 @@ export function LeaderboardWaiting({
     }
   }
 
-  const getMedal = (rank: number) => {
-    switch (rank) {
-      case 1: return '🥇'
-      case 2: return '🥈'
-      case 3: return '🥉'
-      default: return null
-    }
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður stigatöflu...</p>
         </div>
       </div>
@@ -146,7 +139,7 @@ export function LeaderboardWaiting({
         <div className="text-center space-y-2">
           <h1 className="text-2xl font-bold">Bestu bjórarnir hingað til</h1>
           <p className="text-sm text-muted-foreground">
-            {isLeader ? 'Veldu næsta bjór til að halda áfram' : 'Bíður eftir næsta bjór... 🍺'}
+            {isLeader ? 'Veldu næsta bjór til að halda áfram' : 'Bíður eftir næsta bjór...'}
           </p>
         </div>
 
@@ -174,9 +167,7 @@ export function LeaderboardWaiting({
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      {getMedal(beer.rank) && (
-                        <span className="text-2xl">{getMedal(beer.rank)}</span>
-                      )}
+                      <RankMedal rank={beer.rank} className="h-7 w-7" />
                       <h3 className="font-bold text-lg">{beer.name}</h3>
                     </div>
                     <p className="text-sm text-muted-foreground">{beer.brewery}</p>
@@ -195,7 +186,7 @@ export function LeaderboardWaiting({
           </div>
         ) : (
           <div className="text-center py-8">
-            <div className="text-6xl mb-4">🍺</div>
+            <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">Engir bjórar kláraðir ennþá</p>
           </div>
         )}

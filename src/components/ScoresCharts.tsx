@@ -3,6 +3,18 @@
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
 import { buildAwards, linearFit, ratingDomain, type TastePair } from '@/lib/stats'
+import { Brain, CircleCheck, Equal, Flame, Globe, type LucideIcon, MoveRight, Scale, Smile, ThumbsDown, ThumbsUp, TrendingDown, TrendingUp, TriangleAlert } from 'lucide-react'
+import { AwardIcon } from '@/components/AwardIcon'
+import { RankMedal } from '@/components/RankMedal'
+
+function IconLabel({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Icon className="h-3.5 w-3.5 flex-shrink-0" />
+      {children}
+    </span>
+  )
+}
 
 interface BeerScore {
   beerId: string
@@ -481,7 +493,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {awards.map(award => (
             <div key={award.title} className="bg-card p-4 rounded-lg border text-center">
-              <div className="text-3xl mb-1">{award.emoji}</div>
+              <AwardIcon kind={award.kind} className="h-8 w-8 mx-auto mb-1 text-primary" />
               <div className="text-xs text-muted-foreground uppercase tracking-wide">{award.title}</div>
               <div className="font-bold mt-1 truncate" title={award.main}>{award.main}</div>
               <div className="text-xs text-muted-foreground mt-1">{award.sub}</div>
@@ -561,19 +573,19 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               if (Math.abs(changePerBeer) < 0.05) {
                 return (
                   <p>
-                    ➡️ Stöðug þróun: Einkunnir haldast nokkurn veginn stöðugar í gegnum kvöldið
+                    <MoveRight className="inline h-4 w-4 mr-1 -mt-0.5" />Stöðug þróun: Einkunnir haldast nokkurn veginn stöðugar í gegnum kvöldið
                   </p>
                 )
               } else if (changePerBeer > 0) {
                 return (
                   <p className="text-green-600 font-medium">
-                    📈 Hækkandi þróun: Einkunnir hækka að meðaltali um {changePerBeer.toFixed(2)} stig á hvern bjór (+{totalChange.toFixed(1)} yfir kvöldið)
+                    <TrendingUp className="inline h-4 w-4 mr-1 -mt-0.5" />Hækkandi þróun: Einkunnir hækka að meðaltali um {changePerBeer.toFixed(2)} stig á hvern bjór (+{totalChange.toFixed(1)} yfir kvöldið)
                   </p>
                 )
               } else {
                 return (
                   <p className="text-orange-600 font-medium">
-                    📉 Lækkandi þróun: Einkunnir lækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({totalChange.toFixed(1)} yfir kvöldið)
+                    <TrendingDown className="inline h-4 w-4 mr-1 -mt-0.5" />Lækkandi þróun: Einkunnir lækka að meðaltali um {Math.abs(changePerBeer).toFixed(2)} stig á hvern bjór ({totalChange.toFixed(1)} yfir kvöldið)
                   </p>
                 )
               }
@@ -903,7 +915,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                         <p className="text-sm">Staðalfrávik: <span className="font-semibold">{data.standardDeviation.toFixed(2)}</span></p>
                         {data.highestRater && data.lowestRater && (
                           <p className="text-sm">
-                            👍 {data.highestRater.userName} {data.highestRater.score} · 👎 {data.lowestRater.userName} {data.lowestRater.score}
+                            <ThumbsUp className="inline h-3.5 w-3.5 -mt-0.5" /> {data.highestRater.userName} {data.highestRater.score} · <ThumbsDown className="inline h-3.5 w-3.5 -mt-0.5" /> {data.lowestRater.userName} {data.lowestRater.score}
                           </p>
                         )}
                         <p className="text-xs mt-1">
@@ -912,9 +924,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                             data.controversy === 'Medium' ? 'text-orange-600 font-semibold' :
                             'text-green-600 font-semibold'
                           }>
-                            {data.controversy === 'High' ? '🔥 Mjög umdeildur' :
-                             data.controversy === 'Medium' ? '⚠️ Nokkuð umdeildur' :
-                             '✅ Almennt sammála'}
+                            {data.controversy === 'High' ? <IconLabel icon={Flame}>Mjög umdeildur</IconLabel> :
+                             data.controversy === 'Medium' ? <IconLabel icon={TriangleAlert}>Nokkuð umdeildur</IconLabel> :
+                             <IconLabel icon={CircleCheck}>Almennt sammála</IconLabel>}
                           </span>
                         </p>
                       </div>
@@ -953,9 +965,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 <div key={b.beerId} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/50 rounded">
                   <div className="font-medium text-sm">{b.name}</div>
                   <div className="text-sm">
-                    <span className="text-green-600 font-semibold">👍 {b.highestRater!.userName} {b.highestRater!.score}</span>
+                    <span className="text-green-600 font-semibold"><ThumbsUp className="inline h-4 w-4 -mt-0.5" /> {b.highestRater!.userName} {b.highestRater!.score}</span>
                     <span className="text-muted-foreground mx-2">vs</span>
-                    <span className="text-red-600 font-semibold">👎 {b.lowestRater!.userName} {b.lowestRater!.score}</span>
+                    <span className="text-red-600 font-semibold"><ThumbsDown className="inline h-4 w-4 -mt-0.5" /> {b.lowestRater!.userName} {b.lowestRater!.score}</span>
                   </div>
                 </div>
               ))}
@@ -1025,10 +1037,10 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
           {abvFit && (
             <p className="mt-4 text-center text-sm text-muted-foreground">
               {Math.abs(abvFit.r) < 0.3
-                ? '➡️ Lítið samband milli áfengisstyrks og einkunnar'
+                ? <IconLabel icon={MoveRight}>Lítið samband milli áfengisstyrks og einkunnar</IconLabel>
                 : abvFit.r > 0
-                ? `📈 Sterkari bjórar fengu hærri einkunnir (+${abvFit.slope.toFixed(2)} stig á hvert %)`
-                : `📉 Sterkari bjórar fengu lægri einkunnir (${abvFit.slope.toFixed(2)} stig á hvert %)`}
+                ? <IconLabel icon={TrendingUp}>Sterkari bjórar fengu hærri einkunnir (+{abvFit.slope.toFixed(2)} stig á hvert %)</IconLabel>
+                : <IconLabel icon={TrendingDown}>Sterkari bjórar fengu lægri einkunnir ({abvFit.slope.toFixed(2)} stig á hvert %)</IconLabel>}
               <span className="block text-xs opacity-70">Fylgni r = {abvFit.r.toFixed(2)}</span>
             </p>
           )}
@@ -1125,9 +1137,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                           {data.deviation > 0 ? '+' : ''}{Number(data.deviation.toFixed(2))}
                         </span></p>
                         <p className="text-xs text-muted-foreground mt-1">
-                          {data.deviation > 0.5 ? '😊 Rausnarlegri en hópurinn' :
-                           data.deviation < -0.5 ? '🤔 Gagnrýnni en hópurinn' :
-                           '👌 Nálægt hópnum'}
+                          {data.deviation > 0.5 ? <IconLabel icon={Smile}>Rausnarlegri en hópurinn</IconLabel> :
+                           data.deviation < -0.5 ? <IconLabel icon={Brain}>Gagnrýnni en hópurinn</IconLabel> :
+                           <IconLabel icon={Equal}>Nálægt hópnum</IconLabel>}
                         </p>
                       </div>
                     )
@@ -1195,9 +1207,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                             data.consensus > 6 ? 'text-orange-600 font-semibold' :
                             'text-red-600 font-semibold'
                           }>
-                            {data.consensus > 8 ? '✅ Mjög sammála' :
-                             data.consensus > 6 ? '👍 Nokkuð sammála' :
-                             '⚠️ Misjafnt álit'}
+                            {data.consensus > 8 ? <IconLabel icon={CircleCheck}>Mjög sammála</IconLabel> :
+                             data.consensus > 6 ? <IconLabel icon={ThumbsUp}>Nokkuð sammála</IconLabel> :
+                             <IconLabel icon={TriangleAlert}>Misjafnt álit</IconLabel>}
                           </span>
                         </p>
                       </div>
@@ -1325,7 +1337,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                           data.agreement === 'High' ? 'text-green-600 font-semibold' :
                           data.agreement === 'Medium' ? 'text-orange-600 font-semibold' :
                           'text-red-600 font-semibold'
-                        }>{data.agreement === 'High' ? '✅ Há' : data.agreement === 'Medium' ? '⚠️ Miðlungs' : '🔥 Lág'}</span></p>
+                        }>{data.agreement === 'High' ? <IconLabel icon={CircleCheck}>Há</IconLabel> : data.agreement === 'Medium' ? <IconLabel icon={TriangleAlert}>Miðlungs</IconLabel> : <IconLabel icon={Flame}>Lág</IconLabel>}</span></p>
                         <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.ratingsCount} einkunnir</p>
                       </div>
                     )
@@ -1433,9 +1445,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                             data.unanimity === 'High' ? 'text-green-500 font-semibold' :
                             'text-orange-600 font-semibold'
                           }>
-                            {data.unanimity === 'Very High' ? '✅ Mjög há samstaða' :
-                             data.unanimity === 'High' ? '✅ Há samstaða' :
-                             '👍 Góð samstaða'}
+                            {data.unanimity === 'Very High' ? <IconLabel icon={CircleCheck}>Mjög há samstaða</IconLabel> :
+                             data.unanimity === 'High' ? <IconLabel icon={CircleCheck}>Há samstaða</IconLabel> :
+                             <IconLabel icon={ThumbsUp}>Góð samstaða</IconLabel>}
                           </span>
                         </p>
                       </div>
@@ -1511,9 +1523,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                             data.ratingStyle === 'Moderate' ? 'text-orange-600 font-semibold' :
                             'text-red-600 font-semibold'
                           }>
-                            {data.ratingStyle === 'Consistent' ? '✅ Stöðugur' :
-                             data.ratingStyle === 'Moderate' ? '⚠️ Miðlungs' :
-                             '🔥 Breitt svið'}
+                            {data.ratingStyle === 'Consistent' ? <IconLabel icon={CircleCheck}>Stöðugur</IconLabel> :
+                             data.ratingStyle === 'Moderate' ? <IconLabel icon={TriangleAlert}>Miðlungs</IconLabel> :
+                             <IconLabel icon={Flame}>Breitt svið</IconLabel>}
                           </span>
                         </p>
                       </div>
@@ -1736,10 +1748,10 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                           data.consistency === 'Moderate' ? 'text-orange-600 font-semibold' :
                           'text-red-600 font-semibold'
                         }>{
-                          data.consistency === 'Very Consistent' ? '✅ Mjög stöðugt' :
-                          data.consistency === 'Consistent' ? '✅ Stöðugt' :
-                          data.consistency === 'Moderate' ? '⚠️ Miðlungs' :
-                          '🔥 Breytilegt'
+                          data.consistency === 'Very Consistent' ? <IconLabel icon={CircleCheck}>Mjög stöðugt</IconLabel> :
+                          data.consistency === 'Consistent' ? <IconLabel icon={CircleCheck}>Stöðugt</IconLabel> :
+                          data.consistency === 'Moderate' ? <IconLabel icon={TriangleAlert}>Miðlungs</IconLabel> :
+                          <IconLabel icon={Flame}>Breytilegt</IconLabel>
                         }</span></p>
                         <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.averageRating.toFixed(2)} meðaleinkunn</p>
                       </div>
@@ -1794,7 +1806,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">
-                      {brewery.rank === 1 ? '🥇' : brewery.rank === 2 ? '🥈' : brewery.rank === 3 ? '🥉' : `#${brewery.rank}`}
+                      {brewery.rank <= 3 ? <RankMedal rank={brewery.rank} className="h-7 w-7" /> : `#${brewery.rank}`}
                     </span>
                     <h4 className="font-bold text-lg">{brewery.brewery}</h4>
                   </div>
@@ -1961,7 +1973,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
             {/* International Beers */}
             <div className="bg-green-50 dark:bg-green-950 p-6 rounded-lg">
               <div className="flex items-center justify-center mb-4">
-                <span className="text-4xl">🌍</span>
+                <Globe className="h-10 w-10 text-green-600" />
               </div>
               <h4 className="font-semibold text-center text-lg mb-3">Erlendir bjórar</h4>
               <div className="space-y-2">
@@ -1980,10 +1992,10 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 <span className="text-blue-600 dark:text-blue-400 font-bold">🇮🇸 Íslenskir bjórar fengu hærri einkunnir (+{Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
               )}
               {analytics.localVsInternational.favoritism === 'International' && (
-                <span className="text-green-600 dark:text-green-400 font-bold">🌍 Erlendir bjórar fengu hærri einkunnir (+{Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
+                <span className="text-green-600 dark:text-green-400 font-bold"><Globe className="inline h-5 w-5 mr-1 -mt-1" />Erlendir bjórar fengu hærri einkunnir (+{Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
               )}
               {analytics.localVsInternational.favoritism === 'Neutral' && (
-                <span className="font-bold">⚖️ Engin marktæk hlutdrægni (mismunur: {Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
+                <span className="font-bold"><Scale className="inline h-5 w-5 mr-1 -mt-1" />Engin marktæk hlutdrægni (mismunur: {Math.abs(analytics.localVsInternational.difference).toFixed(2)} stig)</span>
               )}
             </p>
           </div>
@@ -2012,9 +2024,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     <span className="text-2xl">{getCountryFlag(country.country)}</span>
                     <h4 className="font-semibold text-sm">{country.country}</h4>
                   </div>
-                  {index === 0 && <span className="text-xl">🥇</span>}
-                  {index === 1 && <span className="text-xl">🥈</span>}
-                  {index === 2 && <span className="text-xl">🥉</span>}
+                  <RankMedal rank={index + 1} className="h-6 w-6" />
                 </div>
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -2178,7 +2188,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                           data.agreement === 'High' ? 'text-green-600 font-semibold' :
                           data.agreement === 'Medium' ? 'text-orange-600 font-semibold' :
                           'text-red-600 font-semibold'
-                        }>{data.agreement === 'High' ? '✅ Há' : data.agreement === 'Medium' ? '⚠️ Miðlungs' : '🔥 Lág'}</span></p>
+                        }>{data.agreement === 'High' ? <IconLabel icon={CircleCheck}>Há</IconLabel> : data.agreement === 'Medium' ? <IconLabel icon={TriangleAlert}>Miðlungs</IconLabel> : <IconLabel icon={Flame}>Lág</IconLabel>}</span></p>
                         <p className="text-xs text-muted-foreground mt-1">{data.beersCount} bjórar, {data.ratingsCount} einkunnir</p>
                       </div>
                     )

@@ -60,21 +60,11 @@ export async function GET(
     // Sort by average descending
     beersWithScores.sort((a, b) => b.average - a.average);
 
-    // Add ranks and medals
-    const beersWithRanks = beersWithScores.map((beer, index) => {
-      const rank = index + 1;
-      let medal = null;
-
-      if (rank === 1) medal = '🥇';
-      else if (rank === 2) medal = '🥈';
-      else if (rank === 3) medal = '🥉';
-
-      return {
-        ...beer,
-        rank,
-        medal
-      };
-    });
+    // Add ranks
+    const beersWithRanks = beersWithScores.map((beer, index) => ({
+      ...beer,
+      rank: index + 1
+    }));
 
     return NextResponse.json({
       tastingId: tasting.id,

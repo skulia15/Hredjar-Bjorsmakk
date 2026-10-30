@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { Beer as BeerIcon } from 'lucide-react'
 
 /**
  * Global navigation button that appears when user has an active tasting
@@ -75,7 +76,7 @@ export function ReturnToTastingButton() {
       href={`/t/${activeTastingId}/rate`}
       className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-40 px-6 py-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all hover:scale-105 flex items-center gap-2 font-medium"
     >
-      <span className="text-xl">🍺</span>
+      <BeerIcon className="h-5 w-5" />
       <span className="hidden sm:inline">Fara á smökkun</span>
       <span className="sm:hidden">Smökkun</span>
       <span>→</span>

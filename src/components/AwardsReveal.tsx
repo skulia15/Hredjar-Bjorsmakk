@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { CircleHelp, Medal } from 'lucide-react'
 import type { Award } from '@/lib/stats'
+import { AwardIcon } from '@/components/AwardIcon'
 
 const REVEAL_INTERVAL_MS = 4000
 
@@ -40,7 +42,7 @@ export function AwardsReveal({ awards, winnerName, onClose }: AwardsRevealProps)
       className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex flex-col items-center justify-center p-8 cursor-pointer"
       onClick={() => (done ? onClose() : setRevealed(r => r + 1))}
     >
-      <h1 className="text-5xl font-bold mb-2">🏅 Verðlaunaafhending</h1>
+      <h1 className="text-5xl font-bold mb-2 flex items-center gap-3"><Medal className="h-12 w-12 text-yellow-500" /> Verðlaunaafhending</h1>
       {winnerName && (
         <p className="text-2xl text-muted-foreground mb-10">Sigurvegari kvöldsins: <span className="font-bold text-primary">{winnerName}</span></p>
       )}
@@ -55,7 +57,9 @@ export function AwardsReveal({ awards, winnerName, onClose }: AwardsRevealProps)
                 : 'opacity-10 scale-95 border-border'
             }`}
           >
-            <div className="text-6xl mb-3">{index < revealed ? award.emoji : '❓'}</div>
+            {index < revealed
+              ? <AwardIcon kind={award.kind} className="h-16 w-16 mx-auto mb-3 text-primary" />
+              : <CircleHelp className="h-16 w-16 mx-auto mb-3 text-muted-foreground" />}
             <div className="text-lg text-muted-foreground uppercase tracking-wide">{award.title}</div>
             <div className="text-3xl font-bold mt-2 break-words">{index < revealed ? award.main : '…'}</div>
             <div className="text-lg text-muted-foreground mt-2">{index < revealed ? award.sub : ''}</div>

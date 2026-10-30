@@ -131,8 +131,10 @@ export function tasteTwins(pairs: TastePair[]) {
   return { closest: pairs[0], furthest: pairs[pairs.length - 1] }
 }
 
+export type AwardKind = 'generous' | 'harsh' | 'twins' | 'opposites' | 'controversial' | 'unanimous' | 'winnerFan'
+
 export interface Award {
-  emoji: string
+  kind: AwardKind
   title: string
   main: string
   sub: string
@@ -162,13 +164,13 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
     const generous = raters[0]
     const harsh = raters[raters.length - 1]
     awards.push({
-      emoji: '😇',
+      kind: 'generous',
       title: 'Örlátasti dómarinn',
       main: generous.userName,
       sub: `Meðaleinkunn ${generous.averageRating.toFixed(2)}`,
     })
     awards.push({
-      emoji: '😈',
+      kind: 'harsh',
       title: 'Strangasti dómarinn',
       main: harsh.userName,
       sub: `Meðaleinkunn ${harsh.averageRating.toFixed(2)}`,
@@ -178,13 +180,13 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
   if (tasteTwins) {
     const { closest, furthest } = tasteTwins
     awards.push({
-      emoji: '👯',
+      kind: 'twins',
       title: 'Bragðtvíburar',
       main: `${closest.aName} & ${closest.bName}`,
       sub: `Aðeins ${closest.meanDifference.toFixed(1)} stig á milli að meðaltali`,
     })
     awards.push({
-      emoji: '⚔️',
+      kind: 'opposites',
       title: 'Algjörar andstæður',
       main: `${furthest.aName} & ${furthest.bName}`,
       sub: `${furthest.meanDifference.toFixed(1)} stig á milli að meðaltali`,
@@ -195,7 +197,7 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
   if (mostControversial && mostControversial.standardDeviation > 0) {
     const { highestRater, lowestRater } = mostControversial
     awards.push({
-      emoji: '🔥',
+      kind: 'controversial',
       title: 'Umdeildasti bjórinn',
       main: mostControversial.name,
       sub: highestRater && lowestRater
@@ -207,7 +209,7 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
   if (beerControversy.length > 1) {
     const unanimous = beerControversy[beerControversy.length - 1]
     awards.push({
-      emoji: '🤝',
+      kind: 'unanimous',
       title: 'Mest sammála um',
       main: unanimous.name,
       sub: `Staðalfrávik ${unanimous.standardDeviation.toFixed(2)}`,
@@ -217,7 +219,7 @@ export function buildAwards({ participantStats, beerControversy, winner, tasteTw
   const winnerFan = winner && beerControversy.find(b => b.beerId === winner.beerId)?.highestRater
   if (winner && winnerFan) {
     awards.push({
-      emoji: '🏆',
+      kind: 'winnerFan',
       title: 'Stærsti aðdáandi sigurvegarans',
       main: winnerFan.userName,
       sub: `${winnerFan.score} fyrir ${winner.name}`,

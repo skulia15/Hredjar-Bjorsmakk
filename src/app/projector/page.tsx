@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Beer as BeerIcon, Tv, Users } from 'lucide-react'
 
 interface Tasting {
   id: string
@@ -39,7 +40,7 @@ export default function ProjectorSelectionPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður smökkunum...</p>
         </div>
       </div>
@@ -66,7 +67,7 @@ export default function ProjectorSelectionPage() {
 
         {tastings.length === 0 ? (
           <div className="bg-card p-8 rounded-lg border text-center space-y-4">
-            <div className="text-6xl mb-4">📺</div>
+            <Tv className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">Engar virkar smakkanir í gangi</p>
             <Link
               href="/"
@@ -90,8 +91,8 @@ export default function ProjectorSelectionPage() {
                       <span className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
                         {tasting.status === 'active' ? 'Í gangi' : tasting.status}
                       </span>
-                      <span>👥 {tasting.participantCount} þátttakendur</span>
-                      <span>🍺 {tasting.beerCount} bjórar</span>
+                      <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {tasting.participantCount} þátttakendur</span>
+                      <span className="inline-flex items-center gap-1"><BeerIcon className="h-4 w-4" /> {tasting.beerCount} bjórar</span>
                     </div>
                   </div>
                   <div className="text-3xl">→</div>

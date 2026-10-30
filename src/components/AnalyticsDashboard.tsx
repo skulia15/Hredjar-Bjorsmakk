@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { TrendingUp, Users, Beer, Clock, Award, BarChart3 } from 'lucide-react';
+import { Award, BarChart3, Beer as BeerIcon, Clock, TrendingUp, Users } from 'lucide-react';
+import { RankMedal } from '@/components/RankMedal';
 
 interface AnalyticsData {
   overview: {
@@ -112,7 +113,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
 
         <div className="bg-card p-4 rounded-lg border">
           <div className="flex items-center gap-2 text-muted-foreground mb-1">
-            <Beer className="h-4 w-4" />
+            <BeerIcon className="h-4 w-4" />
             <span className="text-sm">Bjórar smakkaðir</span>
           </div>
           <div className="text-2xl font-bold">{overview.finishedBeers} / {overview.totalBeers}</div>
@@ -158,7 +159,7 @@ export function AnalyticsDashboard({ tastingId }: AnalyticsDashboardProps) {
               <div key={beer.beerId} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">
-                    {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`}
+                    {index < 3 ? <RankMedal rank={index + 1} className="h-6 w-6" /> : `${index + 1}.`}
                   </span>
                   <div>
                     <div className="font-medium text-sm">{beer.name}</div>

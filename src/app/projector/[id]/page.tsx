@@ -7,6 +7,8 @@ import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, type Rater, type TastePair } from '@/lib/stats'
+import { BarChart3, Beer as BeerIcon, Gift, Hourglass, Medal, PartyPopper, Pause, Rocket, Search, Snail, Star, Target, Trophy } from 'lucide-react'
+import { RankMedal } from '@/components/RankMedal'
 
 interface Beer {
   id: string
@@ -37,7 +39,6 @@ interface BeerScore {
   average: number
   count: number
   rank: number
-  medal: string | null
   imageUrl?: string | null
 }
 
@@ -238,7 +239,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
         <div className="text-center">
-          <div className="text-6xl mb-4">🍺</div>
+          <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <p className="text-xl text-muted-foreground">Hleður skjávarpasýn...</p>
         </div>
       </div>
@@ -304,7 +305,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           onClick={() => setAwardsDismissed(false)}
           className="fixed bottom-4 right-4 z-40 px-4 py-2 rounded-lg border bg-card hover:bg-muted font-medium shadow"
         >
-          🏅 Sýna verðlaun
+          <Medal className="inline h-4 w-4 mr-1 -mt-0.5 text-yellow-500" />Sýna verðlaun
         </button>
       )}
 
@@ -322,13 +323,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         {/* Column 1: Top 6 Beers */}
         <div className="bg-card rounded-xl border-2 border-border p-6 overflow-y-auto min-w-0">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-            <span>🏆</span>
+            <Trophy className="h-6 w-6 text-yellow-500" />
             <span>Efstu 6</span>
           </h2>
 
           {topBeers.length === 0 ? (
             <div className="text-center py-12">
-              <div className="text-5xl mb-3">🍺</div>
+              <BeerIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
               <p className="text-muted-foreground">Engir bjórar klárðir ennþá</p>
             </div>
           ) : (
@@ -358,9 +359,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          {beer.medal && (
-                            <span className="text-3xl">{beer.medal}</span>
-                          )}
+                          <RankMedal rank={beer.rank} className="h-8 w-8" />
                           <span className="text-xl font-bold text-muted-foreground">
                             #{beer.rank}
                           </span>
@@ -389,7 +388,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         {/* Column 2: Current Beer Stats */}
         <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col overflow-y-auto min-w-0">
           <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-            <span>🍺</span>
+            <BeerIcon className="h-6 w-6 text-amber-500" />
             <span>Núverandi bjór</span>
           </h2>
 
@@ -484,7 +483,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               {currentBeer.status === 'finished' && highestRater && lowestRater && (
                 <div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border-2 border-amber-500">
                   <h3 className="text-lg font-semibold text-center mb-3 text-amber-700 dark:text-amber-400">
-                    🎯 Einkunnir bjórs
+                    <Target className="inline h-5 w-5 mr-1 -mt-0.5" /> Einkunnir bjórs
                   </h3>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
@@ -512,7 +511,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           ) : (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-12">
-                <div className="text-6xl mb-4">⏸️</div>
+                <Pause className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                 <p className="text-2xl text-muted-foreground">
                   Enginn bjór valinn
                 </p>
@@ -526,7 +525,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           {!currentBeer || !pendingRaters ? (
             <div className="flex-1 flex items-center justify-center">
               <div className="text-center py-12">
-                <div className="text-5xl mb-3">⏳</div>
+                <Hourglass className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
                 <p className="text-muted-foreground">Bíður eftir bjór</p>
               </div>
             </div>
@@ -534,12 +533,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
             <>
               {/* Top Section: Stats (Fixed Height) */}
               <div className="flex flex-col flex-shrink-0">
-                <h3 className="text-lg font-semibold mb-3 text-center">📊 Tölfræði</h3>
+                <h3 className="text-lg font-semibold mb-3 text-center"><BarChart3 className="inline h-5 w-5 mr-1 -mt-0.5" /> Tölfræði</h3>
                 <div className="grid grid-cols-2 gap-2">
                   {/* Fastest Rater */}
                   {engagementStats?.fastestRater && (
                     <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🚀</div>
+                      <Rocket className="h-10 w-10 mx-auto mb-2 text-green-600" />
                       <div className="text-sm text-muted-foreground mb-1">Hraðastur</div>
                       <div className="text-lg font-bold text-green-600 truncate max-w-full">
                         {engagementStats.fastestRater.userName}
@@ -553,7 +552,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Slowest Rater */}
                   {engagementStats?.slowestRater && (
                     <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🐌</div>
+                      <Snail className="h-10 w-10 mx-auto mb-2 text-orange-600" />
                       <div className="text-sm text-muted-foreground mb-1">Hægastur</div>
                       <div className="text-lg font-bold text-orange-600 truncate max-w-full">
                         {engagementStats.slowestRater.userName}
@@ -567,7 +566,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Most Generous */}
                   {engagementStats?.mostGenerous && (
                     <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🎁</div>
+                      <Gift className="h-10 w-10 mx-auto mb-2 text-purple-600" />
                       <div className="text-sm text-muted-foreground mb-1">Rausnarlegastur</div>
                       <div className="text-lg font-bold text-purple-600 truncate max-w-full">
                         {engagementStats.mostGenerous.userName}
@@ -581,7 +580,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Toughest Critic */}
                   {engagementStats?.toughestCritic && (
                     <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🔍</div>
+                      <Search className="h-10 w-10 mx-auto mb-2 text-red-600" />
                       <div className="text-sm text-muted-foreground mb-1">Strangastur</div>
                       <div className="text-lg font-bold text-red-600 truncate max-w-full">
                         {engagementStats.toughestCritic.userName}
@@ -595,7 +594,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Most Deviant Rater */}
                   {engagementStats?.mostDeviant && (
                     <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">🎯</div>
+                      <Target className="h-10 w-10 mx-auto mb-2 text-blue-600" />
                       <div className="text-sm text-muted-foreground mb-1">Útlaginn</div>
                       <div className="text-lg font-bold text-blue-600 truncate max-w-full">
                         {engagementStats.mostDeviant.userName}
@@ -608,7 +607,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {/* Total Ratings */}
                   {totalRatingsGiven > 0 && (
                     <div className="bg-indigo-50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800 flex flex-col items-center justify-center text-center">
-                      <div className="text-4xl mb-2">⭐</div>
+                      <Star className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
                       <div className="text-sm text-muted-foreground mb-1">Heildarfjöldi einkunna</div>
                       <div className="text-3xl font-bold text-indigo-600">
                         {totalRatingsGiven}
@@ -644,7 +643,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 {pendingRaters.totalParticipants > 0 && pendingRaters.pendingCount === 0 ? (
                   <div className="flex-1 flex items-center justify-center">
                     <div className="text-center py-8">
-                      <div className="text-6xl mb-3">🎉</div>
+                      <PartyPopper className="h-16 w-16 mx-auto mb-3 text-green-600" />
                       <p className="text-lg font-medium text-green-600">
                         Allir hafa gefið einkunn!
                       </p>
@@ -654,7 +653,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   /* Pending List */
                   <div className="flex-1 flex flex-col min-h-0">
                     <h3 className="text-lg font-semibold text-orange-600 flex items-center gap-2 mb-2">
-                      <span>⏳</span>
+                      <Hourglass className="h-5 w-5" />
                       <span>Bíður eftir {pendingRaters.pendingCount} einkunnargjöfum</span>
                     </h3>
                     <div className="flex-1 space-y-1 overflow-y-auto">

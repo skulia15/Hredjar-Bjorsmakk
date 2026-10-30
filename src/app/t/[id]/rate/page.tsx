@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { Check, Plus, Settings, Trophy } from "lucide-react";
+import { Beer as BeerIcon, Check, Hourglass, PartyPopper, Plus, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -487,7 +487,7 @@ export default function RatePage({
 						Þessi smökkun er ekki byrjuð enn. Vinsamlegast bíddu eftir að
 						skipuleggjandi byrji.
 					</p>
-					<div className="text-6xl mb-4">⏳</div>
+					<Hourglass className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 				</div>
 			</div>
 		);
@@ -528,7 +528,7 @@ export default function RatePage({
 					<p className="text-muted-foreground mb-4">
 						Bíður eftir næsta bjór...
 					</p>
-					<div className="text-6xl mb-4">🍺</div>
+					<BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 					<Link
 						href={`/t/${params.id}/scores`}
 						className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
@@ -752,7 +752,7 @@ export default function RatePage({
 							</p>
 						) : (
 							<p className="text-xs text-green-600 text-center font-medium">
-								🎉 Allir hafa gefið einkunn!
+								<PartyPopper className="inline h-4 w-4 mr-1 -mt-0.5" /> Allir hafa gefið einkunn!
 							</p>
 						)}
 					</div>

@@ -14,6 +14,8 @@ import {
   Legend,
   ReferenceLine
 } from 'recharts'
+import { ArrowDownRight, ArrowUpRight, Award, BarChart3, Coins, Gem, MoveRight, Search, Star, TrendingDown, TrendingUp, TriangleAlert, Trophy } from 'lucide-react'
+import { RankMedal } from '@/components/RankMedal'
 
 interface PriceAnalyticsData {
   hasData: boolean
@@ -137,20 +139,21 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
   }
 
   const getCorrelationDescription = (corr: number) => {
-    if (corr > 0.7) return { text: 'Sterk jákvæð', emoji: '📈' }
-    if (corr > 0.3) return { text: 'Miðlungs jákvæð', emoji: '↗️' }
-    if (corr > -0.3) return { text: 'Engin', emoji: '➡️' }
-    if (corr > -0.7) return { text: 'Miðlungs neikvæð', emoji: '↘️' }
-    return { text: 'Sterk neikvæð', emoji: '📉' }
+    if (corr > 0.7) return { text: 'Sterk jákvæð', icon: TrendingUp }
+    if (corr > 0.3) return { text: 'Miðlungs jákvæð', icon: ArrowUpRight }
+    if (corr > -0.3) return { text: 'Engin', icon: MoveRight }
+    if (corr > -0.7) return { text: 'Miðlungs neikvæð', icon: ArrowDownRight }
+    return { text: 'Sterk neikvæð', icon: TrendingDown }
   }
 
   const corrDesc = getCorrelationDescription(data.overview.correlation)
+  const CorrIcon = corrDesc.icon
 
   return (
     <div className="mt-8 space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold">💰 Verðgreining</h2>
+        <h2 className="text-2xl font-bold flex items-center justify-center gap-2"><Coins className="h-6 w-6 text-yellow-500" /> Verðgreining</h2>
         <p className="text-sm text-muted-foreground">
           {data.overview.totalBeers} bjórar með verð- og einkunnagögnum
         </p>
@@ -167,7 +170,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <div className="text-xs text-muted-foreground mt-1">Meðaleinkunn</div>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
-          <div className="text-2xl font-bold">{corrDesc.emoji}</div>
+          <CorrIcon className="h-8 w-8 mx-auto" />
           <div className="text-xs text-muted-foreground mt-1">
             {corrDesc.text} fylgni
             <div className="text-xs opacity-60">r = {data.overview.correlation.toFixed(2)}</div>
@@ -184,7 +187,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       {/* Best Value Highlight */}
       <div className="p-4 rounded-lg border-2 border-primary bg-primary/5">
         <div className="flex items-start gap-3">
-          <div className="text-3xl">💎</div>
+          <Gem className="h-8 w-8 text-primary flex-shrink-0" />
           <div className="flex-1">
             <div className="font-semibold text-sm text-muted-foreground mb-1">BESTU KAUP</div>
             <div className="font-bold text-lg">{data.bestValue.name}</div>
@@ -216,7 +219,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          📊 Dreifingarrit
+          <BarChart3 className="inline h-4 w-4 mr-1 -mt-0.5" /> Dreifingarrit
         </button>
         <button
           onClick={() => setShowScatter(false)}
@@ -226,7 +229,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               : 'bg-muted text-muted-foreground hover:bg-muted/80'
           }`}
         >
-          🏆 Verðgildi
+          <Trophy className="inline h-4 w-4 mr-1 -mt-0.5" /> Verðgildi
         </button>
       </div>
 
@@ -295,7 +298,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
                   >
                     <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span>💎</span>
+                        <Gem className="h-4 w-4 text-green-600" />
                         <span>Falinn gimsteinn ({data.quadrants.hiddenGems.length})</span>
                       </div>
                       <span className="text-xs">{expandedQuadrants.hiddenGems ? '▼' : '▶'}</span>
@@ -328,7 +331,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
                   >
                     <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span>⭐</span>
+                        <Star className="h-4 w-4 text-blue-600" />
                         <span>Premium gæði ({data.quadrants.premiumWorthIt.length})</span>
                       </div>
                       <span className="text-xs">{expandedQuadrants.premiumWorthIt ? '▼' : '▶'}</span>
@@ -361,7 +364,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
                   >
                     <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span>💰</span>
+                        <Coins className="h-4 w-4 text-yellow-600" />
                         <span>Sparnaður ({data.quadrants.budgetOptions.length})</span>
                       </div>
                       <span className="text-xs">{expandedQuadrants.budgetOptions ? '▼' : '▶'}</span>
@@ -394,7 +397,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
                   >
                     <div className="font-semibold text-sm mb-2 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <span>⚠️</span>
+                        <TriangleAlert className="h-4 w-4 text-red-600" />
                         <span>Spurning ({data.quadrants.overpriced.length})</span>
                       </div>
                       <span className="text-xs">{expandedQuadrants.overpriced ? '▼' : '▶'}</span>
@@ -425,7 +428,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       ) : (
         /* Value Ranking */
         <div className="space-y-3">
-          <h3 className="font-semibold text-center">🏅 Verðgildi stigatafla</h3>
+          <h3 className="font-semibold flex items-center justify-center gap-2"><Award className="h-5 w-5" /> Verðgildi stigatafla</h3>
           <p className="text-xs text-center text-muted-foreground mb-4">
             Raðað eftir gæðum í hlutfalli við verð
           </p>
@@ -439,9 +442,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <div className="text-2xl flex-shrink-0">
-                    {beer.rank === 1 && '🥇'}
-                    {beer.rank === 2 && '🥈'}
-                    {beer.rank === 3 && '🥉'}
+                    <RankMedal rank={beer.rank} className="h-7 w-7" />
                     {beer.rank > 3 && `#${beer.rank}`}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -470,7 +471,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       {/* Insights */}
       <div className="p-4 rounded-lg border bg-muted/30">
         <div className="font-semibold mb-3 flex items-center gap-2">
-          <span>🔍</span>
+          <Search className="h-4 w-4" />
           <span>Tölfræðilegar niðurstöður</span>
         </div>
         <div className="space-y-2 text-sm">

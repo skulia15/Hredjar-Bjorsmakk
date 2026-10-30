@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ChevronDown, Home, Trash2, Trophy, Users } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, Home, Hourglass, Trash2, Trophy, Users } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
@@ -333,7 +333,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður...</p>
         </div>
       </div>
@@ -449,7 +449,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                 <div className="bg-green-50 dark:bg-green-950/20 p-6 rounded-lg border-2 border-green-500 shadow-lg space-y-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="text-2xl">🍺</span>
+                      <BeerIcon className="h-6 w-6 text-amber-500" />
                       <h3 className="font-bold text-lg text-green-700 dark:text-green-400">NÚVERANDI BJÓR</h3>
                     </div>
                     {currentBeer.currentSince && (
@@ -503,7 +503,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Untasted Beers */}
               {untastedBeers.length > 0 && (
                 <div className="bg-card p-4 rounded-lg border space-y-3">
-                  <h3 className="font-semibold text-blue-600 dark:text-blue-400">⏳ Ósmakkaðir bjórar ({untastedBeers.length})</h3>
+                  <h3 className="font-semibold text-blue-600 dark:text-blue-400"><Hourglass className="inline h-4 w-4 mr-1 -mt-0.5" /> Ósmakkaðir bjórar ({untastedBeers.length})</h3>
                   <div className="space-y-2">
                     {untastedBeers.map((beer) => (
                       <div key={beer.id} className="flex flex-col gap-3 p-4 bg-blue-50 dark:bg-blue-950/10 border border-blue-200 dark:border-blue-800 rounded-md hover:border-blue-400 transition-colors">

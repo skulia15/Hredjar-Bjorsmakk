@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Edit, ArrowUpDown, Grid, List, Trash2 } from 'lucide-react'
+import { ArrowUpDown, Beer as BeerIcon, Edit, Grid, List, Search, Trash2 } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 
 interface Beer {
@@ -213,7 +213,7 @@ export default function BeersPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður bjórlista...</p>
         </div>
       </div>
@@ -319,7 +319,7 @@ export default function BeersPage() {
         {/* Beer Display - Grouped or Ungrouped */}
         {filteredBeers.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-4xl mb-4">🔍</div>
+            <Search className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">Engir bjórar fundust sem passa við leitarskilyrðin</p>
           </div>
         ) : groupByBrewery ? (

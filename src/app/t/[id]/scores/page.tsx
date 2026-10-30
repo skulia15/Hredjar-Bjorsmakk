@@ -7,6 +7,8 @@ import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { PersonalStats } from '@/components/PersonalStats'
+import { Beer as BeerIcon } from 'lucide-react'
+import { RankMedal } from '@/components/RankMedal'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -196,18 +198,11 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     }
   }
 
-  const getMedal = (rank: number) => {
-    if (rank === 1) return '🥇'
-    if (rank === 2) return '🥈'
-    if (rank === 3) return '🥉'
-    return null
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <div className="text-4xl mb-4">🍺</div>
+          <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður einkunnum...</p>
         </div>
       </div>
@@ -264,7 +259,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         {/* Scores List */}
         {scores.beers.length === 0 ? (
           <div className="text-center py-12">
-            <div className="text-6xl mb-4">🍺</div>
+            <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
             <p className="text-muted-foreground">
               Engir bjórar hafa fengið einkunn ennþá
             </p>
@@ -284,9 +279,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        {getMedal(beer.rank) && (
-                          <span className="text-2xl">{getMedal(beer.rank)}</span>
-                        )}
+                        <RankMedal rank={beer.rank} className="h-7 w-7" />
                         <span className="text-lg font-semibold text-muted-foreground">
                           #{beer.rank}
                         </span>
@@ -416,8 +409,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                           {participant.topBeers.map((beer, index) => (
                             <div key={beer.beerId} className="p-3 rounded bg-muted/50 relative">
-                              <div className="absolute top-2 right-2 text-2xl opacity-50">
-                                {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                              <div className="absolute top-2 right-2 opacity-50">
+                                <RankMedal rank={index + 1} className="h-6 w-6" />
                               </div>
                               <div className="font-medium text-sm pr-8">{beer.name}</div>
                               <div className="text-xs text-muted-foreground">{beer.brewery}</div>

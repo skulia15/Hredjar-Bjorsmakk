@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { RankMedal } from '@/components/RankMedal'
 
 interface Participant {
   id: string
@@ -149,7 +150,7 @@ export function RatingsTable({ participants, beers }: RatingsTableProps) {
                       <div className="flex items-center gap-2">
                         {selectedParticipant === 'all' && index < 3 && (
                           <span className="text-lg">
-                            {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
+                            <RankMedal rank={index + 1} className="h-5 w-5" />
                           </span>
                         )}
                         <div className="font-medium text-sm">{beer.name}</div>

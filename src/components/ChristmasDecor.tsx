@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { Snowflake, TreePine } from 'lucide-react'
 
 /**
  * Non-interactive decorative overlay shown only when `.christmas` theme
@@ -42,13 +43,12 @@ export function ChristmasDecor() {
         const duration = 12 + (i % 7) * 1.5
         const size = 10 + (i % 4) * 3
         return (
-          <div
+          <Snowflake
             key={i}
-            className="absolute -top-6 text-xl opacity-70 xmas-snowflake"
-            style={{ left: `${left}%`, animationDelay: `${delay}s`, animationDuration: `${duration}s`, fontSize: `${size}px` }}
-          >
-            ❄️
-          </div>
+            size={size}
+            className="absolute -top-6 opacity-70 text-sky-200 xmas-snowflake"
+            style={{ left: `${left}%`, animationDelay: `${delay}s`, animationDuration: `${duration}s` }}
+            />
         )
       })}
 
@@ -89,8 +89,8 @@ export function ChristmasDecor() {
       </div>
 
       {/* Corner trees */}
-      <div className="absolute bottom-3 left-3 text-4xl opacity-80 select-none xmas-tree">🎄</div>
-      <div className="absolute bottom-3 right-3 text-4xl opacity-80 select-none xmas-tree">🎄</div>
+      <TreePine className="absolute bottom-3 left-3 h-10 w-10 opacity-80 text-green-600 select-none xmas-tree" />
+      <TreePine className="absolute bottom-3 right-3 h-10 w-10 opacity-80 text-green-600 select-none xmas-tree" />
     </div>
   )
 }

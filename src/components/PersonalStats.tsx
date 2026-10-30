@@ -1,5 +1,6 @@
 'use client'
 
+import { Beer, Heart, type LucideIcon, Meh, Users, Wine } from 'lucide-react'
 import { personalStats, type PersonalStatsInput } from '@/lib/stats'
 
 interface PersonalStatsProps extends PersonalStatsInput {
@@ -19,7 +20,7 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
   return (
     <div className="bg-card p-6 rounded-lg border-2 border-primary space-y-4">
       <div className="text-center">
-        <h2 className="text-2xl font-bold">🍻 Þín smökkun</h2>
+        <h2 className="text-2xl font-bold flex items-center justify-center gap-2"><Wine className="h-6 w-6 text-amber-500" /> Þín smökkun</h2>
         <p className="text-sm text-muted-foreground mt-1">
           {stats.ratedCount} bjórum gefin einkunn • meðaleinkunn {stats.myAverage.toFixed(2)}
         </p>
@@ -27,11 +28,11 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Stat emoji="❤️" label="Uppáhaldsbjórinn þinn" main={stats.favourite.name} sub={`Þú gafst ${stats.favourite.score}`} />
+        <Stat icon={Heart} label="Uppáhaldsbjórinn þinn" main={stats.favourite.name} sub={`Þú gafst ${stats.favourite.score}`} />
 
         {stats.biggestDisagreement && (
           <Stat
-            emoji="🙃"
+            icon={Meh}
             label="Mest ósammála hópnum"
             main={stats.biggestDisagreement.name}
             sub={`Þú: ${stats.biggestDisagreement.myScore} • Hópurinn: ${stats.biggestDisagreement.groupAverage.toFixed(1)}`}
@@ -40,7 +41,7 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
 
         {stats.twin && (
           <Stat
-            emoji="👯"
+            icon={Users}
             label="Bragðtvíburinn þinn"
             main={stats.twin.userName}
             sub={`${stats.twin.meanDifference.toFixed(1)} stig á milli að meðaltali (${stats.twin.sharedBeers} bjórar)`}
@@ -49,7 +50,7 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
 
         {favoriteStyle && (
           <Stat
-            emoji="🍺"
+            icon={Beer}
             label="Uppáhalds bjórstíllinn"
             main={favoriteStyle.style}
             sub={`Meðaleinkunn ${favoriteStyle.average.toFixed(2)} (${favoriteStyle.count} bjórar)`}
@@ -60,10 +61,10 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
   )
 }
 
-function Stat({ emoji, label, main, sub }: { emoji: string; label: string; main: string; sub: string }) {
+function Stat({ icon: Icon, label, main, sub }: { icon: LucideIcon; label: string; main: string; sub: string }) {
   return (
     <div className="p-3 rounded-lg bg-muted/50 flex items-start gap-3">
-      <div className="text-2xl">{emoji}</div>
+      <Icon className="h-6 w-6 flex-shrink-0 text-primary" />
       <div className="min-w-0">
         <div className="text-xs text-muted-foreground uppercase tracking-wide">{label}</div>
         <div className="font-bold truncate" title={main}>{main}</div>

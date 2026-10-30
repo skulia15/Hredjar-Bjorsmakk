@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Hourglass, PartyPopper, Star } from 'lucide-react'
 
 interface RatedParticipant {
   participantId: string
@@ -124,7 +125,7 @@ export function PendingRaters({
                   <span className="text-xs text-muted-foreground">({participant.code})</span>
                 </div>
                 <span className="font-bold text-primary">
-                  {participant.score.toFixed(1)} ⭐
+                  {participant.score.toFixed(1)} <Star className="inline h-3.5 w-3.5 -mt-0.5 fill-yellow-400 text-yellow-400" />
                 </span>
               </div>
             ))}
@@ -137,7 +138,7 @@ export function PendingRaters({
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <h4 className="text-sm font-medium text-orange-600">
-              ⏳ Bíður ({data.pendingCount})
+              <Hourglass className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />Bíður ({data.pendingCount})
             </h4>
             {onNudge && (
               <button
@@ -187,7 +188,7 @@ export function PendingRaters({
       {/* All Done */}
       {data.totalParticipants > 0 && data.pendingCount === 0 && (
         <div className="text-center py-4">
-          <div className="text-4xl mb-2">🎉</div>
+          <PartyPopper className="h-10 w-10 mx-auto mb-2 text-green-600" />
           <p className="text-sm font-medium text-green-600">
             Allir hafa gefið einkunn!
           </p>
