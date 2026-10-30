@@ -274,6 +274,11 @@
   mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,0.6) 70%, rgba(0,0,0,0) 100%);
 }
 
+/* Garland would sit behind or over the app header; keep it for header-less views (projector) */
+body:has([data-app-header]) .xmas-garland-wrap {
+  display: none;
+}
+
 /* Reset heading font weight for non-brutalist themes */
 body:not(.neo-brutalist) h1,
 body:not(.neo-brutalist) h2,

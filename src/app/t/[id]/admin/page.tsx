@@ -2,12 +2,13 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Beer as BeerIcon, ChevronDown, EyeOff, Home, Hourglass, Trash2, Trophy, Users } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, EyeOff, Hourglass, Trash2 } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 import { SlideToConfirm } from '@/components/SlideToConfirm'
+import { useActiveTasting } from '@/hooks/useActiveTasting'
 
 interface Beer {
   id: string
@@ -41,7 +42,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   const [tasting, setTasting] = useState<Tasting | null>(null)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
   const [isFinishedBeersExpanded, setIsFinishedBeersExpanded] = useState(false)
 
   // Beer catalog state
@@ -58,19 +58,18 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     imageUrl?: string
   }>>([])
 
+  const { setActiveTasting } = useActiveTasting()
+
+  // Leaders land here instead of the rate page, so record the tasting for the header's "Í gangi" link
+  useEffect(() => {
+    setActiveTasting(params.id)
+  }, [params.id, setActiveTasting])
+
   useEffect(() => {
     loadTasting()
     const interval = setInterval(loadTasting, 5000)
     return () => clearInterval(interval)
   }, [params.id])
-
-  // Only admins see the user management link
-  useEffect(() => {
-    fetch('/api/session')
-      .then(res => res.json())
-      .then(data => setIsAdmin(data.isAdmin || false))
-      .catch(err => console.error('Error checking admin status:', err))
-  }, [])
 
   // Load beer catalog
   useEffect(() => {
@@ -430,40 +429,6 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             </span>
           </span>
         </label>
-
-        {/* Navigation Links */}
-        <div className="flex gap-2 flex-wrap">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-          >
-            <Home className="w-4 h-4" />
-            Forsíða
-          </Link>
-          <Link
-            href={`/t/${params.id}/rate`}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-          >
-            <Users className="w-4 h-4" />
-            Þátttakandasýn
-          </Link>
-          <Link
-            href={`/t/${params.id}/scores`}
-            className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors"
-          >
-            <Trophy className="w-4 h-4" />
-            Stigatafla
-          </Link>
-          {isAdmin && (
-            <Link
-              href="/admin/users"
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md hover:bg-accent transition-colors bg-primary/5"
-            >
-              <Users className="w-4 h-4" />
-              Notendastjórnun
-            </Link>
-          )}
-        </div>
 
         {message && (
           <div className="p-3 bg-green-500/10 border border-green-500 text-green-600 rounded-md text-sm text-center">

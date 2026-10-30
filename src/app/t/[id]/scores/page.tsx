@@ -239,25 +239,6 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           )}
         </div>
 
-        {/* Navigation Buttons */}
-        <div className="flex justify-center gap-3">
-          {scores.status === 'closed' && (
-            <Link
-              href="/"
-              className="px-6 py-3 rounded-lg border bg-card hover:bg-muted transition-colors font-medium"
-            >
-              Forsíða
-            </Link>
-          )}
-          {scores.status === 'active' && (
-            <Link
-              href={`/t/${params.id}/rate`}
-              className="px-6 py-3 rounded-lg border bg-card hover:bg-muted transition-colors font-medium"
-            >
-              Aftur í smökkun
-            </Link>
-          )}
-        </div>
 
         {/* Scores List */}
         {scores.beers.length === 0 ? (
@@ -456,30 +437,6 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           </div>
         )}
 
-        {/* Navigation */}
-        <div className="flex justify-center gap-4 pt-4">
-          {scores.status === 'closed' ? (
-            <Link
-              href="/"
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← Til baka á forsíðu
-            </Link>
-          ) : (
-            <Link
-              href={`/t/${params.id}/rate`}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← Til baka í smökkun
-            </Link>
-          )}
-          <Link
-            href="/"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Forsíða →
-          </Link>
-        </div>
       </div>
 
       {/* Nudge notification overlay */}

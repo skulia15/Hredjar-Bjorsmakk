@@ -1,0 +1,147 @@
+'use client'
+
+import { SignInButton, Show, UserButton, useAuth } from '@clerk/nextjs'
+import { Beer as BeerIcon, ListChecks, Shield, Tv } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { getActiveTastingId, useActiveTasting } from '@/hooks/useActiveTasting'
+import { cn } from '@/lib/utils'
+
+const NAV_ITEMS = [
+  { href: '/tastings', label: 'Smakkanir', icon: ListChecks },
+  { href: '/beers', label: 'Bjórlisti', icon: BeerIcon },
+  { href: '/projector', label: 'Skjávarpi', icon: Tv },
+]
+const ADMIN_ITEM = { href: '/admin/users', label: 'Notendur', icon: Shield }
+
+function isActive(pathname: string, href: string) {
+  return pathname === href || pathname.startsWith(`${href}/`)
+}
+
+export function AppHeader() {
+  const pathname = usePathname() ?? '/'
+  const { isSignedIn } = useAuth()
+  const { clearActiveTasting } = useActiveTasting()
+  const [session, setSession] = useState<{ name: string; isAdmin: boolean } | null>(null)
+  const [activeTastingId, setActiveTastingId] = useState<string | null>(null)
+  const [isEmbedded, setIsEmbedded] = useState(false)
+
+  useEffect(() => {
+    setIsEmbedded(window.self !== window.top)
+  }, [])
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setSession(null)
+      return
+    }
+    fetch('/api/session')
+      .then(res => res.json())
+      .then(data => setSession(data.hasSession ? { name: data.name, isAdmin: data.isAdmin } : null))
+      .catch(err => console.error('Error loading session:', err))
+  }, [isSignedIn])
+
+  useEffect(() => {
+    const verify = async () => {
+      const stored = getActiveTastingId()
+      if (!stored) {
+        setActiveTastingId(null)
+        return
+      }
+      try {
+        const response = await fetch(`/api/tastings/${stored}`)
+        const data = response.ok ? await response.json() : null
+        if (data?.status === 'active') {
+          setActiveTastingId(stored)
+        } else {
+          setActiveTastingId(null)
+          clearActiveTasting()
+        }
+      } catch (error) {
+        console.error('Error checking tasting status:', error)
+      }
+    }
+
+    verify()
+    window.addEventListener('storage', verify)
+    return () => window.removeEventListener('storage', verify)
+  }, [clearActiveTasting])
+
+  // Projector display is fullscreen; embedded views live inside another page
+  if (isEmbedded || /^\/projector\/[^/]+/.test(pathname)) {
+    return null
+  }
+
+  const navItems = session?.isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS
+  const isInActiveTasting = !!activeTastingId && pathname.startsWith(`/t/${activeTastingId}`)
+
+  return (
+    <header data-app-header className="sticky top-0 z-40 w-full border-b bg-background">
+      <div className="container mx-auto flex h-14 items-center gap-1 px-2 sm:gap-2 sm:px-4">
+        <Link href="/" className="mr-1 flex shrink-0 items-center gap-2 font-bold sm:mr-3">
+          <Image src="/icon.svg" alt="" width={28} height={28} unoptimized className="h-7 w-7" />
+          <span className="hidden md:inline">Bjórsmakk</span>
+        </Link>
+
+        <nav aria-label="Aðalvalmynd" className="flex items-center gap-0.5 sm:gap-1">
+          {navItems.map(({ href, label, icon: Icon }) => {
+            const active = isActive(pathname, href)
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-current={active ? 'page' : undefined}
+                className={cn(
+                  // Stacked icon + small label on phones, inline on larger screens
+                  'inline-flex flex-col items-center gap-0.5 rounded-md px-2 py-1 text-[10px] font-medium leading-none transition-colors sm:flex-row sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm',
+                  active
+                    ? 'bg-accent text-accent-foreground'
+                    : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+              </Link>
+            )
+          })}
+        </nav>
+
+        <div className="ml-auto flex items-center gap-2">
+          {activeTastingId && !isInActiveTasting && (
+            <Link
+              href={`/t/${activeTastingId}/rate`}
+              aria-label="Fara á smökkun í gangi"
+              className="inline-flex items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
+              </span>
+              <span className="hidden sm:inline">Í gangi</span>
+              <span>→</span>
+            </Link>
+          )}
+
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button
+                type="button"
+                className="rounded-md border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+              >
+                Skrá inn
+              </button>
+            </SignInButton>
+          </Show>
+          <Show when="signed-in">
+            <div className="flex items-center gap-2 text-sm">
+              {session && <span className="hidden max-w-[8rem] truncate font-medium sm:inline">{session.name}</span>}
+              <UserButton />
+            </div>
+          </Show>
+        </div>
+      </div>
+    </header>
+  )
+}

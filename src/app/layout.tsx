@@ -4,8 +4,7 @@ import { isIS } from '@clerk/localizations'
 import { Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
-import { ReturnToTastingButton } from '@/components/ReturnToTastingButton'
-import { UserDisplay } from '@/components/UserDisplay'
+import { AppHeader } from '@/components/AppHeader'
 import { ThemeFooter } from '@/components/ThemeFooter'
 import { ChristmasDecor } from '@/components/ChristmasDecor'
 
@@ -38,14 +37,13 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${spaceGrotesk.className} christmas min-h-screen flex flex-col`} suppressHydrationWarning>
         <Providers>
+          <AppHeader />
           <main className="flex-1">
             {children}
           </main>
           <ThemeFooter />
         </Providers>
         <ChristmasDecor />
-        <ReturnToTastingButton />
-        <UserDisplay />
       </body>
     </html>
     </ClerkProvider>

@@ -99,15 +99,6 @@ export default function ProjectorSelectionPage() {
                 </div>
               </Link>
             ))}
-
-            <div className="pt-4">
-              <Link
-                href="/"
-                className="block w-full px-4 py-3 text-center border border-input rounded-lg font-medium hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                ← Til baka á forsíðu
-              </Link>
-            </div>
           </div>
         )}
       </div>

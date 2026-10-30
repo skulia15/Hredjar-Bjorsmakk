@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { ArrowUpDown, Beer as BeerIcon, Edit, Grid, List, Search, Trash2 } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 
@@ -237,9 +236,6 @@ export default function BeersPage() {
                   {updatingImages ? 'Uppfærir...' : `Uppfæra ${imageStats.needingImages} myndir`}
                 </button>
               )}
-              <Link href="/" className="text-sm text-primary hover:underline">
-                ← Forsíða
-              </Link>
             </div>
           </div>
           <div className="flex items-center justify-between">
@@ -595,16 +591,6 @@ export default function BeersPage() {
             ))}
           </div>
         )}
-
-        {/* Footer */}
-        <div className="text-center pt-8 border-t">
-          <Link
-            href="/"
-            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 inline-block"
-          >
-            Aftur á forsíðu
-          </Link>
-        </div>
       </div>
 
       {/* Edit Modal */}
