@@ -35,13 +35,17 @@ export async function GET(
     })
 
     // Filter beers that have both ratings and price data
-    // Prefer the price snapshotted for this tasting over the current catalog price
+    // Use the price snapshotted for this tasting; fall back to the catalog only when nothing was
+    // snapshotted, so a later catalog sync can't fill in a missing price/L with this year's price
     const beersWithData = tastingBeers
-      .map(tb => ({
-        ...tb,
-        priceISK: tb.priceISK ?? tb.beer?.priceISK ?? null,
-        pricePerLiter: tb.pricePerLiter ?? tb.beer?.pricePerLiter ?? null
-      }))
+      .map(tb => {
+        const price = tb.priceISK != null || tb.pricePerLiter != null ? tb : tb.beer
+        return {
+          ...tb,
+          priceISK: price?.priceISK ?? null,
+          pricePerLiter: price?.pricePerLiter ?? null
+        }
+      })
       .filter(tb => tb.beer && tb.pricePerLiter && tb.ratings.length > 0)
       .map(tb => {
         const ratings = tb.ratings.map(r => r.score)
