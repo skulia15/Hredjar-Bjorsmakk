@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { getHiddenTastingBeerId } from '@/lib/hiddenScores'
 
 /**
  * GET /api/tastings/{id}/current/pending-raters
@@ -69,6 +70,8 @@ export async function GET(
       }
     })
 
+    const scoresHidden = (await getHiddenTastingBeerId(id)) === tasting.currentTastingBeerId
+
     // Create a set of participant IDs who have rated
     const ratedParticipantIds = new Set(ratings.map(r => r.participantId))
 
@@ -77,7 +80,7 @@ export async function GET(
       participantId: rating.participantId,
       name: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
       code: rating.participant.code,
-      score: rating.score,
+      score: scoresHidden ? null : rating.score,
       submittedAt: rating.updatedAt.toISOString()
     }))
 
@@ -95,6 +98,7 @@ export async function GET(
       totalParticipants: tasting.participants.length,
       ratedCount: rated.length,
       pendingCount: pending.length,
+      scoresHidden,
       rated,
       pending
     })

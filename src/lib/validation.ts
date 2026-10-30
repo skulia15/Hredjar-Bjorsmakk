@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { FLAVOR_TAG_KEYS, NOTE_MAX_LENGTH } from '@/lib/flavorTags';
 
 // Identity (who is acting) always comes from the Clerk session, never from these bodies
 
@@ -8,7 +9,17 @@ export const ratingSchema = z.object({
   score: z.number()
     .min(1.0, 'Score must be at least 1.0')
     .max(10.0, 'Score must be at most 10.0')
-    .refine((val) => val % 0.5 === 0, 'Score must be in 0.5 increments')
+    .refine((val) => val % 0.5 === 0, 'Score must be in 0.5 increments'),
+  // Omitted fields keep their stored value
+  tags: z.array(z.enum(FLAVOR_TAG_KEYS))
+    .transform((tags) => [...new Set(tags)])
+    .optional(),
+  note: z.string()
+    .trim()
+    .max(NOTE_MAX_LENGTH, `Note must be at most ${NOTE_MAX_LENGTH} characters`)
+    .transform((note) => note || null)
+    .nullable()
+    .optional()
 });
 
 // Tasting operations
@@ -17,7 +28,10 @@ export const createTastingSchema = z.object({
 });
 
 export const updateTastingSchema = z.object({
-  status: z.enum(['draft', 'active', 'closed'])
+  status: z.enum(['draft', 'active', 'closed']).optional(),
+  hideScoresUntilAllRated: z.boolean().optional()
+}).refine((data) => data.status !== undefined || data.hideScoresUntilAllRated !== undefined, {
+  message: "At least one field (status or hideScoresUntilAllRated) must be provided"
 });
 
 // Beer operations

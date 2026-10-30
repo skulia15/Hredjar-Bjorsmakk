@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "Tasting" ADD COLUMN IF NOT EXISTS "hideScoresUntilAllRated" BOOLEAN NOT NULL DEFAULT false;
+
+-- AlterTable
+ALTER TABLE "Rating" ADD COLUMN IF NOT EXISTS "tags" TEXT[] DEFAULT ARRAY[]::TEXT[],
+ADD COLUMN IF NOT EXISTS "note" TEXT;

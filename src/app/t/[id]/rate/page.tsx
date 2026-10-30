@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback } from "react";
-import { Beer as BeerIcon, Check, Hourglass, PartyPopper, Plus, Settings, Trophy } from "lucide-react";
+import { Beer as BeerIcon, Check, EyeOff, Hourglass, PartyPopper, Plus, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -13,6 +13,7 @@ import { useActiveTasting } from "@/components/ReturnToTastingButton";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
 import { WrapUpOverlay } from "@/components/WrapUpOverlay";
+import { FLAVOR_TAGS, type FlavorTag, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
 
 interface Beer {
 	id: string;
@@ -146,6 +147,8 @@ export default function RatePage({
 	const router = useRouter();
 	const [tasting, setTasting] = useState<Tasting | null>(null);
 	const [rating, setRating] = useState<number>(0);
+	const [tags, setTags] = useState<string[]>([]);
+	const [note, setNote] = useState("");
 	const [loading, setLoading] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [message, setMessage] = useState("");
@@ -160,6 +163,7 @@ export default function RatePage({
 		totalParticipants: number;
 		ratedCount: number;
 		pendingCount: number;
+		scoresHidden: boolean;
 		pending: Array<{ participantId: string; name: string; code: string }>;
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
@@ -246,6 +250,7 @@ export default function RatePage({
 				totalParticipants: data.totalParticipants,
 				ratedCount: data.ratedCount,
 				pendingCount: data.pendingCount,
+				scoresHidden: data.scoresHidden ?? false,
 				pending: data.pending || [],
 			});
 		} catch (error) {
@@ -306,24 +311,24 @@ export default function RatePage({
 		if (currentBeer && participantId) {
 			loadRatingStats();
 
-			// Load existing rating for this beer
-			fetch(`/api/tastings/${params.id}/current/pending-raters`)
-				.then((res) => res.json())
-				.then((data) => {
-					// Check if this participant has already rated
-					const existingRating = data.rated?.find(
-						(r: { participantId: string; score: number }) =>
-							r.participantId === participantId,
-					);
-					if (existingRating) {
-						setRating(existingRating.score);
-						setHasRated(true);
-					} else {
-						// Reset to 0 for new beer
-						setRating(0);
-						setHasRated(false);
-					}
-				})
+			// Load this participant's existing rating for this beer
+			fetch(`/api/tastings/${params.id}/ratings?beerId=${currentBeer.id}`)
+				.then((res) => (res.ok ? res.json() : null))
+				.then(
+					(
+						existingRating: {
+							score: number;
+							tags: string[];
+							note: string | null;
+						} | null,
+					) => {
+						// Reset for a new beer
+						setRating(existingRating?.score ?? 0);
+						setTags(existingRating?.tags ?? []);
+						setNote(existingRating?.note ?? "");
+						setHasRated(!!existingRating);
+					},
+				)
 				.catch((err) => console.error("Error loading existing rating:", err));
 		}
 	}, [currentBeer?.id, participantId, loadRatingStats, params.id]);
@@ -389,6 +394,8 @@ export default function RatePage({
 				body: JSON.stringify({
 					beerId: currentBeer.id,
 					score: rating,
+					tags,
+					note,
 				}),
 			});
 
@@ -665,6 +672,52 @@ export default function RatePage({
 							</div>
 						</div>
 
+						{/* Flavor tags */}
+						<div className="flex flex-wrap justify-center gap-2">
+							{(Object.entries(FLAVOR_TAGS) as Array<[FlavorTag, string]>).map(
+								([tag, label]) => {
+									const selected = tags.includes(tag);
+									return (
+										<button
+											key={tag}
+											type="button"
+											aria-pressed={selected}
+											onClick={() =>
+												setTags((prev) =>
+													selected
+														? prev.filter((t) => t !== tag)
+														: [...prev, tag],
+												)
+											}
+											className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${
+												selected
+													? "bg-primary text-primary-foreground border-primary"
+													: "bg-background text-muted-foreground hover:bg-muted"
+											}`}
+										>
+											{label}
+										</button>
+									);
+								},
+							)}
+						</div>
+
+						<div className="space-y-1">
+							<textarea
+								value={note}
+								onChange={(e) => setNote(e.target.value)}
+								maxLength={NOTE_MAX_LENGTH}
+								rows={2}
+								placeholder="Athugasemd (valfrjálst)"
+								className="w-full px-3 py-2 rounded-md border bg-background text-sm resize-none"
+							/>
+							{note.length > NOTE_MAX_LENGTH - 40 && (
+								<p className="text-xs text-muted-foreground text-right">
+									{note.length} / {NOTE_MAX_LENGTH}
+								</p>
+							)}
+						</div>
+
 						{message && (
 							<div
 								className={`p-3 rounded-md text-sm text-center ${
@@ -726,6 +779,13 @@ export default function RatePage({
 								}}
 							/>
 						</div>
+
+						{ratingStats.scoresHidden && (
+							<p className="text-xs text-muted-foreground text-center">
+								<EyeOff className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
+								Einkunnir eru faldar þar til allir hafa gefið einkunn
+							</p>
+						)}
 
 						{/* Status message */}
 						{ratingStats.pendingCount > 0 ? (

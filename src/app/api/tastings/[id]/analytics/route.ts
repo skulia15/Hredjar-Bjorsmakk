@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
 import { comparePairs, extremeRaters, summarizeScores, tasteTwins } from '@/lib/stats';
 
 /**
@@ -12,8 +13,9 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
+    const hiddenTastingBeerId = await getHiddenTastingBeerId(id);
 
-    // Fetch tasting with all related data
+    // Fetch tasting with all related data; a beer with hidden scores contributes no ratings yet
     const tasting = await prisma.tasting.findUnique({
       where: { id },
       include: {
@@ -21,6 +23,7 @@ export async function GET(
           include: {
             beer: true,
             ratings: {
+              ...(hiddenTastingBeerId && { where: { tastingBeerId: { not: hiddenTastingBeerId } } }),
               include: {
                 participant: {
                   include: { user: true }

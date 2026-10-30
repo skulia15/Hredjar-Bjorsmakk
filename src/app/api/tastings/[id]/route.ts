@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { updateTastingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, getCurrentUser, isLeaderOrAdmin, requireLeader } from '@/lib/auth';
+import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
 
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
@@ -43,6 +44,8 @@ export async function GET(
     const currentUser = await getCurrentUser();
     const currentUserIsLeader = currentUser ? isLeaderOrAdmin(currentUser) : false;
 
+    const hiddenTastingBeerId = await getHiddenTastingBeerId(id);
+
     // Fetch all ratings for this tasting in one query (eliminates N+1 problem)
     const allRatings = await prisma.rating.findMany({
       where: { tastingId: id },
@@ -77,6 +80,7 @@ export async function GET(
       const containerType = tastingBeer.beer?.containerType || null;
       const priceISK = tastingBeer.priceISK ?? tastingBeer.beer?.priceISK ?? null;
       const imageUrl = tastingBeer.beer?.imageUrl || null;
+      const scoresHidden = tastingBeer.id === hiddenTastingBeerId;
 
       return {
         id: tastingBeer.id,
@@ -94,8 +98,9 @@ export async function GET(
         createdAt: tastingBeer.createdAt,
         currentSince: tastingBeer.currentSince,
         finishedAt: tastingBeer.finishedAt,
-        averageRating: Number(average.toFixed(2)),
-        ratingCount: ratings.length
+        averageRating: scoresHidden ? null : Number(average.toFixed(2)),
+        ratingCount: ratings.length,
+        scoresHidden
       };
     });
 
@@ -105,6 +110,7 @@ export async function GET(
       status: tasting.status,
       currentBeerId: tasting.currentTastingBeerId, // Map to old field name for backwards compatibility
       version: tasting.version,
+      hideScoresUntilAllRated: tasting.hideScoresUntilAllRated,
       createdAt: tasting.createdAt,
       updatedAt: tasting.updatedAt,
       participantCount: tasting._count.participants,
@@ -121,7 +127,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/tastings/[id] - Update tasting status
+// PATCH /api/tastings/[id] - Update tasting status and settings
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -138,7 +144,7 @@ export async function PATCH(
       );
     }
 
-    const { status } = validation.data;
+    const { status, hideScoresUntilAllRated } = validation.data;
 
     // Verify user is leader
     await requireLeader();
@@ -148,6 +154,7 @@ export async function PATCH(
       where: { id },
       data: {
         status,
+        hideScoresUntilAllRated,
         version: { increment: 1 }
       }
     });
@@ -155,6 +162,7 @@ export async function PATCH(
     return NextResponse.json({
       id: tasting.id,
       status: tasting.status,
+      hideScoresUntilAllRated: tasting.hideScoresUntilAllRated,
       version: tasting.version
     });
 
