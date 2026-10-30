@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client'
-
-const prisma = new PrismaClient()
+import 'dotenv/config'
+import { prisma } from '../src/lib/prisma'
 
 async function cleanupBeers() {
   console.log('🗑️  Deleting all beers from catalog...\n')

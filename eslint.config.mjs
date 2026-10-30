@@ -13,5 +13,5 @@ export default defineConfig([
       'react-hooks/refs': 'warn',
     },
   },
-  globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts']),
+  globalIgnores(['.next/**', 'src/generated/**', 'out/**', 'build/**', 'next-env.d.ts']),
 ])

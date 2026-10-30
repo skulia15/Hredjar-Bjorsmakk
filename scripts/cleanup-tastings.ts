@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import 'dotenv/config';
+import { prisma } from '../src/lib/prisma';
 
 async function cleanupTastings() {
   console.log('Starting cleanup of all tastings and ratings...\n');
