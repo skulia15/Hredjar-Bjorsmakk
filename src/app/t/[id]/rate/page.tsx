@@ -8,6 +8,7 @@ import { BeerPlaceholder } from "@/components/BeerPlaceholder";
 import { CurrentBeerTimer } from "@/components/CurrentBeerTimer";
 import { LeaderboardWaiting } from "@/components/LeaderboardWaiting";
 import { NudgeNotification } from "@/components/NudgeNotification";
+import { useNudge } from "@/hooks/useNudge";
 import { useActiveTasting } from "@/components/ReturnToTastingButton";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
@@ -191,55 +192,20 @@ export default function RatePage({
 		setIsEmbedded(window.self !== window.top);
 	}, []);
 
-	// Set up SSE connection for real-time updates
-	useEffect(() => {
-		if (!participantId) return;
+	// Show nudge when a leader nudges and this participant hasn't rated
+	const handleIncomingNudge = useCallback(() => {
+		setNudgeTimestamp(Date.now());
+		if ("vibrate" in navigator) {
+			navigator.vibrate([200, 100, 200, 100, 200]);
+		}
+	}, []);
 
-		console.log(
-			"[Rate] Setting up SSE connection for participant:",
-			participantId,
-		);
-		const eventSource = new EventSource(`/api/tastings/${params.id}/stream`);
-
-		eventSource.addEventListener("nudge", (event) => {
-			console.log("[Rate] Nudge event received:", event.data);
-			const data = JSON.parse(event.data);
-
-			console.log("[Rate] Checking if participant is pending:", {
-				participantId,
-				pendingParticipantIds: data.pendingParticipantIds,
-				isPending: data.pendingParticipantIds?.includes(participantId),
-			});
-
-			// Check if this participant is in the pending list
-			if (
-				data.pendingParticipantIds &&
-				data.pendingParticipantIds.includes(participantId)
-			) {
-				console.log("[Rate] Showing nudge notification");
-				setNudgeTimestamp(Date.now());
-
-				// Try to vibrate if supported
-				if ("vibrate" in navigator) {
-					navigator.vibrate([200, 100, 200, 100, 200]);
-				}
-			}
-		});
-
-		eventSource.addEventListener("connected", () => {
-			console.log("[Rate] SSE connection established");
-		});
-
-		eventSource.onerror = (error) => {
-			console.error("[Rate] SSE connection error:", error);
-			eventSource.close();
-		};
-
-		return () => {
-			console.log("[Rate] Closing SSE connection");
-			eventSource.close();
-		};
-	}, [params.id, participantId]);
+	useNudge({
+		tastingId: params.id,
+		participantId,
+		enabled: !!participantId,
+		onNudge: handleIncomingNudge,
+	});
 
 	const loadTasting = useCallback(
 		async (showLoadingSpinner = false) => {

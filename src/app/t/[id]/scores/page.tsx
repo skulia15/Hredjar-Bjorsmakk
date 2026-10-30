@@ -1,10 +1,11 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
+import { useNudge } from '@/hooks/useNudge'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -152,49 +153,20 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     }
   }, [params.id])
 
-  // Set up SSE connection for nudge notifications
-  useEffect(() => {
-    if (!participantId) return
-
-    console.log('[Scores] Setting up SSE connection for participant:', participantId)
-    const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
-
-    eventSource.addEventListener('nudge', (event) => {
-      console.log('[Scores] Nudge event received:', event.data)
-      const data = JSON.parse(event.data)
-
-      console.log('[Scores] Checking if participant is pending:', {
-        participantId,
-        pendingParticipantIds: data.pendingParticipantIds,
-        isPending: data.pendingParticipantIds?.includes(participantId)
-      })
-
-      // Check if this participant is in the pending list
-      if (data.pendingParticipantIds && data.pendingParticipantIds.includes(participantId)) {
-        console.log('[Scores] Showing nudge notification')
-        setNudgeTimestamp(Date.now())
-
-        // Try to vibrate if supported
-        if ('vibrate' in navigator) {
-          navigator.vibrate([200, 100, 200, 100, 200])
-        }
-      }
-    })
-
-    eventSource.addEventListener('connected', () => {
-      console.log('[Scores] SSE connection established')
-    })
-
-    eventSource.onerror = (error) => {
-      console.error('[Scores] SSE connection error:', error)
-      eventSource.close()
+  // Show nudge when a leader nudges and this participant hasn't rated
+  const handleIncomingNudge = useCallback(() => {
+    setNudgeTimestamp(Date.now())
+    if ('vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200, 100, 200])
     }
+  }, [])
 
-    return () => {
-      console.log('[Scores] Closing SSE connection')
-      eventSource.close()
-    }
-  }, [params.id, participantId])
+  useNudge({
+    tastingId: params.id,
+    participantId,
+    enabled: !!participantId,
+    onNudge: handleIncomingNudge
+  })
 
   const loadData = async () => {
     try {

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { finishBeerSchema, validateInput } from '@/lib/validation';
 import { requireLeader } from '@/lib/auth';
-import { broadcastBeerFinished } from '@/lib/sse';
 
 // POST /api/tastings/[id]/beers/[beerId]/finish - Mark beer as finished
 export async function POST(
@@ -78,15 +77,6 @@ export async function POST(
 
       return tasting;
     });
-
-    // Broadcast finish via SSE
-    broadcastBeerFinished(
-      id,
-      beerId,
-      Number(average.toFixed(2)),
-      ratings.length,
-      result.version
-    );
 
     return NextResponse.json({
       tastingBeerId: beerId,

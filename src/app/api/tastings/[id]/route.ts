@@ -3,7 +3,6 @@ import { prisma } from '@/lib/prisma';
 import { updateTastingSchema, validateInput } from '@/lib/validation';
 import { requireLeader } from '@/lib/auth';
 import { getParticipantFromTasting } from '@/lib/session';
-import { broadcastTastingClosed } from '@/lib/sse';
 
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
@@ -153,11 +152,6 @@ export async function PATCH(
         version: { increment: 1 }
       }
     });
-
-    // Broadcast if closed
-    if (status === 'closed') {
-      broadcastTastingClosed(id, tasting.version);
-    }
 
     return NextResponse.json({
       id: tasting.id,

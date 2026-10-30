@@ -1,9 +1,10 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { NudgeNotification } from '@/components/NudgeNotification'
+import { useNudge } from '@/hooks/useNudge'
 
 interface Beer {
   id: string
@@ -113,37 +114,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     return () => clearInterval(interval)
   }, [params.id])
 
-  // Setup SSE connection for nudge notifications
-  useEffect(() => {
-    console.log('[Projector] Setting up SSE connection')
-    const eventSource = new EventSource(`/api/tastings/${params.id}/stream`)
+  // Projector shows every nudge (component will auto-hide after duration)
+  const handleIncomingNudge = useCallback(() => setShowNudge(true), [])
 
-    eventSource.addEventListener('nudge', (e: MessageEvent) => {
-      try {
-        const data = JSON.parse(e.data)
-        console.log('[Projector] Nudge received:', data)
-
-        // Show nudge notification (component will auto-hide after duration)
-        setShowNudge(true)
-      } catch (error) {
-        console.error('[Projector] Error parsing nudge event:', error)
-      }
-    })
-
-    eventSource.addEventListener('connected', () => {
-      console.log('[Projector] SSE connection established')
-    })
-
-    eventSource.onerror = (err) => {
-      console.error('[Projector] SSE connection error:', err)
-      eventSource.close()
-    }
-
-    return () => {
-      console.log('[Projector] Closing SSE connection')
-      eventSource.close()
-    }
-  }, [params.id])
+  useNudge({ tastingId: params.id, participantId: null, onNudge: handleIncomingNudge })
 
   const loadAllData = async () => {
     try {

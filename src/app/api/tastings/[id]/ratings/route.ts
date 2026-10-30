@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ratingSchema, validateInput } from '@/lib/validation';
-import { broadcastVersionUpdate } from '@/lib/sse';
 
 // POST /api/tastings/[id]/ratings - Submit or update rating
 export async function POST(
@@ -73,9 +72,6 @@ export async function POST(
         score
       }
     });
-
-    // Broadcast update via SSE (don't increment version for ratings)
-    broadcastVersionUpdate(id, 0); // Version 0 = just scores updated
 
     return NextResponse.json({
       id: rating.id,

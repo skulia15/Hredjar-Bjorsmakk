@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { setCurrentBeerSchema, validateInput } from '@/lib/validation';
 import { requireLeader } from '@/lib/auth';
-import { broadcastCurrentBeerChanged } from '@/lib/sse';
 
 // PATCH /api/tastings/[id]/current - Set current beer
 export async function PATCH(
@@ -84,9 +83,6 @@ export async function PATCH(
 
       return tasting;
     });
-
-    // Broadcast change via SSE
-    broadcastCurrentBeerChanged(id, tastingBeerId, result.version);
 
     return NextResponse.json({
       tastingId: id,

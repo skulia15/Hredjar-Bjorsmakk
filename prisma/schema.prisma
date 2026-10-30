@@ -87,6 +87,8 @@ model Tasting {
   createdBy          String?  // User.id who created it
 
   version            Int      @default(1)  // Increments on state changes
+  nudgedAt           DateTime?  // Last nudge; clients poll and fire when it changes
+  nudgedParticipantIds String[] @default([])  // Pending participants at time of last nudge
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

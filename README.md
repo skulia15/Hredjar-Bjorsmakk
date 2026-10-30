@@ -10,7 +10,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 
 ## ✨ Key Features
 
-- 🎯 **Real-time synchronization** — everyone sees the same current beer (≤1s latency)
+- 🎯 **Real-time synchronization** — everyone sees the same current beer (≤5s latency)
 - 👥 **Global user system** — users identified by name, leaders have global privileges
 - 🍺 **Beer catalog** — global catalog with Vínbúðin integration, styles, pricing, and images
 - 📊 **Live leaderboard** — see top beers as ratings come in
@@ -38,7 +38,7 @@ A mobile-first web application for synchronized beer tastings where groups can r
 - **UI:** shadcn/ui + Tailwind CSS
 - **Forms:** React Hook Form
 - **State:** TanStack Query (React Query)
-- **Real-time:** SSE with polling fallback
+- **Real-time:** Polling
 
 ### Backend
 - **API:** Next.js API Routes
@@ -147,7 +147,6 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Optional
 ADMIN_PASSWORD=admin
-REALTIME_MODE=sse
 ```
 
 See [`.env.example`](.env.example) for complete configuration.
@@ -264,27 +263,12 @@ Rating
 
 ### Architecture
 
-**Primary:** Server-Sent Events (SSE)
-- One connection per tasting: `GET /api/tastings/{id}/stream`
-- Broadcasts events: `currentChanged`, `finished`, `scoresUpdated`, `tastingClosed`
-- Auto-reconnects with exponential backoff (1s, 2s, 4s, max 10s)
-
-**Fallback:** Polling (1s interval)
-- Activates after 3 SSE reconnect failures
-- Checks `Tasting.version` and refetches if stale
-
-### State Changes
-
-| Event | Trigger | Version++ | SSE Event |
-|-------|---------|-----------|-----------|
-| Current beer changed | Leader selects beer | ✅ | `currentChanged` |
-| Beer finished | Leader marks finished | ✅ | `finished` |
-| Tasting closed | Leader completes | ✅ | `tastingClosed` |
-| New rating | Participant rates | ❌ | `scoresUpdated` |
+**Polling** — stateless, so it works across Vercel's serverless instances (an in-memory SSE broadcast only reaches clients connected to the same instance).
+- Pages poll their data endpoints every 3–5s (`GET /api/tastings/{id}`, `/scores`, `/current/pending-raters`, …)
+- Nudges are persisted on `Tasting.nudgedAt` / `Tasting.nudgedParticipantIds`; `useNudge` polls `GET /api/tastings/{id}/nudge` every 2s and fires when `nudgedAt` changes
 
 ### Consistency Target
-- **SSE:** All clients sync within **≤1 second**
-- **Polling:** All clients sync within **≤2 seconds**
+- All clients sync within **≤5 seconds**; nudges within **≤2 seconds**
 
 ## 🧪 Testing
 
@@ -409,15 +393,10 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 | Mobile LCP | < 2.0s |
 | API p95 (POST /ratings) | < 200ms |
 | API p95 (GET queries) | < 300ms |
-| Real-time sync | ≤1s (SSE) / ≤2s (polling) |
+| Real-time sync | ≤5s (polling) |
 | Export generation | ≤5s (10k ratings) |
 
 ## 🐛 Troubleshooting
-
-### SSE not working?
-- Check browser console for connection errors
-- Verify endpoint: `GET /api/tastings/{id}/stream`
-- Fallback to polling should activate automatically after 3 failures
 
 ### Database connection issues?
 - Verify `DATABASE_URL` in `.env`
@@ -430,9 +409,8 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 - Check `SESSION_COOKIE_NAME` in environment
 
 ### Real-time lag?
-- SSE should sync ≤1s, polling ≤2s
-- Check network tab for SSE events
-- Verify `Tasting.version` is incrementing
+- Polling syncs within ≤5s
+- Check network tab for failing poll requests
 
 ## 🛣️ Roadmap
 
@@ -458,7 +436,7 @@ Edit `prisma/cleanup.ts` and uncomment the beer deletion code.
 ### v2.0 (Future)
 - [ ] Beer catalog with vintages
 - [ ] Live median/distribution stats
-- [ ] WebSocket instead of SSE
+- [ ] Push-based real-time (e.g. Redis pub/sub) if polling latency becomes a problem
 - [ ] Multi-language support (Icelandic)
 - [ ] Advanced analytics per style/brewery
 
