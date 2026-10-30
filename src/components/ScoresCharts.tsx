@@ -300,6 +300,39 @@ interface ScoresChartsProps {
   analytics: AnalyticsData
 }
 
+// Which analytics sections to render. Data is still computed by the API;
+// flip a flag to bring a section back.
+const VISIBLE_SECTIONS = {
+  ratingTrend: true,
+  styleDistribution: false,
+  ratingDistribution: false,
+  beerComparison: false,
+  beerTimings: false,
+  participantAverages: true,
+  beerControversy: true,
+  abvVsRating: true,
+  ratingVelocity: false,
+  participantDeviation: false,
+  ratingConsensus: false,
+  stylePerformanceRanking: true,
+  styleRatingSpread: false,
+  participantStylePreferences: true,
+  unanimousRatings: false,
+  participantRatingSpread: false,
+  breweryPerformanceRanking: true,
+  breweryDistribution: false,
+  breweryConsistency: false,
+  icelandicBreweries: false,
+  breweryPortfolio: false,
+  participantBreweryPreferences: false,
+  countryPerformanceRanking: false,
+  localVsInternational: true,
+  countryDetails: false,
+  countryDistribution: false,
+  participantCountryPreferences: false,
+  countryRatingConsensus: false,
+} as const
+
 export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   const chart = useChartTheme()
   // Colors for pie chart
@@ -404,7 +437,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   return (
     <div className="mt-8 space-y-8">
       {/* Rating Trend Over Time Chart */}
-      {analytics.ratingTrend && analytics.ratingTrend.length > 1 && (
+      {VISIBLE_SECTIONS.ratingTrend && analytics.ratingTrend && analytics.ratingTrend.length > 1 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Þróun einkunna í gegnum smökkunina</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -487,7 +520,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Beer Style Distribution Pie Chart */}
-      {analytics.styleDistribution && analytics.styleDistribution.length > 0 && (
+      {VISIBLE_SECTIONS.styleDistribution && analytics.styleDistribution && analytics.styleDistribution.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Dreifing bjórtegunda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -555,7 +588,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Rating Distribution Chart */}
-      {analytics.ratingDistribution && Object.keys(analytics.ratingDistribution).length > 0 && (
+      {VISIBLE_SECTIONS.ratingDistribution && analytics.ratingDistribution && Object.keys(analytics.ratingDistribution).length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Dreifing einkunna</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -599,7 +632,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Beer Comparison Chart */}
-      {scores.beers.length > 0 && (
+      {VISIBLE_SECTIONS.beerComparison && scores.beers.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samanburður bjóra</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -664,7 +697,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Beer Timing Chart */}
-      {analytics.beerTimings && analytics.beerTimings.length > 0 && (
+      {VISIBLE_SECTIONS.beerTimings && analytics.beerTimings && analytics.beerTimings.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Tími á hvern bjór</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -713,7 +746,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Engagement Chart */}
-      {analytics.participantStats && analytics.participantStats.length > 0 && (
+      {VISIBLE_SECTIONS.participantAverages && analytics.participantStats && analytics.participantStats.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Meðaleinkunnir þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -761,7 +794,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Beer Controversy Index Chart */}
-      {analytics.beerControversy && analytics.beerControversy.length > 0 && (
+      {VISIBLE_SECTIONS.beerControversy && analytics.beerControversy && analytics.beerControversy.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Umdeildir bjórar</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -838,7 +871,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* ABV vs Rating Scatter Plot */}
-      {analytics.abvVsRating && analytics.abvVsRating.length > 0 && (
+      {VISIBLE_SECTIONS.abvVsRating && analytics.abvVsRating && analytics.abvVsRating.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Áfengisstyrkur vs. Einkunn</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -889,7 +922,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Rating Velocity Chart */}
-      {analytics.ratingVelocity && analytics.ratingVelocity.length > 0 && (
+      {VISIBLE_SECTIONS.ratingVelocity && analytics.ratingVelocity && analytics.ratingVelocity.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Hraði einkunnagjaafar</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -938,7 +971,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Deviation Scatter Plot */}
-      {analytics.participantDeviation && analytics.participantDeviation.length > 0 && (
+      {VISIBLE_SECTIONS.participantDeviation && analytics.participantDeviation && analytics.participantDeviation.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Einkunnir vs. Hópmeðaltal</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1005,7 +1038,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Rating Consensus Bar Chart */}
-      {analytics.ratingConsensus && analytics.ratingConsensus.length > 0 && (
+      {VISIBLE_SECTIONS.ratingConsensus && analytics.ratingConsensus && analytics.ratingConsensus.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samstaða um bjóra</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1085,7 +1118,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* NEW ANALYTICS - Style Performance Ranking */}
-      {analytics.stylePerformanceRanking && analytics.stylePerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.stylePerformanceRanking && analytics.stylePerformanceRanking && analytics.stylePerformanceRanking.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Besti og versti bjórstíllinn</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1137,7 +1170,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Style Rating Spread - Agreement levels */}
-      {analytics.styleRatingSpread && analytics.styleRatingSpread.length > 0 && (
+      {VISIBLE_SECTIONS.styleRatingSpread && analytics.styleRatingSpread && analytics.styleRatingSpread.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samstaða um bjórstíla</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1210,7 +1243,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Style Preferences */}
-      {analytics.participantStylePreferences && analytics.participantStylePreferences.length > 0 && (
+      {VISIBLE_SECTIONS.participantStylePreferences && analytics.participantStylePreferences && analytics.participantStylePreferences.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds bjórstíllar þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1243,7 +1276,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Unanimous Ratings */}
-      {analytics.unanimousRatings && analytics.unanimousRatings.length > 0 && (
+      {VISIBLE_SECTIONS.unanimousRatings && analytics.unanimousRatings && analytics.unanimousRatings.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Bjórar með minnstum ágreiningi</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1321,7 +1354,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Rating Spread */}
-      {analytics.participantRatingSpread && analytics.participantRatingSpread.length > 0 && (
+      {VISIBLE_SECTIONS.participantRatingSpread && analytics.participantRatingSpread && analytics.participantRatingSpread.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Einkunna-svið þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1399,7 +1432,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* BREWERY ANALYTICS - Brewery Performance Ranking */}
-      {analytics.breweryPerformanceRanking && analytics.breweryPerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.breweryPerformanceRanking && analytics.breweryPerformanceRanking && analytics.breweryPerformanceRanking.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Bestu og verstu brugghús</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1476,7 +1509,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Brewery Distribution Pie Chart */}
-      {analytics.breweryDistribution && analytics.breweryDistribution.length > 0 && (
+      {VISIBLE_SECTIONS.breweryDistribution && analytics.breweryDistribution && analytics.breweryDistribution.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Dreifing brugghúsa</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1546,7 +1579,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Brewery Consistency Chart */}
-      {analytics.breweryConsistency && analytics.breweryConsistency.length > 0 && (
+      {VISIBLE_SECTIONS.breweryConsistency && analytics.breweryConsistency && analytics.breweryConsistency.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samræmi í gæðum brugghúsa</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1623,7 +1656,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Icelandic Breweries Leaderboard */}
-      {analytics.icelandicBreweries && analytics.icelandicBreweries.length > 0 && (
+      {VISIBLE_SECTIONS.icelandicBreweries && analytics.icelandicBreweries && analytics.icelandicBreweries.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">🇮🇸 Íslensk brugghús</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1674,7 +1707,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Brewery Portfolio Analysis */}
-      {analytics.breweryPortfolio && analytics.breweryPortfolio.length > 0 && (
+      {VISIBLE_SECTIONS.breweryPortfolio && analytics.breweryPortfolio && analytics.breweryPortfolio.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Brugghús með mörgum bjórum</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1705,7 +1738,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Brewery Preferences */}
-      {analytics.participantBreweryPreferences && analytics.participantBreweryPreferences.length > 0 && (
+      {VISIBLE_SECTIONS.participantBreweryPreferences && analytics.participantBreweryPreferences && analytics.participantBreweryPreferences.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds brugghús þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1738,7 +1771,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* COUNTRY ANALYTICS - Country Performance Ranking */}
-      {analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.countryPerformanceRanking && analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Besta og versta upprunaland</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1787,7 +1820,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Local vs International Comparison */}
-      {analytics.localVsInternational && (analytics.localVsInternational.icelandic.beersCount > 0 || analytics.localVsInternational.international.beersCount > 0) && (
+      {VISIBLE_SECTIONS.localVsInternational && analytics.localVsInternational && (analytics.localVsInternational.icelandic.beersCount > 0 || analytics.localVsInternational.international.beersCount > 0) && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Íslenskir vs. Erlendir bjórar</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1840,7 +1873,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Detailed Per-Country Statistics */}
-      {analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
+      {VISIBLE_SECTIONS.countryDetails && analytics.countryPerformanceRanking && analytics.countryPerformanceRanking.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Tölfræði eftir löndum</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1890,7 +1923,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Country Distribution Pie Chart */}
-      {analytics.countryDistribution && analytics.countryDistribution.length > 0 && (
+      {VISIBLE_SECTIONS.countryDistribution && analytics.countryDistribution && analytics.countryDistribution.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Dreifing landa</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1958,7 +1991,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Participant Country Preferences */}
-      {analytics.participantCountryPreferences && analytics.participantCountryPreferences.length > 0 && (
+      {VISIBLE_SECTIONS.participantCountryPreferences && analytics.participantCountryPreferences && analytics.participantCountryPreferences.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Uppáhalds upprunalönd þátttakenda</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
@@ -1991,7 +2024,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Country Rating Consensus */}
-      {analytics.countryRatingConsensus && analytics.countryRatingConsensus.length > 0 && (
+      {VISIBLE_SECTIONS.countryRatingConsensus && analytics.countryRatingConsensus && analytics.countryRatingConsensus.length > 0 && (
         <div className="bg-card p-6 rounded-lg border">
           <h3 className="text-xl font-bold mb-4 text-center">Samstaða um upprunalönd</h3>
           <p className="text-sm text-muted-foreground text-center mb-6">
