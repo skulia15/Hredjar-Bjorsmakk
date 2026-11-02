@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import { Search, Plus, ArrowLeft, Check } from 'lucide-react'
 import { BeerPlaceholder } from './BeerPlaceholder'
+import { beerImageSrc } from '@/lib/beerImage'
 
 interface Beer {
   id: string
@@ -153,7 +154,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                           <div className="flex-shrink-0 w-16 flex justify-center">
                             {beer.imageUrl ? (
                               <img
-                                src={beer.imageUrl}
+                                src={beerImageSrc(beer.imageUrl)}
                                 alt={beer.name}
                                 className="h-16 w-auto object-contain"
                                 onError={(e) => {

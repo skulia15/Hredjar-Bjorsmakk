@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ArrowDown, ArrowUp } from 'lucide-react'
+import { beerImageSrc } from '@/lib/beerImage'
 
 export interface LeaderboardBeer {
   beerId: string
@@ -103,7 +104,7 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
             {beer.rank}
           </span>
           {beer.imageUrl && (
-            <Image src={beer.imageUrl} alt="" width={48} height={48} className="h-10 w-auto shrink-0 object-contain" />
+            <Image src={beerImageSrc(beer.imageUrl)} alt="" width={48} height={48} className="h-10 w-auto shrink-0 object-contain" />
           )}
           <span className="flex-1 min-w-0 flex flex-col">
             <span className="text-xl 2xl:text-2xl font-extrabold leading-tight truncate">{beer.name}</span>

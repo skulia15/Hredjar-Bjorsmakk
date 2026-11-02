@@ -8,6 +8,7 @@ import { TagCloud } from '@/components/projector/TagCloud'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import type { Rater } from '@/lib/stats'
 import { playDrumroll, playFanfare } from '@/lib/sounds'
+import { beerImageSrc } from '@/lib/beerImage'
 
 export interface FinishedBeerReveal {
   beerId: string
@@ -65,7 +66,7 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
 
         <div className={phase === 'drumroll' ? 'animate-bounce' : ''}>
           {reveal.imageUrl ? (
-            <Image src={reveal.imageUrl} alt={reveal.name} width={180} height={180} className="object-contain max-h-44 w-auto" />
+            <Image src={beerImageSrc(reveal.imageUrl)} alt={reveal.name} width={180} height={180} className="object-contain max-h-44 w-auto" />
           ) : (
             <BeerIcon className="h-32 w-32 text-amber-500" />
           )}
