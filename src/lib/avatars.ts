@@ -43,6 +43,13 @@ export const AVATARS: Avatar[] = [
   { key: 'fulli-jolasveinninn', name: 'Fulli jólasveinninn' },
   { key: 'thunna-hreindyrid', name: 'Þunna hreindýrið' },
   { key: 'gryla', name: 'Grýla á djamminu' },
+  { key: 'gryla-v2', name: 'Grýla í kjólnum', cheeky: true },
+  { key: 'bumbusveinn-v2', name: 'Bumbusveinn í nærbuxum', cheeky: true },
+  { key: 'leppaludi', name: 'Leppalúði', cheeky: true },
+  { key: 'stekkjarstaur', name: 'Stekkjarstaur', cheeky: true },
+  { key: 'ljosaseria', name: 'Ljósaserían', cheeky: true },
+  { key: 'kertastjakinn', name: 'Kertastjakinn', cheeky: true },
+  { key: 'jolahermann', name: 'Jólahermanninn', cheeky: true },
   { key: 'hurdaskellir', name: 'Hurðaskellir' },
 ]
 
