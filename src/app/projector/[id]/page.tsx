@@ -6,10 +6,11 @@ import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { useProjectorControls } from '@/hooks/useProjectorControls'
+import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { Beer as BeerIcon, Brain, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { Beer as BeerIcon, Brain, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
@@ -19,6 +20,7 @@ import { AnimatedLeaderboard } from '@/components/projector/AnimatedLeaderboard'
 import { BeerFinishedReveal, type FinishedBeerReveal } from '@/components/projector/BeerFinishedReveal'
 import { CountUp } from '@/components/projector/CountUp'
 import { LobbyParticipants, type LobbyParticipant } from '@/components/projector/LobbyParticipants'
+import { NoteTicker } from '@/components/projector/NoteTicker'
 import { ProgressStrip } from '@/components/projector/ProgressStrip'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
@@ -66,6 +68,7 @@ interface RatedParticipant {
   code: string
   score: number | null  // null while the tasting hides scores until everyone has rated
   groupGuess: number | null
+  note: string | null  // null while scores are hidden
   submittedAt: string
 }
 
@@ -172,6 +175,8 @@ async function loadFinishedReveal(tastingId: string, beer: Beer, scores: ScoresD
 export default function ProjectorDisplayPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
+  // Only a 404 means the tasting is gone; an outage keeps retrying with the next poll
+  const [notFound, setNotFound] = useState(false)
   const [scores, setScores] = useState<ScoresData | null>(null)
   const [pendingRaters, setPendingRaters] = useState<PendingRatersData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
@@ -183,7 +188,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const [revealedBeerId, setRevealedBeerId] = useState<string | null>(null)
   const closeAwards = useCallback(() => setAwardsDismissed(true), [])
   const closeFinishedReveal = useCallback(() => setFinishedReveal(null), [])
-  const { isFullscreen, toggleFullscreen, soundOn, toggleSound } = useProjectorControls()
+  const { isFullscreen, toggleFullscreen, soundOn, toggleSound, tagsOn, toggleTags } = useProjectorControls()
 
   // What the previous poll saw, to spot transitions; undefined until the first load
   const previous = useRef<{
@@ -207,8 +212,16 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const loadAllData = async () => {
     try {
       // Load tasting details
-      const tastingResponse = await fetch(`/api/tastings/${params.id}`)
-      const tastingData: Tasting = await tastingResponse.json()
+      const tastingResult = await fetchTasting<Tasting>(params.id)
+      if (tastingResult.kind === 'not-found') {
+        setNotFound(true)
+        setTasting(null)
+        return
+      }
+      // Couldn't reach the server: keep showing the last good screen until the next poll
+      if (tastingResult.kind === 'unavailable') return
+      const tastingData = tastingResult.data
+      setNotFound(false)
       setTasting(tastingData)
 
       // Load scores (top beers)
@@ -310,6 +323,17 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     )
   }
 
+  if (!tasting && !notFound) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center space-y-2">
+          <p className="text-3xl font-bold">Næ ekki sambandi</p>
+          <p className="text-xl text-muted-foreground">Reyni aftur…</p>
+        </div>
+      </div>
+    )
+  }
+
   if (!tasting) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -321,6 +345,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   }
 
   const currentBeer = tasting.beers.find(b => b.id === tasting.currentBeerId)
+  // No beer on and none tasted yet: still gathering people, so show the join code
+  const notStarted = !currentBeer && !tasting.beers.some(b => b.status === 'finished')
   const awards = tasting.status === 'closed' && analytics
     ? buildAwards({
         participantStats: analytics.participantStats,
@@ -337,6 +363,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // Calculate current beer stats
   const currentBeerRatings = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { score: number } => r.score !== null)
+  // Ratings come newest first; the ticker rotates through the five newest notes
+  const beerNotes = (pendingRaters?.rated || [])
+    .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
+    .slice(0, 5)
+    .map(r => ({ key: r.participantId, note: r.note.trim(), name: r.name }))
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
     : null
@@ -417,7 +448,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
       {/* Beer finished: drumroll, score and where it landed */}
       {finishedReveal && !showingAwards && (
-        <BeerFinishedReveal key={finishedReveal.beerId} reveal={finishedReveal} onClose={closeFinishedReveal} />
+        <BeerFinishedReveal key={finishedReveal.beerId} reveal={finishedReveal} onClose={closeFinishedReveal} showTags={tagsOn} />
       )}
 
       {/* Nudge Notification Overlay */}
@@ -440,6 +471,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           <ProgressStrip beers={tasting.beers} currentBeerId={tasting.currentBeerId} />
         </div>
         <div className="flex gap-1 shrink-0 opacity-60 hover:opacity-100 transition-opacity">
+          <button
+            onClick={toggleTags}
+            className="p-2.5 rounded-xl hover:bg-pine-light"
+            aria-pressed={tagsOn}
+            aria-label={tagsOn ? 'Fela bragðlýsingar' : 'Sýna bragðlýsingar'}
+            title={tagsOn ? 'Fela bragðlýsingar' : 'Sýna bragðlýsingar'}
+          >
+            <Tags className={`h-6 w-6 ${tagsOn ? "" : "opacity-40"}`} />
+          </button>
           <button
             onClick={toggleSound}
             className="p-2.5 rounded-xl hover:bg-pine-light"
@@ -477,14 +517,6 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               <AnimatedLeaderboard beers={scores.beers} limit={6} />
             )}
           </div>
-
-          {/* Latecomers can still join while a beer is on screen; in flow so it never covers the list */}
-          {currentBeer && tasting.status !== 'closed' && (
-            <div className="pt-4 mt-4 border-t border-pine-line flex items-center gap-4 shrink-0">
-              <JoinQrCode tastingId={tasting.id} size={96} />
-              <p className="text-xl font-extrabold leading-tight">Skannaðu til<br />að taka þátt</p>
-            </div>
-          )}
         </FoamCard>
 
         {/* Column 2: Current Beer */}
@@ -493,7 +525,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
             <>
               <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
               <div key={currentBeer.id} className="flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-500">
-                <div className="beer-bob mt-1 w-36 h-36 2xl:w-44 2xl:h-44 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
+                <div className="beer-bob mt-1 w-28 h-28 2xl:w-36 2xl:h-36 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
                   {currentBeer.imageUrl ? (
                     <Image
                       src={currentBeer.imageUrl}
@@ -506,7 +538,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <BeerPlaceholder className="h-3/4 w-auto text-[#7A3B12]" />
                   )}
                 </div>
-                <h2 className="mt-1 text-5xl 2xl:text-7xl leading-none">{currentBeer.name}</h2>
+                <h2 className="mt-1 text-5xl 2xl:text-6xl leading-none">{currentBeer.name}</h2>
                 <p className="text-2xl 2xl:text-[1.75rem] text-muted-foreground">
                   {currentBeer.brewery}
                   {currentBeer.containerSize && currentBeer.containerType && ` · ${currentBeer.containerSize} ml ${currentBeer.containerType}`}
@@ -517,6 +549,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   </div>
                 )}
               </div>
+
 
               <div className="mt-auto w-full grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 items-end text-left">
                 <div className="flex flex-col gap-1">
@@ -541,7 +574,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                       ) : (
                         <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
                       )}
-                      <span className="text-8xl 2xl:text-[7.5rem] leading-[0.9] font-extrabold text-cranberry tabular-nums">
+                      <span className="text-8xl 2xl:text-[6.5rem] leading-[0.9] font-extrabold text-cranberry tabular-nums">
                         <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
                       </span>
                       <span className="flex flex-wrap gap-x-4 mt-3 text-lg font-semibold text-muted-foreground">
@@ -574,7 +607,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <ScoreBars key={`bars-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`} scores={currentBeerRatings.map(r => r.score)} />
                   )}
                   {/* Flavor tags; shown even while scores are hidden, they don't give the score away */}
-                  {pendingRaters && pendingRaters.tags.length > 0 && (
+                  {tagsOn && pendingRaters && pendingRaters.tags.length > 0 && (
                     <div className="flex flex-col gap-2">
                       <span className="text-xl font-semibold text-muted-foreground">Bragðlýsingar</span>
                       <TagCloud tags={pendingRaters.tags} />
@@ -583,12 +616,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 </div>
               </div>
             </>
-          ) : tasting.status !== 'closed' ? (
-            // Between beers (and before the start) the screen is a lobby: big scan-to-join code
+          ) : notStarted ? (
+            // Before the first beer the screen is a lobby: big scan-to-join code. Once the
+            // tasting is under way the code stays off the screen
             <div className="flex-1 flex flex-col items-center justify-center gap-6">
               <p className="text-5xl font-extrabold">Skannaðu til að taka þátt</p>
               <JoinQrCode tastingId={tasting.id} size={240} showUrl />
               <LobbyParticipants participants={tasting.participants} />
+            </div>
+          ) : tasting.status !== 'closed' ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4 text-muted-foreground">
+              <Hourglass className="h-20 w-20 text-cranberry" />
+              <p className="text-5xl font-extrabold text-ink">Næsti bjór kemur bráðum</p>
+              <p className="text-2xl">Skál á meðan!</p>
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center gap-4">
@@ -640,12 +680,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                       >
                         <span className="w-8 h-8 rounded-full bg-gold shrink-0" aria-hidden />
                         {participant.name}
-                        <span className="text-lg text-ink-soft">({participant.code})</span>
                       </span>
                     ))}
                   </div>
                 </div>
               ) : null}
+
+              {/* Notes people wrote, one at a time; this column has the room the beer card lacks */}
+              {beerNotes.length > 0 && (
+                <div className="mt-auto flex flex-col gap-2 shrink-0">
+                  <span className="text-xl font-semibold text-mint">Athugasemdir</span>
+                  <NoteTicker notes={beerNotes} />
+                </div>
+              )}
             </>
           )}
         </FoamCard>

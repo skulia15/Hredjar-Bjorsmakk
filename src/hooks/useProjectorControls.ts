@@ -4,15 +4,22 @@ import { useCallback, useEffect, useState } from 'react'
 import { setSoundEnabled } from '@/lib/sounds'
 
 const SOUND_KEY = 'projector_sound'
+const TAGS_KEY = 'projector_tags'
 
 /**
- * Fullscreen and sound toggles for the projector, and a screen wake lock so the
+ * Fullscreen, sound and flavor-tag toggles for the projector, and a screen wake lock so the
  * projector laptop doesn't dim or sleep mid-tasting.
  */
 export function useProjectorControls() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Read once on mount; localStorage isn't available during SSR
   const [soundOn, setSoundOn] = useState(() => typeof window !== 'undefined' && localStorage.getItem(SOUND_KEY) === 'on')
+  // The flavor tag cloud is on unless the host switched it off
+  const [tagsOn, setTagsOn] = useState(() => typeof window === 'undefined' || localStorage.getItem(TAGS_KEY) !== 'off')
+
+  useEffect(() => {
+    localStorage.setItem(TAGS_KEY, tagsOn ? 'on' : 'off')
+  }, [tagsOn])
 
   useEffect(() => {
     setSoundEnabled(soundOn)
@@ -52,6 +59,7 @@ export function useProjectorControls() {
   }, [])
 
   const toggleSound = useCallback(() => setSoundOn(on => !on), [])
+  const toggleTags = useCallback(() => setTagsOn(on => !on), [])
 
-  return { isFullscreen, toggleFullscreen, soundOn, toggleSound }
+  return { isFullscreen, toggleFullscreen, soundOn, toggleSound, tagsOn, toggleTags }
 }

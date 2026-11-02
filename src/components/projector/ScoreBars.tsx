@@ -20,11 +20,11 @@ export function ScoreBars({ scores }: { scores: number[] }) {
       <div className="flex items-end justify-between gap-2">
         {counts.map((count, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-2">
-            <div className="w-full flex flex-col justify-end items-center h-36">
+            <div className="w-full flex flex-col justify-end items-center h-28 2xl:h-32">
               <div
                 // High scores in cranberry, the rest in a quiet sand so the shape reads at a distance
                 className={`w-full rounded-t-[10px] rounded-b flex items-start justify-center transition-[height] duration-700 ease-out ${
-                  i >= 6 ? 'bg-cranberry text-white' : 'bg-[#E6D9BC] text-ink'
+                  i >= 6 && count > 0 ? 'bg-cranberry text-white' : 'bg-[#E6D9BC] text-ink'
                 }`}
                 style={{
                   height: grown ? `${(count / maxCount) * 100}%` : '0%',

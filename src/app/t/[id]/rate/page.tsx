@@ -11,9 +11,9 @@ import { LeaderboardWaiting } from "@/components/LeaderboardWaiting";
 import { NudgeNotification } from "@/components/NudgeNotification";
 import { useNudge } from "@/hooks/useNudge";
 import { useActiveTasting } from "@/hooks/useActiveTasting";
+import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
-import { WrapUpOverlay } from "@/components/WrapUpOverlay";
 import { FLAVOR_TAGS, type FlavorTag, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
 
 interface Beer {
@@ -152,6 +152,8 @@ export default function RatePage({
 	const [note, setNote] = useState("");
 	const [groupGuess, setGroupGuess] = useState<number | null>(null);
 	const [loading, setLoading] = useState(false);
+	// Only a 404 means the tasting is gone; anything else is an outage we retry through
+	const [notFound, setNotFound] = useState(false);
 	const [submitting, setSubmitting] = useState(false);
 	const [message, setMessage] = useState("");
 	const [participantId, setParticipantId] = useState("");
@@ -169,19 +171,6 @@ export default function RatePage({
 		pending: Array<{ participantId: string; name: string; code: string }>;
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
-
-	// Wrap-up overlay state
-	const [showWrapUp, setShowWrapUp] = useState(false);
-	const [wrapUpData, setWrapUpData] = useState<{
-		beerName: string;
-		brewery: string;
-		average: number;
-		count: number;
-	} | null>(null);
-	const [previousBeerId, setPreviousBeerId] = useState<string | null>(null);
-
-	// Leaderboard waiting state (shown after wrap-up completes)
-	const [showLeaderboard, setShowLeaderboard] = useState(false);
 
 	// Nudge notification state with timestamp to force re-renders on each nudge
 	const [nudgeTimestamp, setNudgeTimestamp] = useState<number | null>(null);
@@ -219,17 +208,17 @@ export default function RatePage({
 				setLoading(true);
 			}
 			try {
-				const response = await fetch(`/api/tastings/${params.id}`);
-				if (!response.ok) {
-					console.error("Failed to load tasting:", response.statusText);
+				const result = await fetchTasting<Tasting>(params.id);
+				if (result.kind === "ok") {
+					setNotFound(false);
+					setTasting(result.data);
+				} else if (result.kind === "not-found") {
+					setNotFound(true);
 					setTasting(null);
-					return;
+				} else {
+					// Keep whatever is on screen; the next poll tries again
+					console.error("Tasting unavailable, keeping last state");
 				}
-				const data = await response.json();
-				setTasting(data);
-			} catch (error) {
-				console.error("Error loading tasting:", error);
-				setTasting(null);
 			} finally {
 				if (showLoadingSpinner) {
 					setLoading(false);
@@ -336,42 +325,6 @@ export default function RatePage({
 				.catch((err) => console.error("Error loading existing rating:", err));
 		}
 	}, [currentBeer?.id, participantId, loadRatingStats, params.id]);
-
-	// Detect when a beer has been finished and show wrap-up overlay
-	useEffect(() => {
-		if (!tasting) return;
-
-		const currentBeerId = tasting.currentBeerId;
-
-		// Only update if the beer ID actually changed
-		if (currentBeerId !== previousBeerId) {
-			// If current beer changed and we had a previous beer
-			if (previousBeerId && previousBeerId !== currentBeerId) {
-				// Check if the previous beer is now finished
-				const finishedBeer = tasting.beers?.find(
-					(b) => b.id === previousBeerId && b.status === "finished",
-				);
-
-				if (finishedBeer) {
-					// Show wrap-up overlay with the finished beer's data
-					setWrapUpData({
-						beerName: finishedBeer.name,
-						brewery: finishedBeer.brewery,
-						average: finishedBeer.averageRating || 0,
-						count: finishedBeer.ratingCount || 0,
-					});
-					setShowWrapUp(true);
-					setShowLeaderboard(false); // Hide leaderboard when showing wrap-up
-				}
-			} else if (currentBeerId) {
-				// If a new current beer is set, hide leaderboard
-				setShowLeaderboard(false);
-			}
-
-			// Update previous beer ID for next comparison
-			setPreviousBeerId(currentBeerId || null);
-		}
-	}, [tasting, previousBeerId]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -482,6 +435,18 @@ export default function RatePage({
 		);
 	}
 
+	if (!tasting && !notFound) {
+		// Couldn't reach the server yet; polling keeps retrying
+		return (
+			<div className="min-h-screen flex items-center justify-center p-4">
+				<div className="text-center space-y-2">
+					<p className="text-lg font-semibold">Næ ekki sambandi</p>
+					<p className="text-muted-foreground">Reyni aftur…</p>
+				</div>
+			</div>
+		);
+	}
+
 	if (!tasting) {
 		return (
 			<div className="min-h-screen flex items-center justify-center p-4">
@@ -522,42 +487,14 @@ export default function RatePage({
 		);
 	}
 
-	// Shown over whichever view comes next: usually the leaderboard, since finishing a beer
-	// leaves no current beer until the leader picks the next one
-	const wrapUpOverlay = showWrapUp && wrapUpData && (
-		<WrapUpOverlay
-			beerName={wrapUpData.beerName}
-			brewery={wrapUpData.brewery}
-			average={wrapUpData.average}
-			count={wrapUpData.count}
-			onComplete={() => {
-				// After wrap-up completes, hide wrap-up
-				setShowWrapUp(false);
-				setWrapUpData(null);
-
-				// Force immediate reload to get latest tasting state
-				loadTasting(false).then(() => {
-					// This will trigger a re-render with fresh tasting data
-					// The component will automatically show either the new current beer or leaderboard
-				});
-			}}
-			minDuration={5000}
-		/>
-	);
-
-	// Show leaderboard if no current beer and we've shown wrap-up before
-	if (
-		!currentBeer &&
-		(showLeaderboard || tasting.beers?.some((b) => b.status === "finished"))
-	) {
+	// Between beers: the leaderboard so far. The finished beer's result is revealed on the
+	// projector, so phones skip straight here
+	if (!currentBeer && tasting.beers?.some((b) => b.status === "finished")) {
 		return (
-			<>
-				<LeaderboardWaiting
-					tastingId={params.id}
-					isLeader={tasting.currentUserIsLeader}
-				/>
-				{wrapUpOverlay}
-			</>
+			<LeaderboardWaiting
+				tastingId={params.id}
+				isLeader={tasting.currentUserIsLeader}
+			/>
 		);
 	}
 
@@ -876,8 +813,6 @@ export default function RatePage({
 
 			</div>
 
-			{/* Wrap-up overlay shown when beer is finished */}
-			{wrapUpOverlay}
 
 			{/* Nudge notification overlay */}
 			{nudgeTimestamp && (

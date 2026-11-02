@@ -8,6 +8,7 @@ import { BeerSelector } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 import { SlideToConfirm } from '@/components/SlideToConfirm'
+import { fetchTasting } from '@/lib/fetchTasting'
 import { useActiveTasting } from '@/hooks/useActiveTasting'
 
 interface Beer {
@@ -40,6 +41,8 @@ interface Tasting {
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
   const [tasting, setTasting] = useState<Tasting | null>(null)
+  // Only a 404 means the tasting is gone; an outage keeps retrying with the next poll
+  const [notFound, setNotFound] = useState(false)
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
   const [isFinishedBeersExpanded, setIsFinishedBeersExpanded] = useState(false)
@@ -81,11 +84,15 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
   const loadTasting = async () => {
     try {
-      const response = await fetch(`/api/tastings/${params.id}`)
-      const data = await response.json()
-      setTasting(data)
-    } catch (error) {
-      console.error('Error loading tasting:', error)
+      // An outage keeps the last good state; only a 404 clears it ("Smökkun fannst ekki")
+      const result = await fetchTasting<Tasting>(params.id)
+      if (result.kind === 'ok') {
+        setNotFound(false)
+        setTasting(result.data)
+      } else if (result.kind === 'not-found') {
+        setNotFound(true)
+        setTasting(null)
+      }
     } finally {
       setLoading(false)
     }
@@ -346,6 +353,17 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         <div className="text-center">
           <BeerIcon className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">Hleður...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!tasting && !notFound) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <div className="text-center space-y-2">
+          <p className="text-lg font-semibold">Næ ekki sambandi</p>
+          <p className="text-muted-foreground">Reyni aftur…</p>
         </div>
       </div>
     )

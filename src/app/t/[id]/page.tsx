@@ -4,6 +4,7 @@ import { use, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { SignInButton, useAuth } from '@clerk/nextjs'
 import { Beer as BeerIcon } from 'lucide-react'
+import { fetchTasting } from '@/lib/fetchTasting'
 
 export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -13,23 +14,35 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [tastingTitle, setTastingTitle] = useState('')
   const [tastingStatus, setTastingStatus] = useState<string | null>(null)
 
-  // Fetch tasting details
+  // Fetch tasting details; an outage is retried rather than reported as "not found"
   useEffect(() => {
-    fetch(`/api/tastings/${params.id}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.title) {
-          setTastingTitle(data.title)
-          setTastingStatus(data.status)
-        } else {
-          setError('Smökkun fannst ekki')
-        }
+    let cancelled = false
+    let retry: ReturnType<typeof setTimeout> | undefined
+
+    const load = async () => {
+      const result = await fetchTasting<{ title: string; status: string }>(params.id)
+      if (cancelled) return
+      if (result.kind === 'ok') {
+        setError('')
+        setTastingTitle(result.data.title)
+        setTastingStatus(result.data.status)
         // Redirect to scores if tasting is closed
-        if (data.status === 'closed') {
+        if (result.data.status === 'closed') {
           router.push(`/t/${params.id}/scores`)
         }
-      })
-      .catch(() => setError('Smökkun fannst ekki'))
+      } else if (result.kind === 'not-found') {
+        setError('Smökkun fannst ekki')
+      } else {
+        setError('Næ ekki sambandi, reyni aftur…')
+        retry = setTimeout(load, 4000)
+      }
+    }
+
+    load()
+    return () => {
+      cancelled = true
+      clearTimeout(retry)
+    }
   }, [params.id, router])
 
   // Signed-in users join as themselves; identity comes from the session
