@@ -14,6 +14,7 @@ import { Beer as BeerIcon, Brain, Coffee, Crown, EyeOff, Gift, Hourglass, Maximi
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import { JoinQrCode } from '@/components/JoinQrCode'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { AnimatedLeaderboard } from '@/components/projector/AnimatedLeaderboard'
@@ -76,6 +77,7 @@ interface PendingParticipant {
   participantId: string
   name: string
   code: string
+  imageUrl?: string | null
 }
 
 interface PendingRatersData {
@@ -689,7 +691,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                         key={participant.participantId}
                         className="inline-flex items-center gap-2.5 pl-2.5 pr-4 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
                       >
-                        <span className="w-8 h-8 rounded-full bg-gold shrink-0" aria-hidden />
+                        <ParticipantAvatar seed={participant.participantId} imageUrl={participant.imageUrl} className="w-9 h-9 shrink-0" />
                         {participant.name}
                       </span>
                     ))}

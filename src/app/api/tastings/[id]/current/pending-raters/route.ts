@@ -28,7 +28,8 @@ export async function GET(
           include: {
             user: {
               select: {
-                name: true
+                name: true,
+                imageUrl: true
               }
             }
           }
@@ -93,7 +94,8 @@ export async function GET(
     const toPending = (p: (typeof tasting.participants)[number]) => ({
       participantId: p.id,
       name: p.user?.name || `Notandi ${p.code}`,
-      code: p.code
+      code: p.code,
+      imageUrl: p.user?.imageUrl ?? null
     })
     const notRated = tasting.participants.filter(p => !ratedParticipantIds.has(p.id))
     const pending = notRated.filter(p => !p.pausedAt).map(toPending).sort((a, b) => a.name.localeCompare(b.name))

@@ -55,7 +55,8 @@ export async function getCurrentUser(): Promise<User | null> {
   const profile = {
     clerkId,
     email: verifiedEmail,
-    imageUrl: clerkUser.imageUrl || null,
+    // Clerk always returns an imageUrl; without a real photo it's a generated placeholder
+    imageUrl: clerkUser.hasImage ? clerkUser.imageUrl : null,
   };
 
   // Same verified email on a new Clerk id: the account moved Clerk instance (dev -> production)
