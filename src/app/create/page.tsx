@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check } from 'lucide-react'
-import { AVATARS, avatarSrc } from '@/lib/avatars'
+import { AVATARS } from '@/lib/avatars'
+import { AvatarPicker } from '@/components/AvatarPicker'
 
 export default function CreateTastingPage() {
   const router = useRouter()
@@ -76,61 +76,11 @@ export default function CreateTastingPage() {
             />
           </div>
 
-          <div className="space-y-4">
-            <label className="block text-sm font-medium">
-              Veldu þér jólamynd
-            </label>
-
-            {chosenObj && (
-              <div className="flex flex-col items-center gap-2 pb-4 border-b">
-                <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden ring-4 ring-amber-500 shadow-xl">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatarSrc(chosenObj)}
-                    alt={chosenObj.name}
-                    className="w-full h-full object-cover select-none"
-                  />
-                </div>
-                <div className="text-base sm:text-lg font-bold text-foreground">{chosenObj.name}</div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[42vh] overflow-y-auto p-1">
-              {AVATARS.map(avatar => {
-                const isSelected = selectedAvatar === avatar.key
-                return (
-                  <button
-                    key={avatar.key}
-                    type="button"
-                    disabled={loading}
-                    onClick={() => setSelectedAvatar(avatar.key)}
-                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
-                      isSelected
-                        ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/50 scale-[1.02]'
-                        : 'border-border hover:border-amber-500/50 hover:bg-accent/40'
-                    }`}
-                  >
-                    <div className="relative w-24 h-24 sm:w-28 sm:h-28">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={avatarSrc(avatar)}
-                        alt={avatar.name}
-                        className="w-full h-full rounded-full object-cover select-none"
-                      />
-                      {isSelected && (
-                        <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-amber-500 text-black flex items-center justify-center shadow">
-                          <Check className="w-4 h-4 stroke-[3]" />
-                        </div>
-                      )}
-                    </div>
-                    <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">
-                      {avatar.name}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-          </div>
+          <AvatarPicker
+            selectedAvatar={selectedAvatar}
+            onSelect={setSelectedAvatar}
+            disabled={loading}
+          />
 
           {error && (
             <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
