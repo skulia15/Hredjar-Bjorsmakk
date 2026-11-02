@@ -521,12 +521,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </FoamCard>
 
         {/* Column 2: Current Beer */}
-        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-10 pt-4 pb-8 flex flex-col items-center text-center gap-2 overflow-y-auto">
+        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-10 pt-4 pb-6 flex flex-col items-center text-center gap-2 overflow-y-auto">
           {currentBeer ? (
             <>
               <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
-              <div key={currentBeer.id} className="flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-500">
-                <div className="beer-bob mt-1 w-28 h-28 2xl:w-36 2xl:h-36 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
+              {/* Image beside the name, not above it: the card needs the height for the bars and tags */}
+              <div key={currentBeer.id} className="flex items-center justify-center gap-6 text-left animate-in fade-in zoom-in-95 duration-500">
+                <div className="beer-bob w-28 h-28 2xl:w-36 2xl:h-36 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
                   {currentBeer.imageUrl ? (
                     <Image
                       src={currentBeer.imageUrl}
@@ -539,7 +540,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <BeerPlaceholder className="h-3/4 w-auto text-[#7A3B12]" />
                   )}
                 </div>
-                <h2 className="mt-1 text-5xl 2xl:text-6xl leading-none">{currentBeer.name}</h2>
+                <div className="min-w-0 flex flex-col gap-1.5">
+                <h2 className="text-5xl 2xl:text-6xl leading-none">{currentBeer.name}</h2>
                 <p className="text-2xl 2xl:text-[1.75rem] text-muted-foreground">
                   {currentBeer.brewery}
                   {currentBeer.containerSize && currentBeer.containerType && ` · ${currentBeer.containerSize} ml ${currentBeer.containerType}`}
@@ -549,6 +551,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     <CurrentBeerTimer currentSince={currentBeer.currentSince} colorCoded={false} size="md" />
                   </div>
                 )}
+                </div>
               </div>
 
 
@@ -608,15 +611,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   {currentBeerRatings.length > 0 && (
                     <ScoreBars key={`bars-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`} scores={currentBeerRatings.map(r => r.score)} />
                   )}
-                  {/* Flavor tags; shown even while scores are hidden, they don't give the score away */}
-                  {tagsOn && pendingRaters && pendingRaters.tags.length > 0 && (
-                    <div className="flex flex-col gap-2">
-                      <span className="text-xl font-semibold text-muted-foreground">Bragðlýsingar</span>
-                      <TagCloud tags={pendingRaters.tags} />
-                    </div>
-                  )}
                 </div>
               </div>
+              {/* Flavor tags across the full card width, the column beside the bars fit one pill a row.
+                  Shown even while scores are hidden, they don't give the score away */}
+              {tagsOn && pendingRaters && pendingRaters.tags.length > 0 && (
+                <div className="w-full mt-2" aria-label="Bragðlýsingar">
+                  <TagCloud tags={pendingRaters.tags} raters={pendingRaters.ratedCount} limit={6} />
+                </div>
+              )}
             </>
           ) : notStarted ? (
             // Before the first beer the screen is a lobby: big scan-to-join code. Once the

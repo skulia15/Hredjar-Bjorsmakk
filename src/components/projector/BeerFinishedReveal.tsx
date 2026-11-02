@@ -129,7 +129,7 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
 
             {showTags && (
               <div className="animate-in fade-in duration-700 fill-mode-both [animation-delay:800ms]">
-                <TagCloud tags={reveal.tags} limit={8} />
+                <TagCloud tags={reveal.tags} raters={reveal.count} limit={8} />
               </div>
             )}
           </div>
