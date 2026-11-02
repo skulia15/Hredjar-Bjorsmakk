@@ -8,6 +8,7 @@ interface RatedParticipant {
   name: string
   code: string
   score: number | null  // null while the tasting hides scores until everyone has rated
+  paused?: boolean
   submittedAt: string
 }
 
@@ -137,15 +138,32 @@ export function PendingRaters({
               >
                 <div className="flex items-center gap-2">
                   <span className="font-medium">{participant.name}</span>
-                  <span className="text-xs text-muted-foreground">({participant.code})</span>
+                  {participant.paused && (
+                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                      <Coffee className="h-3.5 w-3.5" /> í pásu
+                    </span>
+                  )}
                 </div>
-                {participant.score === null ? (
-                  <EyeOff className="h-4 w-4 text-muted-foreground" aria-label="Falið" />
-                ) : (
-                  <span className="font-bold text-primary">
-                    {participant.score.toFixed(1)} <Star className="inline h-3.5 w-3.5 -mt-0.5 fill-yellow-400 text-yellow-400" />
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  {/* Rated, then left: pause now so the next beer doesn't wait on them */}
+                  <button
+                    onClick={() => setPaused(participant.participantId, !participant.paused)}
+                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
+                      participant.paused ? 'text-green-700 hover:bg-green-100' : 'text-orange-700 hover:bg-orange-100'
+                    }`}
+                  >
+                    {participant.paused
+                      ? <><Play className="h-3.5 w-3.5" /> Halda áfram</>
+                      : <><Pause className="h-3.5 w-3.5" /> Pása</>}
+                  </button>
+                  {participant.score === null ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" aria-label="Falið" />
+                  ) : (
+                    <span className="font-bold text-primary">
+                      {participant.score.toFixed(1)} <Star className="inline h-3.5 w-3.5 -mt-0.5 fill-yellow-400 text-yellow-400" />
+                    </span>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -174,10 +192,7 @@ export function PendingRaters({
                 key={participant.participantId}
                 className="flex items-center justify-between gap-2 p-2 bg-orange-50 dark:bg-orange-950 rounded text-sm"
               >
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">{participant.name}</span>
-                  <span className="text-xs text-muted-foreground">({participant.code})</span>
-                </div>
+                <span className="font-medium">{participant.name}</span>
                 <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPaused(participant.participantId, true)}

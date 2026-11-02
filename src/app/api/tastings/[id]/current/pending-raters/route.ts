@@ -81,6 +81,8 @@ export async function GET(
       participantId: rating.participantId,
       name: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
       code: rating.participant.code,
+      // Rated, then left: paused so the next beer won't wait on them
+      paused: rating.participant.pausedAt !== null,
       score: scoresHidden ? null : rating.score,
       groupGuess: scoresHidden ? null : rating.groupGuess,
       // A note usually gives the verdict away, so it waits for the scores like the guess does

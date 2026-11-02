@@ -368,7 +368,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const beerNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
     .slice(0, 5)
-    .map(r => ({ key: r.participantId, note: r.note.trim(), name: r.name }))
+    .map(r => ({ key: r.participantId, note: r.note.trim() }))
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
     : null
