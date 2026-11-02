@@ -843,38 +843,45 @@ export default function RatePage({
 						</div>
 					)}
 
-					{message && (
-						<div
-							role="status"
-							className={`self-center inline-flex items-center gap-2 px-4 py-2 rounded-full text-[0.9375rem] font-extrabold ${
-								message.includes("Error") || message.startsWith("Villa")
-									? "bg-destructive text-destructive-foreground"
-									: "bg-holly-soft text-holly"
-							}`}
-						>
-							{message}
-						</div>
-					)}
-
-					<button
-						type="submit"
-						disabled={submitting}
-						className="wiggle w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-cranberry text-white text-lg font-extrabold disabled:opacity-50"
-					>
-						{submitting ? (
-							"Skrái..."
-						) : hasRated ? (
-							<>
-								<Check className="w-5 h-5" strokeWidth={2.6} />
-								Uppfæra einkunn
-							</>
-						) : (
-							<>
-								<Plus className="w-5 h-5" strokeWidth={2.6} />
-								Skrá einkunn
-							</>
+					{/* Pinned to the screen bottom while the form scrolls, so sending is always one tap away */}
+					<div className="sticky bottom-0 z-10 -mx-4 px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-b from-transparent to-background to-30% flex flex-col gap-2">
+						{message && (
+							<div
+								role="status"
+								className={`self-center inline-flex items-center gap-2 px-4 py-2 rounded-full text-[0.9375rem] font-extrabold ${
+									message.includes("Error") || message.startsWith("Villa")
+										? "bg-destructive text-destructive-foreground"
+										: "bg-holly-soft text-holly"
+								}`}
+							>
+								{message}
+							</div>
 						)}
-					</button>
+
+						<button
+							type="submit"
+							disabled={submitting || rating === 0}
+							className="wiggle w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-gold text-ink text-lg font-extrabold shadow-[0_6px_18px_rgb(0_0_0/0.35)] disabled:opacity-50"
+						>
+							{submitting ? (
+								"Skrái..."
+							) : (
+								<>
+									{hasRated ? (
+										<Check className="w-5 h-5" strokeWidth={2.6} />
+									) : (
+										<Plus className="w-5 h-5" strokeWidth={2.6} />
+									)}
+									{hasRated ? "Uppfæra einkunn" : "Skrá einkunn"}
+									{rating > 0 && (
+										<span className="ml-1 rounded-lg bg-ink px-2 py-0.5 text-gold tabular-nums">
+											{rating.toFixed(1)}
+										</span>
+									)}
+								</>
+							)}
+						</button>
+					</div>
 				</form>
 
 				{/* Rating Progress */}
