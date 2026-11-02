@@ -1,7 +1,8 @@
 'use client'
 
-import { SignInButton, Show, UserButton, useAuth } from '@clerk/nextjs'
-import { Beer as BeerIcon, ListChecks, Pencil, Shield, Tv } from 'lucide-react'
+import { SignInButton, Show, useAuth } from '@clerk/nextjs'
+import { Beer as BeerIcon, ListChecks, Shield, Tv } from 'lucide-react'
+import { AccountMenu } from '@/components/AccountMenu'
 import { NicknameForm } from '@/components/NicknameForm'
 import { SantaMug } from '@/components/SantaMug'
 import Link from 'next/link'
@@ -25,7 +26,7 @@ export function AppHeader() {
   const pathname = usePathname() ?? '/'
   const { isSignedIn } = useAuth()
   const { clearActiveTasting } = useActiveTasting()
-  const [session, setSession] = useState<{ name: string; isAdmin: boolean } | null>(null)
+  const [session, setSession] = useState<{ userId: string; name: string; isAdmin: boolean } | null>(null)
   const [activeTastingId, setActiveTastingId] = useState<string | null>(null)
   const [isEmbedded, setIsEmbedded] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -41,7 +42,7 @@ export function AppHeader() {
     }
     fetch('/api/session')
       .then(res => res.json())
-      .then(data => setSession(data.hasSession ? { name: data.name, isAdmin: data.isAdmin } : null))
+      .then(data => setSession(data.hasSession ? { userId: data.userId, name: data.name, isAdmin: data.isAdmin } : null))
       .catch(err => console.error('Error loading session:', err))
   }, [isSignedIn])
 
@@ -140,17 +141,11 @@ export function AppHeader() {
           <Show when="signed-in">
             <div className="flex items-center gap-2 text-sm">
               {session && <span className="hidden max-w-[8rem] truncate font-medium sm:inline">{session.name}</span>}
-              <UserButton>
-                {session && (
-                  <UserButton.MenuItems>
-                    <UserButton.Action
-                      label="Breyta gælunafni"
-                      labelIcon={<Pencil className="h-4 w-4" />}
-                      onClick={() => setEditingName(true)}
-                    />
-                  </UserButton.MenuItems>
-                )}
-              </UserButton>
+              {session ? (
+                <AccountMenu userId={session.userId} name={session.name} onEditName={() => setEditingName(true)} />
+              ) : (
+                <span className="h-9 w-9 rounded-full bg-muted" aria-hidden />
+              )}
             </div>
           </Show>
         </div>
