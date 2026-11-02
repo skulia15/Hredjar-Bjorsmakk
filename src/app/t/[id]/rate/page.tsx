@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
 import { CurrentBeerTimer } from "@/components/CurrentBeerTimer";
+import { FoamCard } from "@/components/FoamCard";
 import { LeaderboardWaiting } from "@/components/LeaderboardWaiting";
 import { NudgeNotification } from "@/components/NudgeNotification";
 import { useNudge } from "@/hooks/useNudge";
@@ -521,16 +522,42 @@ export default function RatePage({
 		);
 	}
 
+	// Shown over whichever view comes next: usually the leaderboard, since finishing a beer
+	// leaves no current beer until the leader picks the next one
+	const wrapUpOverlay = showWrapUp && wrapUpData && (
+		<WrapUpOverlay
+			beerName={wrapUpData.beerName}
+			brewery={wrapUpData.brewery}
+			average={wrapUpData.average}
+			count={wrapUpData.count}
+			onComplete={() => {
+				// After wrap-up completes, hide wrap-up
+				setShowWrapUp(false);
+				setWrapUpData(null);
+
+				// Force immediate reload to get latest tasting state
+				loadTasting(false).then(() => {
+					// This will trigger a re-render with fresh tasting data
+					// The component will automatically show either the new current beer or leaderboard
+				});
+			}}
+			minDuration={5000}
+		/>
+	);
+
 	// Show leaderboard if no current beer and we've shown wrap-up before
 	if (
 		!currentBeer &&
 		(showLeaderboard || tasting.beers?.some((b) => b.status === "finished"))
 	) {
 		return (
-			<LeaderboardWaiting
-				tastingId={params.id}
-				isLeader={tasting.currentUserIsLeader}
-			/>
+			<>
+				<LeaderboardWaiting
+					tastingId={params.id}
+					isLeader={tasting.currentUserIsLeader}
+				/>
+				{wrapUpOverlay}
+			</>
 		);
 	}
 
@@ -546,7 +573,7 @@ export default function RatePage({
 					<BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
 					<Link
 						href={`/t/${params.id}/scores`}
-						className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+						className="wiggle inline-flex items-center gap-2 min-h-12 px-5 bg-cranberry text-white rounded-2xl font-extrabold"
 					>
 						<Trophy className="w-4 h-4" />
 						Skoða stigatöflu
@@ -556,241 +583,228 @@ export default function RatePage({
 		);
 	}
 
+	const chip = "px-2.5 py-1 rounded-full bg-cream-dim text-sm font-semibold";
+
 	return (
-		<div className="min-h-screen flex flex-col items-center justify-center p-4">
-			<div className="max-w-md w-full space-y-6">
+		<div className="min-h-screen flex flex-col items-center px-4 pt-4 pb-6">
+			<div className="max-w-md w-full flex-1 flex flex-col gap-4">
+				{/* Navigation lives in the app header and tasting tabs */}
+				<h1 className="text-center text-[0.8125rem] font-semibold tracking-[0.14em] uppercase text-gold truncate">
+					{tasting.title}
+				</h1>
 
 				{/* Current Beer Card */}
-				<div className="bg-card p-6 rounded-lg border space-y-4">
-					<div className="text-center">
-						{/* Beer Image */}
-						<div className="flex justify-center mb-4">
-							{currentBeer.imageUrl ? (
-								<img
-									src={currentBeer.imageUrl}
-									alt={currentBeer.name}
-									className="h-[148px] w-auto object-contain"
-									onError={(e) => {
-										// Show placeholder if image fails to load
-										const parent = e.currentTarget.parentElement;
-										if (parent) {
-											e.currentTarget.style.display = "none";
-											const placeholder =
-												parent.querySelector(".beer-placeholder");
-											if (placeholder) {
-												(placeholder as HTMLElement).style.display = "block";
-											}
+				<FoamCard className="px-5 pt-1.5 pb-5 flex flex-col items-center text-center gap-1">
+					<div className="w-[104px] h-[104px] rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
+						{currentBeer.imageUrl ? (
+							<img
+								src={currentBeer.imageUrl}
+								alt={currentBeer.name}
+								className="h-[88px] w-auto object-contain"
+								onError={(e) => {
+									// Show placeholder if image fails to load
+									const parent = e.currentTarget.parentElement;
+									if (parent) {
+										e.currentTarget.style.display = "none";
+										const placeholder =
+											parent.querySelector(".beer-placeholder");
+										if (placeholder) {
+											(placeholder as HTMLElement).style.display = "block";
 										}
-									}}
-								/>
-							) : null}
-							<div
-								className={
-									currentBeer.imageUrl
-										? "hidden beer-placeholder"
-										: "beer-placeholder"
-								}
-							>
-								<BeerPlaceholder className="h-[148px] w-auto text-muted-foreground" />
-							</div>
+									}
+								}}
+							/>
+						) : null}
+						<div
+							className={
+								currentBeer.imageUrl
+									? "hidden beer-placeholder"
+									: "beer-placeholder"
+							}
+						>
+							<BeerPlaceholder className="h-20 w-auto text-[#7A3B12]" />
 						</div>
-						<h2 className="text-4xl font-bold mb-2">{currentBeer.name}</h2>
-						<p className="text-xl text-muted-foreground mb-2">
-							{currentBeer.brewery}
-						</p>
+					</div>
+					<h2 className="mt-2 text-[length:min(2.125rem,11vw)] leading-none">{currentBeer.name}</h2>
+					<p className="text-[1.0625rem] text-muted-foreground">{currentBeer.brewery}</p>
+					<div className="flex flex-wrap justify-center gap-1.5 mt-2">
 						{currentBeer.country && (
-							<p className="text-lg text-muted-foreground mt-1">
+							<span className={chip}>
 								{getCountryFlag(currentBeer.country)} {currentBeer.country}
-							</p>
+							</span>
 						)}
-						{(currentBeer.style || currentBeer.abv) && (
-							<p className="text-base text-muted-foreground mt-1">
-								{currentBeer.style}
-								{currentBeer.style && currentBeer.abv && ' • '}
-								{currentBeer.abv && `${currentBeer.abv}%`}
-							</p>
+						{currentBeer.style && <span className={chip}>{currentBeer.style}</span>}
+						{currentBeer.abv && <span className={chip}>{currentBeer.abv}%</span>}
+						{currentBeer.containerSize && currentBeer.containerType && (
+							<span className={chip}>
+								{currentBeer.containerSize} ml {currentBeer.containerType}
+							</span>
 						)}
-						<div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-							{currentBeer.containerSize && currentBeer.containerType && (
-								<span className="text-base text-muted-foreground">
-									{currentBeer.containerSize}ml {currentBeer.containerType}
-								</span>
-							)}
-							{currentBeer.priceISK && (
-								<span className="text-base font-semibold text-green-600">
-									{currentBeer.priceISK} kr
-								</span>
-							)}
+						{currentBeer.priceISK && (
+							<span className="px-2.5 py-1 rounded-full bg-holly-soft text-holly text-sm font-extrabold">
+								{currentBeer.priceISK} kr
+							</span>
+						)}
+					</div>
+					{currentBeer.currentSince && (
+						<div className="mt-1.5">
+							<CurrentBeerTimer
+								currentSince={currentBeer.currentSince}
+								colorCoded={false}
+								size="sm"
+							/>
 						</div>
-						{currentBeer.currentSince && (
-							<div className="flex justify-center mt-2">
-								<CurrentBeerTimer
-									currentSince={currentBeer.currentSince}
-									colorCoded={false}
-									size="sm"
-								/>
-							</div>
+					)}
+				</FoamCard>
+
+				{/* Rating Form */}
+				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
+					<StarRating
+						value={rating}
+						onChange={setRating}
+						max={10}
+						size={44}
+						perRow={5}
+						showNumeric={true}
+					/>
+
+					{/* Flavor tags */}
+					<div className="flex flex-wrap justify-center gap-2">
+						{(Object.entries(FLAVOR_TAGS) as Array<[FlavorTag, string]>).map(
+							([tag, label]) => {
+								const selected = tags.includes(tag);
+								return (
+									<button
+										key={tag}
+										type="button"
+										aria-pressed={selected}
+										onClick={() =>
+											setTags((prev) =>
+												selected
+													? prev.filter((t) => t !== tag)
+													: [...prev, tag],
+											)
+										}
+										className={`min-h-9 px-3.5 rounded-full text-sm font-semibold transition-colors ${
+											selected
+												? "bg-gold text-ink"
+												: "bg-pine-light text-mint hover:bg-pine-line"
+										}`}
+									>
+										{label}
+									</button>
+								);
+							},
 						)}
 					</div>
 
-					{/* Rating Form */}
-					<form onSubmit={handleSubmit} className="space-y-4">
-						<div className="space-y-2">
-							<div className="flex justify-center w-full">
-								<StarRating
-									value={rating}
-									onChange={setRating}
-									max={10}
-									size={28}
-									showNumeric={true}
-								/>
-							</div>
-						</div>
-
-						{/* Flavor tags */}
-						<div className="flex flex-wrap justify-center gap-2">
-							{(Object.entries(FLAVOR_TAGS) as Array<[FlavorTag, string]>).map(
-								([tag, label]) => {
-									const selected = tags.includes(tag);
-									return (
-										<button
-											key={tag}
-											type="button"
-											aria-pressed={selected}
-											onClick={() =>
-												setTags((prev) =>
-													selected
-														? prev.filter((t) => t !== tag)
-														: [...prev, tag],
-												)
-											}
-											className={`px-3 py-1.5 rounded-full border text-sm transition-colors ${
-												selected
-													? "bg-primary text-primary-foreground border-primary"
-													: "bg-background text-muted-foreground hover:bg-muted"
-											}`}
-										>
-											{label}
-										</button>
-									);
-								},
-							)}
-						</div>
-
-						<div className="space-y-1">
-							<textarea
-								value={note}
-								onChange={(e) => setNote(e.target.value)}
-								maxLength={NOTE_MAX_LENGTH}
-								rows={2}
-								placeholder="Athugasemd (valfrjálst)"
-								className="w-full px-3 py-2 rounded-md border bg-background text-sm resize-none"
-							/>
-							{note.length > NOTE_MAX_LENGTH - 40 && (
-								<p className="text-xs text-muted-foreground text-right">
-									{note.length} / {NOTE_MAX_LENGTH}
-								</p>
-							)}
-						</div>
-
-						{/* Guess the group average while it's hidden */}
-						{ratingStats?.scoresHidden && (
-							<div className="rounded-md border border-dashed p-3 space-y-2">
-								{groupGuess === null ? (
-									<button
-										type="button"
-										onClick={() => setGroupGuess(rating || 7)}
-										className="w-full inline-flex items-center justify-center gap-2 text-sm font-medium text-primary"
-									>
-										<Brain className="h-4 w-4" />
-										Giskaðu á meðaltal hópsins
-									</button>
-								) : (
-									<>
-										<div className="flex items-center justify-between text-sm">
-											<span className="inline-flex items-center gap-1.5 font-medium">
-												<Brain className="h-4 w-4" />
-												Meðaltal hópsins verður
-											</span>
-											<span className="text-lg font-bold text-primary tabular-nums">
-												{groupGuess.toFixed(1)}
-											</span>
-										</div>
-										<input
-											type="range"
-											min={1}
-											max={10}
-											step={0.1}
-											value={groupGuess}
-											onChange={(e) => setGroupGuess(Number(e.target.value))}
-											aria-label="Gisk á meðaltal hópsins"
-											className="w-full accent-primary"
-										/>
-										<button
-											type="button"
-											onClick={() => setGroupGuess(null)}
-											className="text-xs text-muted-foreground hover:underline"
-										>
-											Sleppa giski
-										</button>
-									</>
-								)}
-							</div>
+					<div className="space-y-1">
+						<textarea
+							value={note}
+							onChange={(e) => setNote(e.target.value)}
+							maxLength={NOTE_MAX_LENGTH}
+							rows={2}
+							placeholder="Athugasemd (valfrjálst)"
+							className="w-full px-4 py-3 rounded-2xl bg-pine-light text-cream placeholder:text-mint/70 text-[0.9375rem] resize-none border-0 focus:outline-none focus:ring-2 focus:ring-gold"
+						/>
+						{note.length > NOTE_MAX_LENGTH - 40 && (
+							<p className="text-xs text-mint text-right">
+								{note.length} / {NOTE_MAX_LENGTH}
+							</p>
 						)}
+					</div>
 
-						{message && (
-							<div
-								className={`p-3 rounded-md text-sm text-center ${
-									message.includes("Error")
-										? "bg-destructive/10 text-destructive"
-										: "bg-green-500/10 text-green-600"
-								}`}
-							>
-								{message}
-							</div>
-						)}
-
-						<button
-							type="submit"
-							disabled={submitting}
-							className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-md font-medium disabled:opacity-50 transition-colors ${
-								hasRated
-									? "bg-primary text-white hover:bg-primary/90"
-									: "bg-primary text-primary-foreground hover:bg-primary/90"
-							}`}
-						>
-							{submitting ? (
-								"Skrái..."
-							) : hasRated ? (
-								<>
-									<Check className="w-5 h-5" />
-									Uppfæra einkunn
-								</>
+					{/* Guess the group average while it's hidden */}
+					{ratingStats?.scoresHidden && (
+						<div className="rounded-2xl border-2 border-dashed border-pine-line px-4 py-3 space-y-2">
+							{groupGuess === null ? (
+								<button
+									type="button"
+									onClick={() => setGroupGuess(rating || 7)}
+									className="w-full min-h-11 inline-flex items-center justify-center gap-2 text-[0.9375rem] font-semibold text-gold"
+								>
+									<Brain className="h-5 w-5" />
+									Giskaðu á meðaltal hópsins
+								</button>
 							) : (
 								<>
-									<Plus className="w-5 h-5" />
-									Skrá einkunn
+									<div className="flex flex-wrap items-center justify-between gap-x-3 text-[0.9375rem]">
+										<span className="inline-flex items-center gap-1.5 font-semibold">
+											<Brain className="h-4 w-4 text-gold" />
+											Meðaltal hópsins verður
+										</span>
+										<span className="text-2xl font-extrabold text-gold tabular-nums">
+											{groupGuess.toFixed(1)}
+										</span>
+									</div>
+									<input
+										type="range"
+										min={1}
+										max={10}
+										step={0.1}
+										value={groupGuess}
+										onChange={(e) => setGroupGuess(Number(e.target.value))}
+										aria-label="Gisk á meðaltal hópsins"
+										className="w-full accent-gold"
+									/>
+									<button
+										type="button"
+										onClick={() => setGroupGuess(null)}
+										className="min-h-9 text-sm text-mint hover:text-cream hover:underline"
+									>
+										Sleppa giski
+									</button>
 								</>
 							)}
-						</button>
-					</form>
-				</div>
+						</div>
+					)}
+
+					{message && (
+						<div
+							role="status"
+							className={`self-center inline-flex items-center gap-2 px-4 py-2 rounded-full text-[0.9375rem] font-extrabold ${
+								message.includes("Error") || message.startsWith("Villa")
+									? "bg-destructive text-destructive-foreground"
+									: "bg-holly-soft text-holly"
+							}`}
+						>
+							{message}
+						</div>
+					)}
+
+					<button
+						type="submit"
+						disabled={submitting}
+						className="wiggle w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-cranberry text-white text-lg font-extrabold disabled:opacity-50"
+					>
+						{submitting ? (
+							"Skrái..."
+						) : hasRated ? (
+							<>
+								<Check className="w-5 h-5" strokeWidth={2.6} />
+								Uppfæra einkunn
+							</>
+						) : (
+							<>
+								<Plus className="w-5 h-5" strokeWidth={2.6} />
+								Skrá einkunn
+							</>
+						)}
+					</button>
+				</form>
 
 				{/* Rating Progress */}
 				{ratingStats && (
-					<div className="bg-card p-4 rounded-lg border space-y-3">
-						<div className="flex items-center justify-between text-sm">
-							<span className="font-medium">Einkunnargjafir</span>
-							<span className="text-muted-foreground">
-								{ratingStats.ratedCount} / {ratingStats.totalParticipants} hafa gefið
-								einkunn
+					<div className="rounded-2xl bg-pine-light px-4 py-3 space-y-2">
+						<div className="flex flex-wrap items-center justify-between gap-x-3 text-[0.9375rem]">
+							<span className="font-semibold">Einkunnargjafir</span>
+							<span className="text-mint">
+								{ratingStats.ratedCount} / {ratingStats.totalParticipants} hafa gefið einkunn
 							</span>
 						</div>
-
-						{/* Progress Bar */}
-						<div className="w-full bg-muted rounded-full h-2">
+						<div className="w-full bg-pine-deep rounded-full h-2.5 overflow-hidden">
 							<div
-								className="bg-primary h-2 rounded-full transition-all duration-500"
+								className="bg-gold h-full rounded-full transition-all duration-500"
 								style={{
 									width:
 										ratingStats.totalParticipants > 0
@@ -799,17 +813,14 @@ export default function RatePage({
 								}}
 							/>
 						</div>
-
 						{ratingStats.scoresHidden && (
-							<p className="text-xs text-muted-foreground text-center">
+							<p className="text-sm text-mint">
 								<EyeOff className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
 								Einkunnir eru faldar þar til allir hafa gefið einkunn
 							</p>
 						)}
-
-						{/* Status message */}
 						{ratingStats.pendingCount > 0 ? (
-							<p className="text-xs text-muted-foreground text-center">
+							<p className="text-sm text-mint">
 								{ratingStats.pendingCount <= 3 &&
 								ratingStats.pending.length > 0 ? (
 									<>
@@ -819,7 +830,7 @@ export default function RatePage({
 											const isSecondToLast =
 												idx === ratingStats.pending.length - 2;
 											return (
-												<span key={p.participantId}>
+												<span key={p.participantId} className="font-semibold text-cream">
 													{p.name}
 													{!isLast && (isSecondToLast ? " og " : ", ")}
 												</span>
@@ -834,8 +845,8 @@ export default function RatePage({
 								)}
 							</p>
 						) : (
-							<p className="text-xs text-green-600 text-center font-medium">
-								<PartyPopper className="inline h-4 w-4 mr-1 -mt-0.5" /> Allir hafa gefið einkunn!
+							<p className="text-sm text-gold font-semibold">
+								<PartyPopper className="inline h-4 w-4 mr-1 -mt-0.5" /> Allir hafa gefið einkunn! Skál!
 							</p>
 						)}
 					</div>
@@ -843,28 +854,15 @@ export default function RatePage({
 
 				{/* Leader Controls */}
 				{!isEmbedded && tasting.currentUserIsLeader && currentBeer && (
-					<div className="bg-amber-50 dark:bg-amber-950/20 p-4 rounded-lg border-2 border-amber-500 space-y-3">
-						<div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-semibold">
-							<svg
-								className="w-5 h-5"
-								fill="none"
-								stroke="currentColor"
-								viewBox="0 0 24 24"
-							>
-								<path
-									strokeLinecap="round"
-									strokeLinejoin="round"
-									strokeWidth={2}
-									d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-								/>
-							</svg>
+					<div className="rounded-2xl bg-pine-light p-3 space-y-2.5">
+						<div className="text-sm font-semibold uppercase tracking-[0.14em] text-gold px-1">
 							Leiðtogastýringar
 						</div>
 						{ratingStats && ratingStats.pendingCount > 0 && (
 							<button
 								type="button"
 								onClick={handleNudge}
-								className="w-full px-4 py-2.5 bg-red-600 text-white rounded-md font-semibold hover:bg-red-700 transition-colors"
+								className="wiggle w-full min-h-12 rounded-full bg-cream text-ink font-extrabold"
 							>
 								Drífa sig! ({ratingStats.pendingCount})
 							</button>
@@ -872,7 +870,6 @@ export default function RatePage({
 						<SlideToConfirm
 							onConfirm={handleFinishBeer}
 							text="Strjúka til að klára bjór"
-							confirmText="→"
 						/>
 					</div>
 				)}
@@ -880,26 +877,7 @@ export default function RatePage({
 			</div>
 
 			{/* Wrap-up overlay shown when beer is finished */}
-			{showWrapUp && wrapUpData && (
-				<WrapUpOverlay
-					beerName={wrapUpData.beerName}
-					brewery={wrapUpData.brewery}
-					average={wrapUpData.average}
-					count={wrapUpData.count}
-					onComplete={() => {
-						// After wrap-up completes, hide wrap-up
-						setShowWrapUp(false);
-						setWrapUpData(null);
-
-						// Force immediate reload to get latest tasting state
-						loadTasting(false).then(() => {
-							// This will trigger a re-render with fresh tasting data
-							// The component will automatically show either the new current beer or leaderboard
-						});
-					}}
-					minDuration={5000}
-				/>
-			)}
+			{wrapUpOverlay}
 
 			{/* Nudge notification overlay */}
 			{nudgeTimestamp && (

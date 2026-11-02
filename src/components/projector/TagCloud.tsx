@@ -15,7 +15,7 @@ export function TagCloud({ tags, limit = 10 }: { tags: BeerTagCount[]; limit?: n
           <span
             key={tag}
             className="font-bold text-primary animate-in fade-in zoom-in-50 duration-500"
-            style={{ fontSize: `${0.9 + weight * 1.1}rem`, opacity: 0.45 + weight * 0.55 }}
+            style={{ fontSize: `${1.25 + weight * 1.25}rem`, opacity: 0.7 + weight * 0.3 }}
           >
             {flavorTagLabel(tag)}
           </span>

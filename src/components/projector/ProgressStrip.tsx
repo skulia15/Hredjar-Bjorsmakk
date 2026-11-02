@@ -12,21 +12,21 @@ export function ProgressStrip({ beers, currentBeerId }: { beers: ProgressBeer[];
   const position = currentBeerId ? finished + 1 : finished
 
   return (
-    <div className="flex items-center gap-4 px-4 md:px-6 py-3">
-      <div className="text-lg font-bold whitespace-nowrap tabular-nums">
+    <div className="flex items-center gap-4">
+      <div className="text-xl 2xl:text-2xl font-semibold whitespace-nowrap tabular-nums">
         {currentBeerId ? `Bjór ${position} af ${beers.length}` : `${finished} af ${beers.length} búnir`}
       </div>
-      <div className="flex-1 flex gap-1 h-3">
+      <div className="flex-1 flex gap-1 h-3 min-w-[120px]">
         {beers.map(beer => (
           <div
             key={beer.id}
             title={beer.name}
             className={`flex-1 rounded-full transition-colors duration-500 ${
               beer.id === currentBeerId
-                ? 'bg-green-500 animate-pulse'
+                ? 'bg-gold animate-pulse'
                 : beer.status === 'finished'
-                  ? 'bg-primary'
-                  : 'bg-muted'
+                  ? 'bg-cranberry'
+                  : 'bg-pine-deep'
             }`}
           />
         ))}

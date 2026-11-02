@@ -78,14 +78,14 @@ export function AppHeader() {
   const isInActiveTasting = !!activeTastingId && pathname.startsWith(`/t/${activeTastingId}`)
 
   return (
-    <header data-app-header className="sticky top-0 z-40 w-full border-b bg-background">
-      <div className="container mx-auto flex h-14 items-center gap-1 px-2 sm:gap-2 sm:px-4">
+    <header data-app-header className="relative z-40 w-full border-b bg-background sm:sticky sm:top-0">
+      <div className="container mx-auto flex min-h-14 flex-wrap items-center gap-x-1 gap-y-1 px-2 py-1 sm:gap-x-2 sm:px-4">
         <Link href="/" className="mr-1 flex shrink-0 items-center gap-2 font-bold sm:mr-3">
           <Image src="/icon.svg" alt="" width={28} height={28} unoptimized className="h-7 w-7" />
           <span className="hidden md:inline">Bjórsmakk</span>
         </Link>
 
-        <nav aria-label="Aðalvalmynd" className="flex items-center gap-0.5 sm:gap-1">
+        <nav aria-label="Aðalvalmynd" className="flex flex-wrap items-center gap-0.5 sm:gap-1">
           {navItems.map(({ href, label, icon: Icon }) => {
             const active = isActive(pathname, href)
             return (
@@ -95,7 +95,7 @@ export function AppHeader() {
                 aria-current={active ? 'page' : undefined}
                 className={cn(
                   // Stacked icon + small label on phones, inline on larger screens
-                  'inline-flex flex-col items-center gap-0.5 rounded-md px-2 py-1 text-[10px] font-medium leading-none transition-colors sm:flex-row sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm',
+                  'inline-flex min-h-11 flex-col items-center justify-center gap-0.5 whitespace-nowrap rounded-md px-2 py-1 text-xs font-medium leading-none transition-colors [overflow-wrap:normal] sm:flex-row sm:gap-1.5 sm:px-2.5 sm:py-1.5 sm:text-sm',
                   active
                     ? 'bg-accent text-accent-foreground'
                     : 'text-muted-foreground hover:bg-accent/60 hover:text-foreground',
@@ -128,7 +128,7 @@ export function AppHeader() {
             <SignInButton mode="modal">
               <button
                 type="button"
-                className="rounded-md border bg-card px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+                className="min-h-11 whitespace-nowrap rounded-md border bg-card px-3 py-1.5 text-sm font-medium transition-colors [overflow-wrap:normal] hover:bg-accent"
               >
                 Skrá inn
               </button>

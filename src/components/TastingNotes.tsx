@@ -1,5 +1,6 @@
 import { MessageSquareQuote } from 'lucide-react'
 import { flavorTagLabel } from '@/lib/flavorTags'
+import { StatCard } from '@/components/StatCard'
 
 export interface BeerTagCount {
   tag: string
@@ -33,11 +34,7 @@ export function TastingNotes({ beers }: { beers: BeerNotes[] }) {
   if (withNotes.length === 0) return null
 
   return (
-    <div className="mt-8 space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold mb-2">Bragðlýsingar</h2>
-        <p className="text-sm text-muted-foreground">Hvað fólki fannst um hvern bjór</p>
-      </div>
+    <StatCard tone="section" className="mt-8" icon={MessageSquareQuote} title="Bragðlýsingar" description="Hvað fólki fannst um hvern bjór">
       <div className="space-y-3">
         {withNotes.map(beer => (
           <div key={beer.beerId} className="bg-card p-4 rounded-lg border space-y-3">
@@ -62,6 +59,6 @@ export function TastingNotes({ beers }: { beers: BeerNotes[] }) {
           </div>
         ))}
       </div>
-    </div>
+    </StatCard>
   )
 }

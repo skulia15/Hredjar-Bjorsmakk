@@ -10,6 +10,8 @@ interface StarRatingProps {
   size?: number;
   disabled?: boolean;
   showNumeric?: boolean;
+  /** wrap stars into rows of this many */
+  perRow?: number;
 }
 
 export function StarRating({
@@ -18,7 +20,8 @@ export function StarRating({
   max = 10,
   size = 32,
   disabled = false,
-  showNumeric = true
+  showNumeric = true,
+  perRow
 }: StarRatingProps) {
   const [hoverValue, setHoverValue] = useState<number | null>(null);
   const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
@@ -153,9 +156,43 @@ export function StarRating({
   };
 
   return (
-    <div className="flex flex-col gap-3 w-full">
+    <div className="flex flex-col gap-2 w-full">
+      {showNumeric && (
+        <div className="flex items-baseline gap-1 justify-center">
+          <input
+            type="number"
+            min="1"
+            max={max}
+            step="0.5"
+            value={value || ''}
+            onChange={(e) => {
+              const inputValue = e.target.value;
+
+              // Allow empty string (clearing the field)
+              if (inputValue === '') {
+                onChange(0);
+                return;
+              }
+
+              const newValue = parseFloat(inputValue);
+              if (!isNaN(newValue) && newValue >= 1 && newValue <= max) {
+                onChange(newValue);
+              }
+            }}
+            onWheel={(e) => e.currentTarget.blur()}
+            onTouchMove={(e) => e.preventDefault()}
+            disabled={disabled}
+            aria-label="Einkunn"
+            className="w-[2.4em] bg-transparent text-center text-[length:min(3.75rem,17vw)] font-extrabold leading-none text-gold placeholder:text-gold/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed touch-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            placeholder="0.0"
+          />
+          <span className="text-xl font-semibold text-mint">/ {max}</span>
+        </div>
+      )}
       <div
-        className="flex items-center gap-0.5 sm:gap-1 justify-center flex-wrap"
+        className="flex items-center gap-1 justify-center flex-wrap mx-auto"
+        // gap-1 is 0.25rem, so it grows with the text size; include it in rem rather than px
+        style={perRow ? { maxWidth: `calc(${perRow * size}px + ${perRow - 1} * 0.25rem)` } : undefined}
         onMouseLeave={handleMouseLeave}
       >
         {Array.from({ length: max }, (_, i) => {
@@ -164,7 +201,7 @@ export function StarRating({
           return (
             <div
               key={i}
-              className="relative select-none"
+              className="relative select-none transition-transform hover:scale-110 hover:-rotate-6"
               style={{ width: size, height: size }}
               onTouchStart={(e) => handleTouchStart(i, e)}
               onTouchMove={handleTouchMove}
@@ -191,7 +228,7 @@ export function StarRating({
 
               {/* Background star (empty) */}
               <Star
-                className="absolute top-0 left-0 text-gray-300"
+                className="absolute top-0 left-0 text-[#6E9283]"
                 size={size}
                 fill="none"
                 strokeWidth={1.5}
@@ -200,7 +237,7 @@ export function StarRating({
               {/* Filled star */}
               {fill === 'full' && (
                 <Star
-                  className="absolute top-0 left-0 text-yellow-400 transition-colors"
+                  className="absolute top-0 left-0 text-gold transition-colors"
                   size={size}
                   fill="currentColor"
                   strokeWidth={1.5}
@@ -211,7 +248,7 @@ export function StarRating({
               {fill === 'half' && (
                 <div className="absolute top-0 left-0 overflow-hidden" style={{ width: '50%' }}>
                   <Star
-                    className="text-yellow-400 transition-colors"
+                    className="text-gold transition-colors"
                     size={size}
                     fill="currentColor"
                     strokeWidth={1.5}
@@ -223,37 +260,6 @@ export function StarRating({
         })}
       </div>
 
-      {showNumeric && (
-        <div className="flex items-center gap-2 justify-center">
-          <input
-            type="number"
-            min="1"
-            max={max}
-            step="0.5"
-            value={value || ''}
-            onChange={(e) => {
-              const inputValue = e.target.value;
-
-              // Allow empty string (clearing the field)
-              if (inputValue === '') {
-                onChange(0);
-                return;
-              }
-
-              const newValue = parseFloat(inputValue);
-              if (!isNaN(newValue) && newValue >= 1 && newValue <= max) {
-                onChange(newValue);
-              }
-            }}
-            onWheel={(e) => e.currentTarget.blur()}
-            onTouchMove={(e) => e.preventDefault()}
-            disabled={disabled}
-            className="w-20 px-3 py-2 border rounded-md text-center text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed bg-background touch-none"
-            placeholder="0.0"
-          />
-          <span className="text-sm text-muted-foreground">/ {max}.0</span>
-        </div>
-      )}
     </div>
   );
 }

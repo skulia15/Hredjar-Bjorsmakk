@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { StatCard } from '@/components/StatCard'
 import {
   ScatterChart,
   Scatter,
@@ -10,7 +11,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   ZAxis,
-  Label,
   Legend,
   ReferenceLine
 } from 'recharts'
@@ -160,14 +160,14 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
   const maxPrice = Math.max(...data.scatterData.map(p => p.x))
 
   return (
-    <div className="mt-8 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-2"><Coins className="h-6 w-6 text-yellow-500" /> Verðgreining</h2>
-        <p className="text-sm text-muted-foreground">
-          {data.overview.totalBeers} bjórar með verð- og einkunnagögnum
-        </p>
-      </div>
+    <StatCard
+      tone="section"
+      className="mt-8"
+      icon={Coins}
+      title="Verðgreining"
+      description={`${data.overview.totalBeers} bjórar með verð- og einkunnagögnum`}
+    >
+    <div className="space-y-6">
 
       {/* Statistical Overview */}
       <div className="grid grid-cols-3 gap-3">
@@ -179,7 +179,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <CorrIcon className="h-8 w-8 mx-auto" />
           <div className="text-xs text-muted-foreground mt-1">
             {corrDesc.text} fylgni
-            <div className="text-xs opacity-60">r = {data.overview.correlation.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground">r = {data.overview.correlation.toFixed(2)}</div>
           </div>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
@@ -191,14 +191,14 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       </div>
 
       {/* Best Value Highlight */}
-      <div className="p-4 rounded-lg border-2 border-primary bg-primary/5">
+      <div className="p-4 rounded-lg border-2 border-primary bg-card">
         <div className="flex items-start gap-3">
           <Gem className="h-8 w-8 text-primary flex-shrink-0" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm text-muted-foreground mb-1">BESTU KAUP</div>
             <div className="font-bold text-lg">{data.bestValue.name}</div>
             <div className="text-sm text-muted-foreground">{data.bestValue.brewery}</div>
-            <div className="mt-2 flex gap-4 text-sm">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <span className="text-primary font-semibold">
                 {data.bestValue.rating} einkunn
               </span>
@@ -218,39 +218,41 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       {/* Scatter Plot */}
       <div className="space-y-4">
         <div className="p-4 rounded-lg border bg-card">
-          <h3 className="font-semibold mb-4 text-center">Verð vs Einkunn</h3>
-          <ResponsiveContainer width="100%" height={400}>
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 40, left: 60 }}>
+          <h3 className="font-semibold mb-1 text-center">Verð vs Einkunn</h3>
+          <p className="text-xs text-muted-foreground text-center mb-3">
+            Einkunn (lóðrétt) á móti verði á lítra (lárétt). Rauðu línurnar eru meðaleinkunn og miðgildi verðs.
+          </p>
+          {/* Axis titles moved to the line above and reference-line labels dropped: on a phone they clipped */}
+          <ResponsiveContainer width="100%" height={320}>
+            <ScatterChart margin={{ top: 8, right: 12, bottom: 4, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis
                 type="number"
                 dataKey="x"
                 name="Verð/L"
-                unit=" kr"
-              >
-                <Label value="Verð per líter (kr)" offset={-10} position="insideBottom" />
-              </XAxis>
+                domain={['dataMin - 100', 'dataMax + 100']}
+                tickFormatter={(v) => `${Math.round(v / 100) / 10}þ`}
+                tick={{ fontSize: '0.75rem' }}
+              />
               <YAxis
                 type="number"
                 dataKey="y"
                 name="Einkunn"
                 domain={ratingDomain(data.scatterData.map(p => p.y))}
-              >
-                <Label value="Einkunn" angle={-90} position="insideLeft" style={{ textAnchor: 'middle' }} />
-              </YAxis>
-              <ZAxis type="number" dataKey="ratingsCount" range={[50, 400]} />
+                tick={{ fontSize: '0.75rem' }}
+                width={32}
+              />
+              <ZAxis type="number" dataKey="ratingsCount" range={[30, 220]} />
               <Tooltip content={<CustomTooltip />} />
               <ReferenceLine
                 y={data.overview.avgRating}
                 stroke="hsl(var(--primary))"
                 strokeDasharray="5 5"
-                label={{ value: 'Meðaleinkunn', position: 'right' }}
               />
               <ReferenceLine
                 x={data.overview.medianPrice}
                 stroke="hsl(var(--primary))"
                 strokeDasharray="5 5"
-                label={{ value: 'Miðgildi verðs', position: 'top' }}
               />
               {priceFit && maxPrice > minPrice && (
                 <ReferenceLine
@@ -282,9 +284,9 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <h3 className="font-semibold text-center text-sm text-muted-foreground">
             Bjórar eftir svæðum í dreifingarriti
           </h3>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,9.5rem),1fr))] gap-3">
             {data.quadrants.hiddenGems.length > 0 && (
-              <div className="rounded-lg border bg-green-500/10 border-green-500/20">
+              <div className="rounded-lg border bg-green-50 border-green-500/20">
                 <button
                   onClick={() => toggleQuadrant('hiddenGems')}
                   className="w-full p-3 text-left hover:bg-green-500/5 transition-colors"
@@ -317,7 +319,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               </div>
             )}
             {data.quadrants.premiumWorthIt.length > 0 && (
-              <div className="rounded-lg border bg-blue-500/10 border-blue-500/20">
+              <div className="rounded-lg border bg-blue-50 border-blue-500/20">
                 <button
                   onClick={() => toggleQuadrant('premiumWorthIt')}
                   className="w-full p-3 text-left hover:bg-blue-500/5 transition-colors"
@@ -350,7 +352,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               </div>
             )}
             {data.quadrants.budgetOptions.length > 0 && (
-              <div className="rounded-lg border bg-yellow-500/10 border-yellow-500/20">
+              <div className="rounded-lg border bg-yellow-50 border-yellow-500/20">
                 <button
                   onClick={() => toggleQuadrant('budgetOptions')}
                   className="w-full p-3 text-left hover:bg-yellow-500/5 transition-colors"
@@ -383,7 +385,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               </div>
             )}
             {data.quadrants.overpriced.length > 0 && (
-              <div className="rounded-lg border bg-red-500/10 border-red-500/20">
+              <div className="rounded-lg border bg-red-50 border-red-500/20">
                 <button
                   onClick={() => toggleQuadrant('overpriced')}
                   className="w-full p-3 text-left hover:bg-red-500/5 transition-colors"
@@ -429,7 +431,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <div
             key={beer.beerId}
             className={`p-4 rounded-lg border ${
-              beer.rank <= 3 ? 'bg-primary/5 border-primary' : 'bg-card'
+              beer.rank <= 3 ? 'bg-card border-2 border-primary' : 'bg-card'
             }`}
           >
             <div className="flex items-start justify-between gap-4">
@@ -470,5 +472,6 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
         )}
       </div>
     </div>
+    </StatCard>
   )
 }

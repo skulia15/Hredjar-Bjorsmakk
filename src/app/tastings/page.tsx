@@ -48,13 +48,15 @@ export default function TastingsPage() {
   const getStatusBadge = (status: string) => {
     const styles = {
       draft: 'bg-gray-500/10 text-gray-600',
-      active: 'bg-green-500/10 text-green-600',
+      active: 'bg-green-50 text-green-600',
       closed: 'bg-blue-500/10 text-blue-600'
     }
 
+    const labels = { draft: 'Drög', active: 'Í gangi', closed: 'Lokið' }
+
     return (
       <span className={`px-2 py-1 rounded text-xs font-medium ${styles[status as keyof typeof styles] || styles.draft}`}>
-        {status}
+        {labels[status as keyof typeof labels] ?? status}
       </span>
     )
   }
@@ -98,21 +100,21 @@ export default function TastingsPage() {
                 href={`/t/${tasting.id}`}
                 className="block bg-card p-4 rounded-lg border hover:border-primary transition-colors"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <h3 className="font-bold text-lg">{tasting.title}</h3>
                       {getStatusBadge(tasting.status)}
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                       <span>{tasting.beerCount} bjór{tasting.beerCount !== 1 ? 'ar' : ''}</span>
                       <span>•</span>
                       <span>{tasting.participantCount} þátttakend{tasting.participantCount !== 1 ? 'ur' : 'i'}</span>
                       <span>•</span>
-                      <span>{new Date(tasting.createdAt).toLocaleDateString()}</span>
+                      <span>{new Date(tasting.createdAt).toLocaleDateString('is-IS')}</span>
                     </div>
                   </div>
-                  <div className="ml-4">
+                  <div className="shrink-0" aria-hidden>
                     <span className="text-primary">→</span>
                   </div>
                 </div>

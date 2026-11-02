@@ -50,7 +50,7 @@ export function TastingTabs({ tastingId }: { tastingId: string }) {
   return (
     <div className="border-b bg-background/60">
       <div className="container mx-auto px-4">
-        <nav aria-label="Smökkun" className="-mb-px flex flex-1 gap-1 overflow-x-auto sm:flex-none">
+        <nav aria-label="Smökkun" className="-mb-px flex flex-1 flex-wrap gap-1 sm:flex-none">
           {tabs.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href)
             return (
@@ -59,7 +59,7 @@ export function TastingTabs({ tastingId }: { tastingId: string }) {
                 href={href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'inline-flex flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors sm:flex-none',
+                  'inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors [overflow-wrap:normal] sm:flex-none',
                   active
                     ? 'border-primary text-foreground'
                     : 'border-transparent text-muted-foreground hover:text-foreground',

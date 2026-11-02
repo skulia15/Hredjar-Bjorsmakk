@@ -7,7 +7,9 @@ import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { PersonalStats } from '@/components/PersonalStats'
-import { Beer as BeerIcon } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown, Table, Users } from 'lucide-react'
+import { StatCard } from '@/components/StatCard'
+import { FoamCard } from '@/components/FoamCard'
 import { RankMedal } from '@/components/RankMedal'
 import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
 
@@ -225,97 +227,115 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     )
   }
 
+  const podium = scores.beers.slice(0, 3)
+  // Display order on the podium: 2nd, 1st, 3rd
+  const podiumOrder = [podium[1], podium[0], podium[2]]
+  const rest = scores.beers.slice(3)
+
   return (
-    <div className="min-h-screen p-4 md:p-8">
+    <div className="min-h-screen px-4 pt-4 pb-8 md:p-8">
       <div className="max-w-2xl mx-auto space-y-6">
         {/* Header */}
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">{scores.title}</h1>
-          <p className="text-muted-foreground">Stigatafla </p>
-          {scores.status === 'active' && (
-            <p className="text-sm text-muted-foreground">
-              Uppfærslur í beinni • {scores.beers.length} bjórum gefin einkunn
-            </p>
-          )}
-        </div>
+        <header className="min-w-0">
+          <div className="text-[0.8125rem] font-semibold tracking-[0.14em] uppercase text-gold truncate">{scores.title}</div>
+          <h1 className="text-3xl leading-tight">Stigatafla</h1>
+        </header>
+        {scores.status === 'active' && (
+          <p className="text-sm text-mint -mt-3">
+            Uppfærslur í beinni • {scores.beers.length} bjórum gefin einkunn
+          </p>
+        )}
 
-
-        {/* Scores List */}
+        {/* Scores */}
         {scores.beers.length === 0 ? (
           <div className="text-center py-12">
-            <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground">
+            <BeerIcon className="h-16 w-16 mx-auto mb-4 text-mint" />
+            <p className="text-mint">
               Engir bjórar hafa fengið einkunn ennþá
             </p>
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="space-y-3">
-              {(showAllBeers ? scores.beers : scores.beers.slice(0, 3)).map((beer) => (
-                <div
-                  key={beer.beerId}
-                  className={`p-4 rounded-lg border ${
-                    beer.rank <= 3
-                      ? 'bg-card border-2 border-primary'
-                      : 'bg-card'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <RankMedal rank={beer.rank} className="h-7 w-7" />
-                        <span className="text-lg font-semibold text-muted-foreground">
-                          #{beer.rank}
-                        </span>
+            <section aria-label="Verðlaunapallur" className="grid grid-cols-3 gap-2.5 items-end pt-2">
+              {podiumOrder.map((beer, i) => {
+                if (!beer) return <div key={`empty-${i}`} />
+                const place = i === 1 ? 1 : i === 0 ? 2 : 3
+                const tone = place === 1
+                  ? 'min-h-[168px] bg-gold text-ink'
+                  : place === 2
+                    ? 'min-h-[120px] bg-[#D9D3C4] text-ink'
+                    : 'min-h-[96px] bg-cranberry text-white'
+                return (
+                  <div key={beer.beerId} className="flex flex-col items-center gap-2 text-center min-w-0">
+                    {place === 1 && <Crown className="h-8 w-8 text-gold" fill="currentColor" />}
+                    <div className="flex flex-col items-center gap-0.5 min-w-0 w-full [container-type:inline-size]">
+                      <div className={`${place === 1 ? 'text-[length:min(1.0625rem,15cqi)] font-extrabold' : 'text-[length:min(0.9375rem,14cqi)] font-semibold'} leading-tight line-clamp-3`}>
+                        {beer.name}
                       </div>
-                      <h3 className="font-bold text-lg truncate">{beer.name}</h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {beer.brewery}
-                      </p>
-                      {(beer.containerSize || beer.containerType) && (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {beer.containerSize && beer.containerType && (
-                            <span>{beer.containerSize}ml {beer.containerType}</span>
-                          )}
-                        </p>
-                      )}
-                      <div className="mt-2">
-                        <TagChips
-                          tags={ratingsDetail?.beers.find(b => b.beerId === beer.beerId)?.tags ?? []}
-                          limit={3}
-                        />
-                      </div>
+                      <div className="text-[length:min(0.75rem,11cqi)] text-mint truncate max-w-full">{beer.brewery}</div>
                     </div>
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-3xl font-bold text-primary">
-                        {beer.average.toFixed(2)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
+                    {/* Sized to the column (cqi) so large phone text can't push the score out of its bar */}
+                    <div className="w-full [container-type:inline-size]">
+                      <div className="foam" style={{ height: 10, backgroundSize: '16px 10px', backgroundImage: 'radial-gradient(circle at 8px 10px, var(--foam) 8px, transparent 8.5px)' }} />
+                      {/* The score is the headline; the bar height already says the place */}
+                      <div className={`${tone} rounded-b-[14px] flex flex-col items-center justify-center gap-0.5`}>
+                        <span className="text-[length:min(0.75rem,11cqi)] font-extrabold uppercase tracking-wider">{beer.rank}. sæti</span>
+                        <span className={`${place === 1 ? 'text-[length:min(2.25rem,30cqi)]' : 'text-[length:min(1.75rem,28cqi)]'} leading-none font-extrabold tabular-nums`}>{beer.average.toFixed(2)}</span>
+                        <span className="text-[length:min(0.75rem,11cqi)] font-semibold">{beer.count} eink.</span>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                )
+              })}
+            </section>
 
-            {/* Show More/Less Button */}
-            {scores.beers.length > 3 && (
+            {rest.length > 0 && showAllBeers && (
+              <FoamCard as="section" aria-label="Restin af listanum" className="px-4 pt-1 pb-2">
+                <ol>
+                  {rest.map((beer) => (
+                    <li key={beer.beerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 min-h-14 py-2 border-b border-cream-line last:border-b-0">
+                      <span className="w-8 h-8 shrink-0 rounded-full bg-cream-dim flex items-center justify-center text-[0.9375rem] font-extrabold">
+                        {beer.rank}
+                      </span>
+                      <span className="flex-1 min-w-[min(9rem,100%)] flex flex-col">
+                        <span className="text-base font-semibold">{beer.name}</span>
+                        <span className="text-[0.8125rem] text-muted-foreground truncate">
+                          {beer.brewery}
+                          {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+                        </span>
+                        <span className="mt-1">
+                          <TagChips
+                            tags={ratingsDetail?.beers.find(b => b.beerId === beer.beerId)?.tags ?? []}
+                            limit={3}
+                          />
+                        </span>
+                      </span>
+                      <span className="text-right shrink-0 ml-auto">
+                        <span className="block text-lg font-extrabold text-holly">{beer.average.toFixed(2)}</span>
+                        <span className="block text-xs text-muted-foreground">{beer.count} eink.</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </FoamCard>
+            )}
+
+            {rest.length > 0 && (
               <div className="flex justify-center">
                 <button
                   onClick={() => setShowAllBeers(!showAllBeers)}
-                  className="px-6 py-3 rounded-lg border bg-card hover:bg-muted transition-colors font-medium"
+                  className="inline-flex items-center gap-2 min-h-12 px-5 rounded-full bg-pine-light hover:bg-pine-line transition-colors font-semibold"
                 >
                   {showAllBeers ? (
                     <>
                       Fela stigatöflu
-                      <span className="ml-2">↑</span>
+                      <ChevronUp className="h-4 w-4" />
                     </>
                   ) : (
                     <>
                       Sjá alla stigatöflu
-                      <span className="ml-2 text-muted-foreground">({scores.beers.length - 3} bjórar í viðbót)</span>
-                      <span className="ml-2">↓</span>
+                      <span className="text-mint">({rest.length} í viðbót)</span>
+                      <ChevronDown className="h-4 w-4" />
                     </>
                   )}
                 </button>
@@ -346,53 +366,54 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
         {/* Detailed Ratings Table */}
         {isClient && ratingsDetail && ratingsDetail.beers.length > 0 && ratingsDetail.participants.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Einkunnatafla</h2>
-              <p className="text-sm text-muted-foreground">
-                Einkunnir hvers þátttakanda fyrir hvern bjór
-              </p>
-            </div>
+          // Folded by default: on a phone the full table is several screens long
+          <StatCard
+            tone="section"
+            className="mt-8"
+            icon={Table}
+            title="Einkunnatafla"
+            description={`Einkunnir hvers þátttakanda fyrir hvern bjór (${ratingsDetail.beers.length} bjórar × ${ratingsDetail.participants.length})`}
+          >
             <RatingsTable participants={ratingsDetail.participants} beers={ratingsDetail.beers} />
-          </div>
+          </StatCard>
         )}
 
         {isClient && ratingsDetail && <TastingNotes beers={ratingsDetail.beers} />}
 
         {/* User Statistics - Only show for closed tastings */}
         {scores.status === 'closed' && analytics && analytics.participantStats.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Ítarleg tölfræði þátttakenda</h2>
-              <p className="text-sm text-muted-foreground">
-                Meðaleinkunn: {analytics.overview.overallAverage.toFixed(2)} • {analytics.overview.totalRatings} einkunnir samtals
-              </p>
-            </div>
-
-            <div className="space-y-3">
+          <StatCard
+            tone="section"
+            className="mt-8"
+            icon={Users}
+            title="Ítarleg tölfræði þátttakenda"
+            description={`Meðaleinkunn: ${analytics.overview.overallAverage.toFixed(2)} • ${analytics.overview.totalRatings} einkunnir samtals`}
+          >
+            {/* Each person folds open on tap; the summary row alone answers "who rated what on average" */}
+            <div className="space-y-2">
               {analytics.participantStats.map((participant) => (
-                <div
+                <details
                   key={participant.participantId}
-                  className="p-4 rounded-lg border bg-card"
+                  className="group rounded-lg border bg-card"
                 >
-                  <div className="space-y-3">
-                    {/* Participant name and average */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg">{participant.userName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {participant.ratingsCount} af {participant.possibleRatings} bjórum gefin einkunn ({participant.engagementRate}%)
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-2xl font-bold text-primary">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
+                    <span className="flex-1 min-w-[min(10rem,100%)]">
+                      <h3 className="font-bold text-lg leading-tight">{participant.userName}</h3>
+                      <span className="block text-sm text-muted-foreground">
+                        {participant.ratingsCount} af {participant.possibleRatings} bjórum ({participant.engagementRate}%)
+                      </span>
+                    </span>
+                    <span className="ml-auto flex items-center gap-3">
+                      <span className="text-right">
+                        <span className="block text-2xl font-bold text-primary tabular-nums">
                           {participant.averageRating.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          meðaleinkunn
-                        </div>
-                      </div>
-                    </div>
+                        </span>
+                        <span className="block text-xs text-muted-foreground">meðaleinkunn</span>
+                      </span>
+                      <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+                    </span>
+                  </summary>
+                  <div className="space-y-3 px-4 pb-4">
 
                     {/* Top 3 beers */}
                     {participant.topBeers && participant.topBeers.length > 0 && (
@@ -431,10 +452,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       </div>
                     )}
                   </div>
-                </div>
+                </details>
               ))}
             </div>
-          </div>
+          </StatCard>
         )}
 
       </div>

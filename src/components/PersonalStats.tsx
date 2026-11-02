@@ -1,6 +1,7 @@
 'use client'
 
 import { Beer, Heart, type LucideIcon, Meh, Users, Wine } from 'lucide-react'
+import { StatCard } from '@/components/StatCard'
 import { personalStats, type PersonalStatsInput } from '@/lib/stats'
 
 interface PersonalStatsProps extends PersonalStatsInput {
@@ -18,14 +19,16 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
     : `Þú gafst að meðaltali ${Math.abs(stats.offset).toFixed(2)} stigum lægra en hópurinn`
 
   return (
-    <div className="bg-card p-6 rounded-lg border-2 border-primary space-y-4">
-      <div className="text-center">
-        <h2 className="text-2xl font-bold flex items-center justify-center gap-2"><Wine className="h-6 w-6 text-amber-500" /> Þín smökkun</h2>
-        <p className="text-sm text-muted-foreground mt-1">
-          {stats.ratedCount} bjórum gefin einkunn • meðaleinkunn {stats.myAverage.toFixed(2)}
-        </p>
-        <p className="font-medium mt-2">{offsetText}</p>
-      </div>
+    // Your own results matter most to you, so this one starts open
+    <StatCard
+      defaultOpen
+      className="border-2 border-primary"
+      icon={Wine}
+      title="Þín smökkun"
+      description={`${stats.ratedCount} bjórum gefin einkunn • meðaleinkunn ${stats.myAverage.toFixed(2)}`}
+    >
+    <div className="space-y-4">
+      <p className="font-medium text-center">{offsetText}</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Stat icon={Heart} label="Uppáhaldsbjórinn þinn" main={stats.favourite.name} sub={`Þú gafst ${stats.favourite.score}`} />
@@ -58,6 +61,7 @@ export function PersonalStats({ favoriteStyle, ...input }: PersonalStatsProps) {
         )}
       </div>
     </div>
+    </StatCard>
   )
 }
 

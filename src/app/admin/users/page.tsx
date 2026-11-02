@@ -157,7 +157,7 @@ export default function AdminUsersPage() {
 
         {notice && (
           <div className={`p-3 rounded-md text-sm text-center ${
-            notice.isError ? 'bg-destructive/10 text-destructive' : 'bg-green-500/10 text-green-600'
+            notice.isError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'
           }`}>
             {notice.text}
           </div>
@@ -208,7 +208,7 @@ export default function AdminUsersPage() {
                         className={`px-3 py-2 rounded text-sm font-medium transition-colors ${
                           user.isLeader
                             ? 'bg-orange-500/10 text-orange-600 hover:bg-orange-500/20'
-                            : 'bg-green-500/10 text-green-600 hover:bg-green-500/20'
+                            : 'bg-green-50 text-green-600 hover:bg-green-100'
                         }`}
                       >
                         {user.isLeader ? 'Fjarlægja leiðtoga' : 'Gera að leiðtoga'}
@@ -216,7 +216,7 @@ export default function AdminUsersPage() {
                       <button
                         type="button"
                         onClick={() => deleteUser(user)}
-                        className="px-3 py-2 rounded text-sm font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                        className="px-3 py-2 rounded text-sm font-medium bg-red-50 text-red-600 hover:bg-destructive/20 transition-colors"
                         title="Eyða notanda (einkunnir verða geymdar)"
                       >
                         Eyða
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
                   <button
                     type="button"
                     onClick={() => deleteUser(user)}
-                    className="px-3 py-2 rounded text-sm font-medium bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
+                    className="px-3 py-2 rounded text-sm font-medium bg-red-50 text-red-600 hover:bg-destructive/20 transition-colors"
                   >
                     Eyða
                   </button>

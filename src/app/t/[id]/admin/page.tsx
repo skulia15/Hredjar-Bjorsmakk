@@ -431,7 +431,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         </label>
 
         {message && (
-          <div className="p-3 bg-green-500/10 border border-green-500 text-green-600 rounded-md text-sm text-center">
+          <div className="p-3 bg-green-50 border border-green-500 text-green-600 rounded-md text-sm text-center">
             {message}
           </div>
         )}
@@ -480,7 +480,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                   <SlideToConfirm
                     onConfirm={() => handleFinishBeer(currentBeer.id)}
                     text="Strjúka til að klára bjór"
-                    confirmText="→"
+                    
                   />
                 </div>
               )}

@@ -88,7 +88,7 @@ export default function ProjectorSelectionPage() {
                   <div className="flex-1">
                     <h3 className="text-xl font-bold mb-2">{tasting.title}</h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="px-2 py-1 bg-green-500/10 text-green-600 rounded">
+                      <span className="px-2 py-1 bg-green-50 text-green-600 rounded">
                         {tasting.status === 'active' ? 'Í gangi' : tasting.status}
                       </span>
                       <span className="inline-flex items-center gap-1"><Users className="h-4 w-4" /> {tasting.participantCount} þátttakendur</span>

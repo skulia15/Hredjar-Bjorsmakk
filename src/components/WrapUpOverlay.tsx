@@ -42,8 +42,9 @@ export function WrapUpOverlay({
   }, [onComplete])
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 animate-in fade-in duration-300">
-      <div className="bg-card rounded-lg border-2 border-primary max-w-md w-full p-8 space-y-6 animate-in zoom-in-95 duration-300">
+    // Scrolls when large text makes the card taller than the screen; my-auto keeps it centred otherwise
+    <div className="fixed inset-0 bg-black/80 flex overflow-y-auto justify-center z-50 p-4 animate-in fade-in duration-300">
+      <div className="my-auto bg-card rounded-3xl border-2 border-primary max-w-md w-full p-5 sm:p-8 space-y-6 animate-in zoom-in-95 duration-300">
         {/* Beer Finished Header */}
         <div className="text-center space-y-2">
           <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
