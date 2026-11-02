@@ -1,5 +1,7 @@
 import { z } from 'zod';
-import { FLAVOR_TAG_KEYS, NOTE_MAX_LENGTH } from '@/lib/flavorTags';
+import {
+  CUSTOM_TAG_MAX_LENGTH, CUSTOM_TAGS_PER_RATING, isCustomTag, normalizeTag, NOTE_MAX_LENGTH,
+} from '@/lib/flavorTags';
 
 // Identity (who is acting) always comes from the Clerk session, never from these bodies
 
@@ -11,8 +13,11 @@ export const ratingSchema = z.object({
     .max(10.0, 'Score must be at most 10.0')
     .refine((val) => val % 0.5 === 0, 'Score must be in 0.5 increments'),
   // Omitted fields keep their stored value
-  tags: z.array(z.enum(FLAVOR_TAG_KEYS))
-    .transform((tags) => [...new Set(tags)])
+  // Fixed keys plus a few short free-text "Annað" tags, normalized so spellings group together
+  tags: z.array(z.string().trim().min(1).max(CUSTOM_TAG_MAX_LENGTH))
+    .transform((tags) => [...new Set(tags.map(normalizeTag))])
+    .refine((tags) => tags.filter(isCustomTag).length <= CUSTOM_TAGS_PER_RATING,
+      `At most ${CUSTOM_TAGS_PER_RATING} custom tags`)
     .optional(),
   note: z.string()
     .trim()

@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
-import { Beer as BeerIcon, Brain, Check, ChevronDown, EyeOff, Hourglass, PartyPopper, Plus, Trophy } from "lucide-react";
+import { Beer as BeerIcon, Brain, Check, ChevronDown, EyeOff, Hourglass, PartyPopper, Plus, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -15,7 +15,16 @@ import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
 import { FlavorTagIcon } from "@/components/FlavorTagIcon";
-import { FLAVOR_TAGS, type FlavorTag, flavorTagLabel, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
+import {
+	CUSTOM_TAG_MAX_LENGTH,
+	CUSTOM_TAGS_PER_RATING,
+	FLAVOR_TAGS,
+	type FlavorTag,
+	flavorTagLabel,
+	isCustomTag,
+	normalizeTag,
+	NOTE_MAX_LENGTH,
+} from "@/lib/flavorTags";
 
 interface Beer {
 	id: string;
@@ -173,6 +182,20 @@ export default function RatePage({
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
 	const [tagsOpen, setTagsOpen] = useState(false);
+	const [customDraft, setCustomDraft] = useState("");
+	const customTagCount = tags.filter(isCustomTag).length;
+	const addCustomTag = () => {
+		if (!customDraft.trim()) return;
+		// Same normalizing as the server, so "Kaffi" typed in lights up the Kaffi chip
+		const tag = normalizeTag(customDraft);
+		editedRef.current = true;
+		setTags((prev) => {
+			if (prev.includes(tag)) return prev;
+			if (isCustomTag(tag) && prev.filter(isCustomTag).length >= CUSTOM_TAGS_PER_RATING) return prev;
+			return [...prev, tag];
+		});
+		setCustomDraft("");
+	};
 	// Set on any edit, so the saved rating arriving late doesn't wipe what was just tapped
 	const editedRef = useRef(false);
 
@@ -678,6 +701,51 @@ export default function RatePage({
 									</button>
 								);
 							},
+						)}
+						{/* Custom "Annað" picks; tapping one removes it */}
+						{tags.filter(isCustomTag).map((tag) => (
+							<button
+								key={tag}
+								type="button"
+								aria-label={`Fjarlægja ${tag}`}
+								onClick={() => {
+									editedRef.current = true;
+									setTags((prev) => prev.filter((t) => t !== tag));
+								}}
+								className="inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-sm font-semibold italic bg-gold text-ink"
+							>
+								<FlavorTagIcon tag={tag} className="h-[1.1em] w-[1.1em] shrink-0" />
+								{tag}
+								<X aria-hidden className="h-3.5 w-3.5 not-italic" />
+							</button>
+						))}
+						{customTagCount < CUSTOM_TAGS_PER_RATING && (
+							<div className="w-full flex gap-2 pt-1">
+								<input
+									value={customDraft}
+									onChange={(e) => setCustomDraft(e.target.value)}
+									onKeyDown={(e) => {
+										// Enter adds the tag rather than submitting the rating
+										if (e.key === "Enter") {
+											e.preventDefault();
+											addCustomTag();
+										}
+									}}
+									maxLength={CUSTOM_TAG_MAX_LENGTH}
+									enterKeyHint="done"
+									aria-label="Annað bragð"
+									placeholder="Annað… t.d. negull"
+									className="min-w-0 flex-1 min-h-10 px-4 rounded-full bg-pine-deep text-cream placeholder:text-mint/70 text-[0.9375rem] border-0 focus:outline-none focus:ring-2 focus:ring-gold"
+								/>
+								<button
+									type="button"
+									onClick={addCustomTag}
+									disabled={!customDraft.trim()}
+									className="min-h-10 px-4 rounded-full bg-gold text-ink text-sm font-bold disabled:opacity-40"
+								>
+									Bæta við
+								</button>
+							</div>
 						)}
 							</div>
 						)}

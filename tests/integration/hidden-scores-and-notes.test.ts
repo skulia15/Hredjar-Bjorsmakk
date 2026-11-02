@@ -113,12 +113,15 @@ describe('flavor tags and notes', () => {
     expect(none.json).toBeNull()
   })
 
-  it('rejects unknown tags and notes over 280 characters', async () => {
+  it('stores custom tags normalized, and rejects too many of them and notes over 280 characters', async () => {
     const fixture = await createTastingFixture()
     const beer = fixture.beers[0]
     await makeCurrent(fixture, beer.id)
 
-    expect((await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: ['delicious'] })).status).toBe(400)
+    const saved = await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: [' negull', 'hoppy'] })
+    expect(saved.status).toBe(200)
+    expect(saved.json.tags).toEqual(['Negull', 'hoppy'])
+    expect((await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: ['a', 'b', 'c', 'd'] })).status).toBe(400)
     expect((await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: 'x'.repeat(281) })).status).toBe(400)
   })
 

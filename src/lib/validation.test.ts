@@ -18,9 +18,20 @@ describe('ratingSchema', () => {
     expect(ratingSchema.safeParse({ ...ids, beerId: 'nope', score: 5 }).success).toBe(false)
   })
 
-  it('dedupes tags and rejects unknown ones', () => {
+  it('dedupes tags', () => {
     expect(ratingSchema.parse({ ...ids, score: 5, tags: ['hoppy', 'hoppy', 'sour'] }).tags).toEqual(['hoppy', 'sour'])
-    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['delicious'] }).success).toBe(false)
+  })
+
+  it('normalizes custom tags so spellings group, and maps typed labels to their key', () => {
+    expect(ratingSchema.parse({ ...ids, score: 5, tags: [' negull ', 'NEGULL', 'Kaffi', 'appelsínu  börkur'] }).tags)
+      .toEqual(['Negull', 'coffee', 'Appelsínu börkur'])
+  })
+
+  it('caps custom tags in count and length', () => {
+    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['a', 'b', 'c', 'hoppy'] }).success).toBe(true)
+    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['a', 'b', 'c', 'd'] }).success).toBe(false)
+    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['x'.repeat(25)] }).success).toBe(false)
+    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['   '] }).success).toBe(false)
   })
 
   it('trims notes and stores blank ones as null', () => {

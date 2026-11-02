@@ -1,7 +1,7 @@
 // The /ssr entry has no React context, so it renders in server and client components alike
 import {
   Barbell, Campfire, Cherries, CloudFog, CoffeeBean, Cookie, Feather, Grains, IceCream,
-  Jar, Leaf, Lightning, Martini, OrangeSlice, Pepper, SmileyXEyes, Snowflake, Tag, Waves,
+  Jar, Leaf, Lightning, Martini, OrangeSlice, Pepper, SmileyXEyes, Snowflake, Sparkle, Waves,
 } from '@phosphor-icons/react/dist/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import type { FlavorTag } from '@/lib/flavorTags'
@@ -30,8 +30,8 @@ const FLAVOR_TAG_ICONS: Record<FlavorTag, Icon> = {
   boozy: Martini,
 }
 
-/** The icon for a stored flavor tag key; unknown keys (old data) get a plain tag */
+/** The icon for a stored flavor tag; anything not in the fixed list is a custom "Annað" tag and sparkles */
 export function FlavorTagIcon({ tag, className }: { tag: string; className?: string }) {
-  const Icon = FLAVOR_TAG_ICONS[tag as FlavorTag] ?? Tag
+  const Icon = FLAVOR_TAG_ICONS[tag as FlavorTag] ?? Sparkle
   return <Icon aria-hidden weight="fill" className={className} />
 }
