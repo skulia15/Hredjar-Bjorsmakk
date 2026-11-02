@@ -363,6 +363,8 @@ export default function RatePage({
 			loadRatingStats();
 			editedRef.current = false;
 			setTagsOpen(false);
+			// A half-typed tag belongs to the last beer
+			setCustomDraft("");
 			// The last beer's tags must not ride along on a tap before this beer's load
 			tagsRef.current = [];
 
@@ -748,10 +750,12 @@ export default function RatePage({
 							</button>
 						))}
 						{customTagCount < CUSTOM_TAGS_PER_RATING && (
-							<div className="w-full flex gap-2 pt-1">
+							<div className="w-full pt-1">
 								<input
 									value={customDraft}
 									onChange={(e) => setCustomDraft(e.target.value)}
+									// Leaving the field adds the tag, no button press needed
+									onBlur={addCustomTag}
 									onKeyDown={(e) => {
 										// Enter adds the tag rather than submitting the rating
 										if (e.key === "Enter") {
@@ -763,16 +767,8 @@ export default function RatePage({
 									enterKeyHint="done"
 									aria-label="Annað bragð"
 									placeholder="Annað… t.d. negull"
-									className="min-w-0 flex-1 min-h-10 px-4 rounded-full bg-pine-deep text-cream placeholder:text-mint/70 text-[0.9375rem] border-0 focus:outline-none focus:ring-2 focus:ring-gold"
+									className="w-full min-h-10 px-4 rounded-full bg-pine-deep text-cream placeholder:text-mint/70 text-[0.9375rem] border-0 focus:outline-none focus:ring-2 focus:ring-gold"
 								/>
-								<button
-									type="button"
-									onClick={addCustomTag}
-									disabled={!customDraft.trim()}
-									className="min-h-10 px-4 rounded-full bg-gold text-ink text-sm font-bold disabled:opacity-40"
-								>
-									Bæta við
-								</button>
 							</div>
 						)}
 							</div>
