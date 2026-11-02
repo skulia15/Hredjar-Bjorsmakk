@@ -10,7 +10,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { Beer as BeerIcon, Brain, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDown, ArrowUp, Beer as BeerIcon, Brain, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
@@ -586,13 +586,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                       <span className="text-[length:min(6rem,5.5vw)] whitespace-nowrap leading-[0.9] font-extrabold text-cranberry tabular-nums">
                         <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
                       </span>
-                      <span className="flex flex-wrap gap-x-4 mt-3 text-lg font-semibold text-muted-foreground">
+                      <span className="flex flex-col gap-1 mt-3 text-lg font-semibold text-muted-foreground">
                         <span>{currentBeerRatings.length} einkunn{currentBeerRatings.length !== 1 ? 'ir' : ''}</span>
                         {highestScore !== null && lowestScore !== null && (
-                          <>
-                            <span>Hæsta {highestScore.toFixed(1)}</span>
-                            <span>Lægsta {lowestScore.toFixed(1)}</span>
-                          </>
+                          <span className="flex gap-4 whitespace-nowrap tabular-nums">
+                            <span className="inline-flex items-center gap-1" title="Hæsta einkunn">
+                              <ArrowUp className="h-5 w-5 text-holly" aria-label="Hæsta" />
+                              {highestScore.toFixed(1)}
+                            </span>
+                            <span className="inline-flex items-center gap-1" title="Lægsta einkunn">
+                              <ArrowDown className="h-5 w-5 text-cranberry" aria-label="Lægsta" />
+                              {lowestScore.toFixed(1)}
+                            </span>
+                          </span>
                         )}
                       </span>
                       {bestGuess && (
