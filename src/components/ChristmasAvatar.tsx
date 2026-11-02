@@ -5,8 +5,7 @@ function AvatarImage({ avatar, className }: { avatar: (typeof AVATARS)[number]; 
     // eslint-disable-next-line @next/next/no-img-element -- static local avatar sprite
     <img
       src={avatarSrc(avatar)}
-      alt={avatar.name}
-      title={avatar.name}
+      alt=""
       className={`rounded-full object-cover select-none ${className ?? ''}`}
     />
   )

@@ -12,8 +12,6 @@ export default function CreateTastingPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const chosenObj = AVATARS.find(a => a.key === selectedAvatar)
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -93,11 +91,7 @@ export default function CreateTastingPage() {
             disabled={loading || !title.trim()}
             className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading
-              ? 'Bý til...'
-              : chosenObj
-                ? `Búa til smökkun sem ${chosenObj.name}`
-                : 'Búa til smökkun'}
+            {loading ? 'Bý til...' : 'Búa til smökkun'}
           </button>
         </form>
 

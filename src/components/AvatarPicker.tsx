@@ -56,16 +56,15 @@ export function AvatarPicker({
 
       {/* Large featured preview of the currently selected avatar */}
       {chosenObj && (
-        <div className="flex flex-col items-center gap-2 pb-4 border-b">
+        <div className="flex flex-col items-center pb-4 border-b">
           <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden ring-4 ring-amber-500 shadow-xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatarSrc(chosenObj)}
-              alt={chosenObj.name}
+              alt=""
               className="w-full h-full object-cover select-none"
             />
           </div>
-          <div className="text-lg sm:text-xl font-bold text-foreground">{chosenObj.name}</div>
         </div>
       )}
 
@@ -74,7 +73,7 @@ export function AvatarPicker({
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 h-[340px] sm:h-[360px] overflow-y-scroll p-3 pb-12"
+          className="grid grid-cols-3 sm:grid-cols-4 gap-3 h-[340px] sm:h-[360px] overflow-y-scroll p-3 pb-12"
         >
           {AVATARS.map(avatar => {
             const isTaken = !allTaken && takenSet.has(avatar.key)
@@ -85,7 +84,7 @@ export function AvatarPicker({
                 type="button"
                 disabled={isTaken || disabled}
                 onClick={() => onSelect(avatar.key)}
-                className={`group flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
+                className={`group flex items-center justify-center p-2.5 rounded-xl border transition-all ${
                   isTaken
                     ? 'opacity-35 cursor-not-allowed border-transparent bg-muted/40'
                     : isSelected
@@ -97,7 +96,7 @@ export function AvatarPicker({
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatarSrc(avatar)}
-                    alt={avatar.name}
+                    alt=""
                     className={`w-full h-full rounded-full object-cover select-none ${isTaken ? 'grayscale' : ''}`}
                   />
                   {isTaken && (
@@ -111,9 +110,6 @@ export function AvatarPicker({
                     </div>
                   )}
                 </div>
-                <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">
-                  {avatar.name}
-                </span>
               </button>
             )
           })}

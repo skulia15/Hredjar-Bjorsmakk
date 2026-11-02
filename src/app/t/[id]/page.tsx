@@ -213,8 +213,6 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   }
 
   if (isSignedIn && nameStep === 'done' && avatarStep === 'pick' && tastingStatus && tastingStatus !== 'closed') {
-    const chosenObj = AVATARS.find(a => a.key === selectedAvatar)
-
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 bg-gradient-to-b from-background to-muted">
         <div className="max-w-3xl w-full space-y-4 my-4">
@@ -242,11 +240,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               onClick={() => completeJoin(selectedAvatar)}
               className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {submittingJoin
-                ? 'Hleypir inn...'
-                : chosenObj
-                  ? `Taka þátt sem ${chosenObj.name}`
-                  : 'Taka þátt'}
+              {submittingJoin ? 'Hleypir inn...' : 'Taka þátt'}
             </button>
           </div>
         </div>
