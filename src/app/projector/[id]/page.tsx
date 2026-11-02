@@ -71,6 +71,7 @@ interface RatedParticipant {
   participantId: string
   name: string
   code: string
+  avatar?: string | null
   score: number | null  // null while the tasting hides scores until everyone has rated
   groupGuess: number | null
   note: string | null  // null while scores are hidden
@@ -406,7 +407,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // full-width reveal lays out the six newest
   const allNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
-    .map(r => ({ key: r.participantId, note: r.note.trim() }))
+    .map(r => ({ key: r.participantId, avatar: r.avatar, note: r.note.trim() }))
   const beerNotes = allNotes.slice(0, 5)
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length

@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import { ArrowDown, ArrowUp, Brain, PartyPopper, Sparkles } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { CountUp } from '@/components/projector/CountUp'
 import { ScoreBars } from '@/components/projector/ScoreBars'
@@ -123,9 +124,14 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
                   {shownNotes.map(note => (
                     <li
                       key={note.key}
-                      className="rounded-2xl rounded-bl-sm border-2 border-cream-line bg-white/70 px-5 py-3 text-lg 2xl:text-2xl leading-snug line-clamp-2 2xl:line-clamp-3"
+                      className="flex items-center gap-3.5 rounded-2xl rounded-bl-sm border-2 border-cream-line bg-white/70 px-4 py-3 text-lg 2xl:text-2xl leading-snug"
                     >
-                      „{note.note}“
+                      <ParticipantAvatar
+                        avatar={note.avatar}
+                        seed={note.key}
+                        className="w-12 h-12 2xl:w-14 2xl:h-14 shrink-0 shadow-sm"
+                      />
+                      <span className="min-w-0 flex-1 line-clamp-2 2xl:line-clamp-3">„{note.note}“</span>
                     </li>
                   ))}
                 </ul>
