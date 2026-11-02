@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { POST as join } from '@/app/api/tastings/[id]/join/route'
+import { GET as getJoinStatus, POST as join } from '@/app/api/tastings/[id]/join/route'
 import { prisma } from '@/lib/prisma'
 import { AVATARS, resolveAvatar } from '@/lib/avatars'
 import { createParticipant } from '@/lib/participants'
@@ -91,5 +91,42 @@ describe('avatars', () => {
     await callRoute(join, { method: 'POST', params: { id: tasting.id } })
 
     expect((await prisma.participant.findUniqueOrThrow({ where: { id: before.id } })).avatar).toBe(before.avatar)
+  })
+
+  it('allows selecting an available avatar when joining and blocks selecting one already taken', async () => {
+    const { tasting } = await createTastingFixture({ participantNames: [] })
+
+    signInAs({ clerkId: 'clerk_1', name: 'Anna' })
+    const first = await callRoute(join, {
+      method: 'POST',
+      params: { id: tasting.id },
+      body: { avatar: 'gryla' },
+    })
+    expect(first.status).toBe(200)
+    expect(first.json.avatar).toBe('gryla')
+
+    signInAs({ clerkId: 'clerk_2', name: 'Bjarni' })
+    const statusRes = await callRoute(getJoinStatus, {
+      method: 'GET',
+      params: { id: tasting.id },
+    })
+    expect(statusRes.status).toBe(200)
+    expect(statusRes.json.alreadyJoined).toBe(false)
+    expect(statusRes.json.takenAvatars).toContain('gryla')
+
+    const conflict = await callRoute(join, {
+      method: 'POST',
+      params: { id: tasting.id },
+      body: { avatar: 'gryla' },
+    })
+    expect(conflict.status).toBe(409)
+
+    const second = await callRoute(join, {
+      method: 'POST',
+      params: { id: tasting.id },
+      body: { avatar: 'thvorusleikir' },
+    })
+    expect(second.status).toBe(200)
+    expect(second.json.avatar).toBe('thvorusleikir')
   })
 })

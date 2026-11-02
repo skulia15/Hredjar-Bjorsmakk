@@ -1,11 +1,12 @@
 'use client'
 
-import { use, useState, useEffect } from 'react'
+import { use, useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { SignInButton, useAuth } from '@clerk/nextjs'
-import { Beer as BeerIcon } from 'lucide-react'
+import { Beer as BeerIcon, Check, Lock } from 'lucide-react'
 import { fetchTasting } from '@/lib/fetchTasting'
 import { NicknameForm } from '@/components/NicknameForm'
+import { AVATARS, avatarSrc } from '@/lib/avatars'
 
 export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -14,9 +15,15 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [error, setError] = useState('')
   const [tastingTitle, setTastingTitle] = useState('')
   const [tastingStatus, setTastingStatus] = useState<string | null>(null)
-  // First-timers pick a nickname before joining; everyone else joins straight away
+  // First-timers pick a nickname before joining; everyone new to this tasting picks an avatar
   const [nameStep, setNameStep] = useState<'checking' | 'pick' | 'done'>('checking')
   const [suggestedName, setSuggestedName] = useState('')
+
+  const [avatarStep, setAvatarStep] = useState<'checking' | 'pick' | 'joining'>('checking')
+  const [takenAvatars, setTakenAvatars] = useState<string[]>([])
+  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
+  const [avatarError, setAvatarError] = useState('')
+  const [submittingJoin, setSubmittingJoin] = useState(false)
 
   // Fetch tasting details; an outage is retried rather than reported as "not found"
   useEffect(() => {
@@ -72,31 +79,109 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     }
   }, [isSignedIn])
 
-  // Signed-in users join as themselves; identity comes from the session
+  const completeJoin = useCallback(async (avatarKey?: string | null) => {
+    setSubmittingJoin(true)
+    setAvatarError('')
+    try {
+      const response = await fetch(`/api/tastings/${params.id}/join`, {
+        method: 'POST',
+        headers: avatarKey ? { 'Content-Type': 'application/json' } : undefined,
+        body: avatarKey ? JSON.stringify({ avatar: avatarKey }) : undefined,
+      })
+      const data = await response.json()
+
+      if (response.status === 409) {
+        // Someone else just grabbed this avatar — refresh taken list and let user pick another
+        setAvatarError(data.error || 'Þessi mynd var rétt í þessu tekin — veldu aðra!')
+        const statusRes = await fetch(`/api/tastings/${params.id}/join`)
+        if (statusRes.ok) {
+          const statusData = await statusRes.json()
+          const taken: string[] = statusData.takenAvatars || []
+          setTakenAvatars(taken)
+          const firstFree = AVATARS.find(a => !taken.includes(a.key))?.key ?? null
+          setSelectedAvatar(firstFree)
+        }
+        setAvatarStep('pick')
+        setSubmittingJoin(false)
+        return
+      }
+
+      if (!response.ok) throw new Error(data.error || 'Failed to join tasting')
+
+      // Rate page reads this for UI; the server never trusts it
+      localStorage.setItem(`participant_${params.id}`, JSON.stringify({
+        participantId: data.participantId,
+        userId: data.userId,
+        code: data.code
+      }))
+
+      // Redirect based on role
+      router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred')
+      setSubmittingJoin(false)
+    }
+  }, [params.id, router])
+
+  // Check if user already joined this tasting, or load taken avatars so they can pick one
   useEffect(() => {
     if (!isSignedIn || nameStep !== 'done' || !tastingStatus || tastingStatus === 'closed') return
+    let cancelled = false
 
-    const join = async () => {
+    const checkJoinStatus = async () => {
       try {
-        const response = await fetch(`/api/tastings/${params.id}/join`, { method: 'POST' })
-        const data = await response.json()
-        if (!response.ok) throw new Error(data.error || 'Failed to join tasting')
+        const res = await fetch(`/api/tastings/${params.id}/join`)
+        if (cancelled) return
+        if (!res.ok) {
+          // Fallback to direct join if status endpoint fails
+          setAvatarStep('joining')
+          completeJoin()
+          return
+        }
+        const data = await res.json()
+        if (cancelled) return
 
-        // Rate page reads this for UI; the server never trusts it
-        localStorage.setItem(`participant_${params.id}`, JSON.stringify({
-          participantId: data.participantId,
-          userId: data.userId,
-          code: data.code
-        }))
-
-        // Redirect based on role
-        router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
+        if (data.alreadyJoined) {
+          setAvatarStep('joining')
+          completeJoin()
+        } else {
+          const taken: string[] = data.takenAvatars || []
+          setTakenAvatars(taken)
+          const firstFree = AVATARS.find(a => !taken.includes(a.key))?.key ?? AVATARS[0]?.key ?? null
+          setSelectedAvatar(prev => (prev && !taken.includes(prev) ? prev : firstFree))
+          setAvatarStep('pick')
+        }
+      } catch {
+        if (!cancelled) {
+          setAvatarStep('joining')
+          completeJoin()
+        }
       }
     }
-    join()
-  }, [isSignedIn, nameStep, tastingStatus, params.id, router])
+
+    checkJoinStatus()
+    const poll = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/tastings/${params.id}/join`)
+        if (!res.ok || cancelled) return
+        const data = await res.json()
+        if (cancelled || data.alreadyJoined) return
+        const taken: string[] = data.takenAvatars || []
+        setTakenAvatars(taken)
+        setSelectedAvatar(prev => {
+          if (prev && !taken.includes(prev)) return prev
+          return AVATARS.find(a => !taken.includes(a.key))?.key ?? prev
+        })
+      } catch {
+        // Ignore poll error
+      }
+    }, 4000)
+
+    return () => {
+      cancelled = true
+      clearInterval(poll)
+    }
+  }, [isSignedIn, nameStep, tastingStatus, params.id, completeJoin])
 
   if (error) {
     return (
@@ -119,7 +204,90 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
           </div>
 
           <div className="bg-card p-6 rounded-lg border">
-            <NicknameForm initialName={suggestedName} submitLabel="Taka þátt" onSaved={() => setNameStep('done')} />
+            <NicknameForm initialName={suggestedName} submitLabel="Áfram" onSaved={() => setNameStep('done')} />
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (isSignedIn && nameStep === 'done' && avatarStep === 'pick' && tastingStatus && tastingStatus !== 'closed') {
+    const takenSet = new Set(takenAvatars)
+    const allTaken = AVATARS.every(a => takenSet.has(a.key))
+    const chosenObj = AVATARS.find(a => a.key === selectedAvatar)
+
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
+        <div className="max-w-xl w-full space-y-6 my-6">
+          <div className="text-center space-y-1.5">
+            <BeerIcon className="h-10 w-10 mx-auto text-amber-500" />
+            <h2 className="text-2xl font-bold">{tastingTitle}</h2>
+            <p className="text-muted-foreground text-sm">Veldu þér jólamynd fyrir smökkunina</p>
+          </div>
+
+          <div className="bg-card p-5 rounded-xl border space-y-5">
+            {avatarError && (
+              <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm text-center">
+                {avatarError}
+              </div>
+            )}
+
+            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-[55vh] overflow-y-auto p-1">
+              {AVATARS.map(avatar => {
+                const isTaken = !allTaken && takenSet.has(avatar.key)
+                const isSelected = selectedAvatar === avatar.key
+                return (
+                  <button
+                    key={avatar.key}
+                    type="button"
+                    disabled={isTaken || submittingJoin}
+                    onClick={() => setSelectedAvatar(avatar.key)}
+                    className={`group flex flex-col items-center gap-1.5 p-2 rounded-xl border text-center transition-all ${
+                      isTaken
+                        ? 'opacity-35 cursor-not-allowed border-transparent bg-muted/40'
+                        : isSelected
+                          ? 'border-amber-500 bg-amber-500/10 ring-2 ring-amber-500/50 scale-[1.02]'
+                          : 'border-border hover:border-amber-500/50 hover:bg-accent/40'
+                    }`}
+                  >
+                    <div className="relative w-16 h-16 sm:w-18 sm:h-18">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={avatarSrc(avatar)}
+                        alt={avatar.name}
+                        className={`w-full h-full rounded-full object-cover select-none ${isTaken ? 'grayscale' : ''}`}
+                      />
+                      {isTaken && (
+                        <div className="absolute inset-0 rounded-full bg-black/55 flex items-center justify-center">
+                          <Lock className="w-5 h-5 text-white/90" />
+                        </div>
+                      )}
+                      {isSelected && !isTaken && (
+                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-black flex items-center justify-center shadow">
+                          <Check className="w-4 h-4 stroke-[3]" />
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-[11px] font-medium leading-tight line-clamp-2">
+                      {avatar.name}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+
+            <button
+              type="button"
+              disabled={!selectedAvatar || submittingJoin}
+              onClick={() => completeJoin(selectedAvatar)}
+              className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {submittingJoin
+                ? 'Hleypir inn...'
+                : chosenObj
+                  ? `Taka þátt sem ${chosenObj.name}`
+                  : 'Taka þátt'}
+            </button>
           </div>
         </div>
       </div>
