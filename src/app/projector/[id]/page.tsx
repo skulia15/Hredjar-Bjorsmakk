@@ -10,7 +10,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { ArrowDown, ArrowUp, Beer as BeerIcon, Brain, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { ArrowDown, ArrowUp, Beer as BeerIcon, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
@@ -23,6 +23,7 @@ import { CountUp } from '@/components/projector/CountUp'
 import { LobbyParticipants, type LobbyParticipant } from '@/components/projector/LobbyParticipants'
 import { NoteTicker } from '@/components/projector/NoteTicker'
 import { ProgressStrip } from '@/components/projector/ProgressStrip'
+import { ScoreRevealPanel } from '@/components/projector/ScoreRevealPanel'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
 import { beerImageSrc } from '@/lib/beerImage'
@@ -368,11 +369,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // Calculate current beer stats
   const currentBeerRatings = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { score: number } => r.score !== null)
-  // Ratings come newest first; the ticker rotates through the five newest notes
-  const beerNotes = (pendingRaters?.rated || [])
+  // Ratings come newest first: the ticker rotates through the five newest notes, the
+  // full-width reveal lays out the six newest
+  const allNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
-    .slice(0, 5)
     .map(r => ({ key: r.participantId, note: r.note.trim() }))
+  const beerNotes = allNotes.slice(0, 5)
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
     : null
@@ -383,9 +385,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     ? Math.min(...currentBeerRatings.map(r => r.score))
     : null
 
-  // Just revealed: celebrate and name whoever guessed the group average best
-  const justRevealed = !!currentBeer && revealedBeerId === currentBeer.id
-  const bestGuess = justRevealed && liveAverage !== null
+  // Everyone has rated and the scores are out: the current beer takes the whole screen.
+  // Derived from the poll rather than the reveal transition, so a reloaded projector shows it too
+  const expanded = !!currentBeer && currentBeer.status !== 'finished' && liveAverage !== null &&
+    !!pendingRaters && !pendingRaters.scoresHidden &&
+    pendingRaters.totalParticipants > 0 && pendingRaters.pendingCount === 0
+  // Saw the hidden scores come out just now: count up from zero and celebrate
+  const justRevealed = expanded && revealedBeerId === currentBeer.id
+  // Name whoever guessed the group average best
+  const bestGuess = expanded && liveAverage !== null
     ? closestGuess(
         currentBeerRatings.flatMap(r => (r.groupGuess === null ? [] : [{ userName: r.name, guess: r.groupGuess }])),
         liveAverage
@@ -504,9 +512,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       </header>
 
       {/* One column on small screens, three on a projector */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,35fr)_minmax(0,41fr)_minmax(0,24fr)] gap-4 2xl:gap-6 relative">
+      {/* When everyone has rated, the side columns fold away and the current beer fills the screen */}
+      <div
+        className={`flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[var(--columns)] lg:transition-[grid-template-columns,column-gap] lg:duration-700 lg:ease-in-out relative ${
+          expanded ? 'gap-y-4 gap-x-0' : 'gap-4 2xl:gap-6'
+        }`}
+        style={{ '--columns': expanded ? 'minmax(0,0fr) minmax(0,1fr) minmax(0,0fr)' : 'minmax(0,35fr) minmax(0,41fr) minmax(0,24fr)' } as React.CSSProperties}
+      >
         {/* Column 1: Top 6 Beers */}
-        <FoamCard as="section" aria-label="Efstu 6" tone="pine" size="lg" className="px-4 pt-3 pb-4 flex flex-col">
+        <FoamCard as="section" aria-label="Efstu 6" tone="pine" size="lg" folded={expanded} className="px-4 pt-3 pb-4 flex flex-col">
           <div className="flex-1 min-h-0 flex flex-col gap-2.5">
             <h2 className="text-3xl flex items-center gap-3 mb-1.5">
               <Crown className="h-8 w-8 text-gold" fill="currentColor" />
@@ -524,8 +538,29 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </FoamCard>
 
         {/* Column 2: Current Beer */}
-        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-6 pt-4 pb-4 flex flex-col items-center text-center gap-2 overflow-y-auto">
-          {currentBeer ? (
+        <FoamCard
+          as="section"
+          aria-label="Núverandi bjór"
+          size="lg"
+          className={`flex flex-col items-center gap-2 overflow-y-auto ${
+            expanded ? 'px-12 pt-5 pb-8 gap-5 2xl:gap-7 text-left' : 'px-6 pt-4 pb-4 text-center'
+          }`}
+        >
+          {expanded ? (
+            <ScoreRevealPanel
+              // Remount per beer and on the reveal, so the average counts up and the bars grow in
+              key={`reveal-${currentBeer.id}-${justRevealed ? 'revealed' : 'done'}`}
+              beer={currentBeer}
+              scores={currentBeerRatings.map(r => r.score)}
+              average={liveAverage}
+              bestGuess={bestGuess}
+              tags={pendingRaters.tags}
+              raters={pendingRaters.ratedCount}
+              notes={allNotes.slice(0, 6)}
+              justRevealed={justRevealed}
+              showTags={tagsOn}
+            />
+          ) : currentBeer ? (
             <>
               <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
               {/* Image beside the name, not above it: the card needs the height for the bars and tags */}
@@ -570,21 +605,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                       </span>
                     </span>
                   ) : liveAverage !== null ? (
-                    <div
-                      // Remount on reveal so the average counts up from zero
-                      key={`average-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`}
-                      className={`flex flex-col gap-1 ${justRevealed ? 'animate-in zoom-in-90 duration-700' : ''}`}
-                    >
-                      {justRevealed ? (
-                        <span className="inline-flex items-center gap-2 text-2xl font-extrabold text-holly">
-                          <Sparkles className="h-6 w-6" /> Einkunnir birtar!
-                        </span>
-                      ) : (
-                        <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
-                      )}
+                    <div key={`average-${currentBeer.id}`} className="flex flex-col gap-1">
+                      <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
                       {/* Sized to the narrow column beside the score bars; "8.00" must never wrap */}
                       <span className="text-[length:min(6rem,5.5vw)] whitespace-nowrap leading-[0.9] font-extrabold text-cranberry tabular-nums">
-                        <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
+                        <CountUp value={liveAverage} durationMs={600} />
                       </span>
                       <span className="flex flex-col gap-1 mt-3 text-lg font-semibold text-muted-foreground">
                         <span>{currentBeerRatings.length} einkunn{currentBeerRatings.length !== 1 ? 'ir' : ''}</span>
@@ -601,12 +626,6 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                           </span>
                         )}
                       </span>
-                      {bestGuess && (
-                        <span className="mt-2 inline-flex items-center gap-2 text-2xl font-extrabold text-purple-600 animate-in fade-in fill-mode-both duration-700 [animation-delay:1800ms]">
-                          <Brain className="h-5 w-5" />
-                          {bestGuess.userName} giskaði næst: {bestGuess.guess.toFixed(1)}
-                        </span>
-                      )}
                     </div>
                   ) : (
                     <>
@@ -619,7 +638,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 <div className="flex flex-col gap-4">
                   {/* Score Distribution; remounts on reveal so the bars grow in */}
                   {currentBeerRatings.length > 0 && (
-                    <ScoreBars key={`bars-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`} scores={currentBeerRatings.map(r => r.score)} />
+                    <ScoreBars key={`bars-${currentBeer.id}`} scores={currentBeerRatings.map(r => r.score)} />
                   )}
                 </div>
               </div>
@@ -654,7 +673,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </FoamCard>
 
         {/* Column 3: Participation */}
-        <FoamCard as="section" aria-label="Framvinda" tone="pine" size="lg" className="px-4 pt-3 pb-4 flex flex-col gap-5 min-h-0">
+        <FoamCard as="section" aria-label="Framvinda" tone="pine" size="lg" folded={expanded} className="px-4 pt-3 pb-4 flex flex-col gap-5 min-h-0">
           <h2 className="text-3xl">Framvinda</h2>
           {!currentBeer || !pendingRaters ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 text-mint">
@@ -728,8 +747,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       </div>
 
       {/* Tasting-wide stats, kept up between beers */}
-      {statTiles.length > 0 && (
-        <footer aria-label="Tölfræði" className="grid grid-cols-2 lg:grid-cols-6 gap-4 relative">
+      {/* Folds away with the side columns while the current beer fills the screen */}
+      {statTiles.length > 0 && !expanded && (
+        <footer aria-label="Tölfræði" className="grid grid-cols-2 lg:grid-cols-6 gap-4 relative animate-in fade-in duration-700">
           {statTiles.map((tile) => (
             <div key={tile.label} className="flex items-center gap-3.5 px-5 py-4 rounded-[20px] bg-pine-deep min-w-0">
               <span className="w-12 h-12 shrink-0 rounded-[14px] bg-pine-light flex items-center justify-center">

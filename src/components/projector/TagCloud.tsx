@@ -8,14 +8,19 @@ import type { BeerTagCount } from '@/components/TastingNotes'
  * nothing else was picked, and the count says how many it actually was.
  * Custom "Annað" tags are the fun ones: they go first and get a gold, sparkly pill.
  */
-export function TagCloud({ tags, raters, limit = 10 }: { tags: BeerTagCount[]; raters: number; limit?: number }) {
+export function TagCloud({ tags, raters, limit = 10, align = 'center' }: {
+  tags: BeerTagCount[]
+  raters: number
+  limit?: number
+  align?: 'center' | 'start'
+}) {
   if (tags.length === 0) return null
   // Stable sort keeps the most-picked first within each group
   const ordered = [...tags].sort((a, b) => Number(isCustomTag(b.tag)) - Number(isCustomTag(a.tag)))
   const shown = ordered.slice(0, limit)
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2">
+    <div className={`flex flex-wrap items-center gap-2 ${align === 'start' ? 'justify-start' : 'justify-center'}`}>
       {shown.map(({ tag, count }) => {
         const share = raters > 0 ? Math.min(count / raters, 1) : 0
         const custom = isCustomTag(tag)
@@ -25,7 +30,8 @@ export function TagCloud({ tags, raters, limit = 10 }: { tags: BeerTagCount[]; r
             className={`inline-flex items-center gap-[0.35em] rounded-full py-[0.2em] pl-[0.45em] pr-[0.3em] font-bold leading-tight animate-in fade-in zoom-in-50 duration-500 ${
               custom ? 'bg-gold text-ink shadow-[0_0.15em_0_rgba(0,0,0,0.15)]' : 'bg-cranberry/10 text-primary'
             }`}
-            style={{ fontSize: `${1 + share * 0.5}rem` }}
+            // --tag-scale on a parent enlarges the pills, for the full-width reveal
+            style={{ fontSize: `calc(${1 + share * 0.5}rem * var(--tag-scale, 1))` }}
           >
             <FlavorTagIcon tag={tag} className="h-[1em] w-[1em] shrink-0" />
             {custom ? <span className="italic">{flavorTagLabel(tag)}</span> : flavorTagLabel(tag)}
@@ -38,7 +44,7 @@ export function TagCloud({ tags, raters, limit = 10 }: { tags: BeerTagCount[]; r
         )
       })}
       {tags.length > limit && (
-        <span className="rounded-full bg-cranberry/10 px-[0.6em] py-[0.2em] text-base font-bold text-primary tabular-nums">
+        <span className="rounded-full bg-cranberry/10 px-[0.6em] py-[0.2em] font-bold text-primary tabular-nums" style={{ fontSize: 'calc(1rem * var(--tag-scale, 1))' }}>
           +{tags.length - limit}
         </span>
       )}

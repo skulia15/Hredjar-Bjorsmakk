@@ -8,12 +8,22 @@ interface FoamCardProps {
   className?: string
   as?: 'div' | 'section' | 'nav'
   'aria-label'?: string
+  /** Fade out, and drop from the layout on small screens, while its grid column folds to nothing */
+  folded?: boolean
 }
 
 /** Card with a scalloped beer-foam / snow top edge. */
-export function FoamCard({ children, tone = 'cream', size = 'md', className, as: Tag = 'div', ...rest }: FoamCardProps) {
+export function FoamCard({ children, tone = 'cream', size = 'md', className, as: Tag = 'div', folded, ...rest }: FoamCardProps) {
   return (
-    <Tag className="flex flex-col min-h-0" {...rest}>
+    <Tag
+      className={cn(
+        'flex flex-col min-h-0',
+        folded !== undefined && 'min-w-0 overflow-hidden transition-opacity duration-500',
+        folded && 'opacity-0 invisible max-lg:hidden',
+      )}
+      aria-hidden={folded || undefined}
+      {...rest}
+    >
       <div className={cn('foam shrink-0', tone === 'pine' && 'foam-pine', size === 'lg' && 'foam-lg')} />
       <div
         className={cn(
