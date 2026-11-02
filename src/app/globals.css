@@ -151,8 +151,33 @@
 }
 .beer-bob { animation: beer-bob 3s ease-in-out infinite; }
 
+/* SantaMug: the hat swings from its brim, bubbles rise through the beer */
+@keyframes santa-hat-sway {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  70% { transform: rotate(-7deg); }
+  80% { transform: rotate(5deg); }
+  90% { transform: rotate(-2deg); }
+}
+.santa-mug-hat {
+  transform-box: view-box;
+  transform-origin: 55px 44px;
+  animation: santa-hat-sway 4s ease-in-out infinite;
+}
+@keyframes santa-bubble-rise {
+  0% { transform: translateY(0); opacity: 0; }
+  20% { opacity: 0.9; }
+  100% { transform: translateY(-50px); opacity: 0; }
+}
+.santa-mug-bubble {
+  transform-box: view-box;
+  animation: santa-bubble-rise 2.6s ease-in infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .xmas-snowflake,
+  .santa-mug-hat,
+  .santa-mug-bubble,
   .beer-bob { animation: none; }
+  .santa-mug-bubble { display: none; }
   .xmas-snowflake { display: none; }
 }

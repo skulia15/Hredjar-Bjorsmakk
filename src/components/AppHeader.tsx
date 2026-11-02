@@ -2,7 +2,7 @@
 
 import { SignInButton, Show, UserButton, useAuth } from '@clerk/nextjs'
 import { Beer as BeerIcon, ListChecks, Shield, Tv } from 'lucide-react'
-import Image from 'next/image'
+import { SantaMug } from '@/components/SantaMug'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -82,7 +82,7 @@ export function AppHeader() {
     <header data-app-header className="relative z-40 w-full border-b bg-background sm:sticky sm:top-0">
       <div className="container mx-auto flex min-h-14 flex-wrap items-center gap-x-1 gap-y-1 px-2 py-1 sm:gap-x-2 sm:px-4">
         <Link href="/" className="mr-1 flex shrink-0 items-center gap-2 font-bold sm:mr-3">
-          <Image src="/icon.svg" alt="" width={28} height={28} unoptimized className="h-7 w-7" />
+          <SantaMug className="h-8 w-auto" />
           <span className="hidden md:inline">Bjórsmakk</span>
         </Link>
 
