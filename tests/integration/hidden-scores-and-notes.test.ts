@@ -5,6 +5,7 @@ import { GET as pendingRaters } from '@/app/api/tastings/[id]/current/pending-ra
 import { POST as finishBeer } from '@/app/api/tastings/[id]/beers/[beerId]/finish/route'
 import { GET as ownRating, POST as rate } from '@/app/api/tastings/[id]/ratings/route'
 import { GET as ratingsDetail } from '@/app/api/tastings/[id]/ratings-detail/route'
+import { PUT as putFlavorTags } from '@/app/api/tastings/[id]/flavor-tags/route'
 import { GET as analytics } from '@/app/api/tastings/[id]/analytics/route'
 import { prisma } from '@/lib/prisma'
 import { callRoute, createTastingFixture, signInAs } from './helpers'
@@ -29,6 +30,11 @@ async function finish(fixture: Fixture, beerId: string) {
 async function rateAs(fixture: Fixture, participantIndex: number, body: Record<string, unknown>) {
   signInAs(fixture.users[participantIndex])
   return callRoute(rate, { method: 'POST', params: { id: fixture.tasting.id }, body })
+}
+
+async function tagAs(fixture: Fixture, participantIndex: number, body: Record<string, unknown>) {
+  signInAs(fixture.users[participantIndex])
+  return callRoute(putFlavorTags, { method: 'PUT', params: { id: fixture.tasting.id }, body })
 }
 
 const pending = (fixture: Fixture) => callRoute(pendingRaters, { params: { id: fixture.tasting.id } })
@@ -95,22 +101,46 @@ describe('hide scores until everyone has rated', () => {
 })
 
 describe('flavor tags and notes', () => {
-  it('saves tags and a note, returns them as your own rating, and keeps them when only the score changes', async () => {
+  it('saves tags apart from the rating, returns both as your own, and keeps tags when the score changes', async () => {
     const fixture = await createTastingFixture()
     const beer = fixture.beers[0]
     await makeCurrent(fixture, beer.id)
 
-    const saved = await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: ['hoppy', 'citrus', 'hoppy'], note: '  Sítrónubomba  ' })
-    expect(saved.json).toMatchObject({ score: 8, tags: ['hoppy', 'citrus'], note: 'Sítrónubomba' })
+    const tagged = await tagAs(fixture, 0, { beerId: beer.id, tags: ['hoppy', 'citrus', 'hoppy'] })
+    expect(tagged.json).toEqual({ beerId: beer.id, tags: ['hoppy', 'citrus'] })
+
+    // Tagged but not rated: tags come back, the score doesn't
+    const ownTagsOnly = await callRoute(ownRating, { params: { id: fixture.tasting.id }, path: `/?beerId=${beer.id}` })
+    expect(ownTagsOnly.json).toEqual({ score: null, tags: ['hoppy', 'citrus'], note: null, groupGuess: null })
+
+    const saved = await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: '  Sítrónubomba  ' })
+    expect(saved.json).toMatchObject({ score: 8, note: 'Sítrónubomba' })
 
     await rateAs(fixture, 0, { beerId: beer.id, score: 9 })
     const own = await callRoute(ownRating, { params: { id: fixture.tasting.id }, path: `/?beerId=${beer.id}` })
     expect(own.json).toEqual({ score: 9, tags: ['hoppy', 'citrus'], note: 'Sítrónubomba', groupGuess: null })
 
-    // Someone who hasn't rated gets null, not someone else's rating
+    // Untapping the last tag clears them
+    await tagAs(fixture, 0, { beerId: beer.id, tags: [] })
+    const cleared = await callRoute(ownRating, { params: { id: fixture.tasting.id }, path: `/?beerId=${beer.id}` })
+    expect(cleared.json.tags).toEqual([])
+
+    // Someone who hasn't rated or tagged gets null, not someone else's
     signInAs(fixture.users[1])
     const none = await callRoute(ownRating, { params: { id: fixture.tasting.id }, path: `/?beerId=${beer.id}` })
     expect(none.json).toBeNull()
+  })
+
+  it('tagging alone never counts as rating', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await makeCurrent(fixture, beer.id)
+    await tagAs(fixture, 0, { beerId: beer.id, tags: ['hoppy'] })
+
+    const live = await pending(fixture)
+    expect(live.json.ratedCount).toBe(0)
+    expect(live.json.tags).toEqual([{ tag: 'hoppy', count: 1 }])
+    expect(await prisma.rating.count({ where: { tastingBeerId: beer.id } })).toBe(0)
   })
 
   it('stores custom tags normalized, and rejects too many of them and notes over 280 characters', async () => {
@@ -118,11 +148,19 @@ describe('flavor tags and notes', () => {
     const beer = fixture.beers[0]
     await makeCurrent(fixture, beer.id)
 
-    const saved = await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: [' negull', 'hoppy'] })
+    const saved = await tagAs(fixture, 0, { beerId: beer.id, tags: [' negull', 'hoppy'] })
     expect(saved.status).toBe(200)
     expect(saved.json.tags).toEqual(['Negull', 'hoppy'])
-    expect((await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: ['a', 'b', 'c', 'd'] })).status).toBe(400)
+    expect((await tagAs(fixture, 0, { beerId: beer.id, tags: ['a', 'b', 'c', 'd'] })).status).toBe(400)
     expect((await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: 'x'.repeat(281) })).status).toBe(400)
+  })
+
+  it('only tags beers in the tasting that have been poured', async () => {
+    const fixture = await createTastingFixture()
+    expect((await tagAs(fixture, 0, { beerId: fixture.beers[0].id, tags: ['hoppy'] })).status).toBe(400)
+    const other = await createTastingFixture()
+    await makeCurrent(other, other.beers[0].id)
+    expect((await tagAs(fixture, 0, { beerId: other.beers[0].id, tags: ['hoppy'] })).status).toBe(404)
   })
 
   it('shows tag counts on the current beer even while scores are hidden, and notes once it is finished', async () => {
@@ -130,8 +168,10 @@ describe('flavor tags and notes', () => {
     const beer = fixture.beers[0]
     await hideScores(fixture)
     await makeCurrent(fixture, beer.id)
-    await rateAs(fixture, 0, { beerId: beer.id, score: 8, tags: ['hoppy', 'bitter'], note: 'Beiskur!' })
-    await rateAs(fixture, 1, { beerId: beer.id, score: 6, tags: ['hoppy'] })
+    await tagAs(fixture, 0, { beerId: beer.id, tags: ['hoppy', 'bitter'] })
+    await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: 'Beiskur!' })
+    await tagAs(fixture, 1, { beerId: beer.id, tags: ['hoppy'] })
+    await rateAs(fixture, 1, { beerId: beer.id, score: 6 })
 
     const live = await pending(fixture)
     expect(live.json.scoresHidden).toBe(true)
