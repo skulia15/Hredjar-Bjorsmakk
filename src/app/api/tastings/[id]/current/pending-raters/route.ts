@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getHiddenTastingBeerId } from '@/lib/hiddenScores'
+import { getHiddenTastingBeerId, lockRatingsIfAllRated } from '@/lib/hiddenScores'
 import { countTags } from '@/lib/flavorTags'
 
 /**
@@ -73,6 +73,8 @@ export async function GET(
     })
 
     const scoresHidden = (await getHiddenTastingBeerId(id)) === tasting.currentTastingBeerId
+    // Polled by every client, so a lock from someone pausing or leaving is caught here too
+    const ratingsLocked = await lockRatingsIfAllRated(id, tasting.currentTastingBeerId)
     const flavorTags = await prisma.flavorTags.findMany({
       where: { tastingBeerId: tasting.currentTastingBeerId },
       select: { tags: true }
@@ -115,6 +117,7 @@ export async function GET(
       pendingCount: pending.length,
       paused,
       scoresHidden,
+      ratingsLocked,
       // Tags say little about the score, so they show even while scores are hidden
       tags: countTags(flavorTags),
       rated,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { ratingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireParticipant } from '@/lib/auth';
-import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
+import { getHiddenTastingBeerId, lockRatingsIfAllRated } from '@/lib/hiddenScores';
 
 // GET /api/tastings/[id]/ratings?beerId=... - The signed-in participant's own rating and flavor tags for a beer.
 // score is null when they've only tagged it so far; the whole thing is null when they've done neither
@@ -96,18 +96,25 @@ export async function POST(
       );
     }
 
+    // Once everyone has rated, the scores are out: a first rating still counts, but nobody gets to change theirs
+    const key = { tastingBeerId_participantId: { tastingBeerId, participantId: participant.id } };
+    if (await lockRatingsIfAllRated(id, tastingBeerId)) {
+      const existing = await prisma.rating.findUnique({ where: key, select: { id: true } });
+      if (existing) {
+        return NextResponse.json(
+          { error: 'Einkunnir hafa verið birtar og ekki er hægt að breyta þeim' },
+          { status: 409 }
+        );
+      }
+    }
+
     // Guessing the group average only means something while it's hidden, so later guesses are dropped
     const guessOpen = (await getHiddenTastingBeerId(id)) === tastingBeerId;
     const groupGuess = guessOpen ? requestedGuess : undefined;
 
     // Upsert rating (create or update)
     const rating = await prisma.rating.upsert({
-      where: {
-        tastingBeerId_participantId: {
-          tastingBeerId,
-          participantId: participant.id
-        }
-      },
+      where: key,
       update: {
         score,
         ...(note !== undefined && { note }),
@@ -123,6 +130,9 @@ export async function POST(
         groupGuess: groupGuess ?? null
       }
     });
+
+    // The last rating in locks them all
+    await lockRatingsIfAllRated(id, tastingBeerId);
 
     // Rating again means they're back
     if (participant.pausedAt) {

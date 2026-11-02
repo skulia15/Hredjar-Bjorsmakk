@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
-import { Beer as BeerIcon, Brain, Check, ChevronDown, Hourglass, PartyPopper, Plus, Trophy, X } from "lucide-react";
+import { Beer as BeerIcon, Brain, Check, ChevronDown, Hourglass, Lock, PartyPopper, Plus, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -179,6 +179,8 @@ export default function RatePage({
 		ratedCount: number;
 		pendingCount: number;
 		scoresHidden: boolean;
+		ratingsLocked: boolean;
+		beerId: string;
 		pending: Array<{ participantId: string; name: string; code: string }>;
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
@@ -258,6 +260,8 @@ export default function RatePage({
 				ratedCount: data.ratedCount,
 				pendingCount: data.pendingCount,
 				scoresHidden: data.scoresHidden ?? false,
+				ratingsLocked: data.ratingsLocked ?? false,
+				beerId: data.currentBeerId,
 				pending: data.pending || [],
 			});
 		} catch (error) {
@@ -312,6 +316,10 @@ export default function RatePage({
 	const currentBeer = tasting?.beers?.find(
 		(b) => b.id === tasting.currentBeerId,
 	);
+	// Everyone has rated and the scores are out, so this participant's rating can't change any more.
+	// The beer check keeps the last beer's lock from carrying over before the next poll
+	const ratingLocked =
+		hasRated && !!ratingStats?.ratingsLocked && ratingStats.beerId === currentBeer?.id;
 
 	// Flavor tags save on every tap, apart from the rating: tagging never submits a score.
 	// Saves go one at a time so a slow request can't land after a newer one
@@ -434,6 +442,8 @@ export default function RatePage({
 
 			if (!response.ok) {
 				const data = await response.json();
+				// Locked since this screen last polled: show it now rather than in 3 seconds
+				if (response.status === 409) loadRatingStats();
 				throw new Error(data.error || "Failed to submit rating");
 			}
 
@@ -670,6 +680,7 @@ export default function RatePage({
 						size={44}
 						perRow={5}
 						showNumeric={true}
+						disabled={ratingLocked}
 					/>
 
 					{/* Flavor tags, folded away by default: eighteen chips made the screen busy */}
@@ -784,8 +795,9 @@ export default function RatePage({
 							}}
 							maxLength={NOTE_MAX_LENGTH}
 							rows={2}
+							disabled={ratingLocked}
 							placeholder="Athugasemd (valfrjálst)"
-							className="w-full px-4 py-3 rounded-2xl bg-pine-light text-cream placeholder:text-mint/70 text-[0.9375rem] resize-none border-0 focus:outline-none focus:ring-2 focus:ring-gold"
+							className="w-full px-4 py-3 rounded-2xl bg-pine-light text-cream placeholder:text-mint/70 text-[0.9375rem] resize-none border-0 focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-60"
 						/>
 						{note.length > NOTE_MAX_LENGTH - 40 && (
 							<p className="text-xs text-mint text-right">
@@ -854,6 +866,12 @@ export default function RatePage({
 							</div>
 						)}
 
+						{ratingLocked ? (
+							<div className="w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-pine-light text-mint text-lg font-extrabold">
+								<Lock className="w-5 h-5" strokeWidth={2.6} />
+								Einkunnir birtar, ekki hægt að breyta
+							</div>
+						) : (
 						<button
 							type="submit"
 							disabled={submitting || rating === 0}
@@ -877,6 +895,7 @@ export default function RatePage({
 								</>
 							)}
 						</button>
+						)}
 					</div>
 				</form>
 

@@ -132,6 +132,7 @@ model TastingBeer {
   // Timer tracking
   currentSince  DateTime? // When beer became "current"
   finishedAt    DateTime? // When beer was finished
+  ratingsLockedAt DateTime? // When everyone had rated it and its scores came out; ratings can't change after
 
   createdAt     DateTime @default(now())
 
