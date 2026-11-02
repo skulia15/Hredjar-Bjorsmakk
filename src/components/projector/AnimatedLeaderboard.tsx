@@ -83,7 +83,8 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
   }, [signature])
 
   return (
-    <div className="space-y-2.5 relative">
+    // One equal slot per place so all of them fit the column on the projector, never scrolling
+    <div className="flex-1 min-h-0 grid gap-2.5 relative" style={{ gridTemplateRows: `repeat(${limit}, minmax(0, 1fr))` }}>
       {beers.slice(0, limit).map(beer => (
         <div
           key={beer.beerId}
@@ -94,24 +95,24 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
               previousTops.current.delete(beer.beerId)
             }
           }}
-          className={`flex items-center gap-4 min-h-[84px] px-4 py-2 rounded-[20px] animate-in fade-in slide-in-from-left-4 duration-500 ${
+          className={`flex items-center gap-4 min-h-0 overflow-hidden px-4 py-1 rounded-[20px] animate-in fade-in slide-in-from-left-4 duration-500 ${
             beer.rank === 1 ? 'bg-cream text-ink' : 'bg-pine'
           } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-inset ring-gold/70' : ''}`}
         >
-          <span className={`w-12 h-12 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
+          <span className={`w-11 h-11 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
             {beer.rank}
           </span>
           {beer.imageUrl && (
             <Image src={beer.imageUrl} alt="" width={48} height={48} className="h-10 w-auto shrink-0 object-contain" />
           )}
           <span className="flex-1 min-w-0 flex flex-col">
-            <span className="text-2xl font-extrabold leading-tight line-clamp-2">{beer.name}</span>
+            <span className="text-xl 2xl:text-2xl font-extrabold leading-tight truncate">{beer.name}</span>
             <span className="flex items-center gap-2 min-w-0">
-              <span className="text-base opacity-80 truncate">{beer.brewery} · {beer.count} eink.</span>
+              <span className="text-sm 2xl:text-base opacity-80 truncate">{beer.brewery} · {beer.count} eink.</span>
               <MovementBadge movement={snapshot.movement[beer.beerId]} />
             </span>
           </span>
-          <span className="text-4xl font-extrabold tabular-nums">{beer.average.toFixed(2)}</span>
+          <span className="text-3xl 2xl:text-4xl font-extrabold tabular-nums">{beer.average.toFixed(2)}</span>
         </div>
       ))}
     </div>

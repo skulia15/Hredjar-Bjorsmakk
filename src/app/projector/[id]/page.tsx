@@ -45,6 +45,7 @@ interface Tasting {
   id: string
   title: string
   status: string
+  createdAt: string
   currentBeerId?: string | null
   beers: Beer[]
   participants: LobbyParticipant[]
@@ -436,7 +437,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   ].filter(Boolean) as Array<{ icon: typeof Star; label: string; name: string; detail: string | null }>
 
   return (
-    <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-6 2xl:gap-8 px-4 pt-6 pb-8 lg:px-8 2xl:px-14 2xl:pt-10 2xl:pb-12">
+    <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-4 2xl:gap-6 px-3 pt-3 pb-3 lg:px-4 2xl:px-8 2xl:pt-5 2xl:pb-6">
       {/* Awards reveal once the tasting is closed */}
       {showingAwards && (
         <AwardsReveal awards={awards} winnerName={scores?.beers[0]?.name} onClose={closeAwards} />
@@ -465,11 +466,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       )}
 
       <header className="flex flex-wrap lg:flex-nowrap items-center gap-6 relative">
-        <SantaMug className="w-14 2xl:w-16 h-auto shrink-0" />
-        <div className="min-w-0 shrink">
-          <div className="text-base 2xl:text-xl font-semibold tracking-[0.2em] uppercase text-gold">Hreðjar Jólabjórsmakk</div>
-          <h1 className="text-4xl 2xl:text-5xl leading-none truncate">{tasting.title}</h1>
-        </div>
+        <SantaMug className="w-10 2xl:w-12 h-auto shrink-0" />
+        <h1 className="min-w-0 truncate text-xl 2xl:text-2xl font-extrabold tracking-[0.2em] uppercase text-gold">
+          Hreðjar Jólabjórsmakk {new Date(tasting.createdAt).getFullYear()}
+        </h1>
         {/* Progress through the tasting */}
         <div className="flex-1 min-w-0 max-w-2xl ml-auto">
           <ProgressStrip beers={tasting.beers} currentBeerId={tasting.currentBeerId} />
@@ -504,10 +504,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       </header>
 
       {/* One column on small screens, three on a projector */}
-      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,29fr)_minmax(0,47fr)_minmax(0,24fr)] gap-6 2xl:gap-8 relative">
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,35fr)_minmax(0,41fr)_minmax(0,24fr)] gap-4 2xl:gap-6 relative">
         {/* Column 1: Top 6 Beers */}
-        <FoamCard as="section" aria-label="Efstu 6" tone="pine" size="lg" className="px-6 pt-3 pb-6 flex flex-col">
-          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5">
+        <FoamCard as="section" aria-label="Efstu 6" tone="pine" size="lg" className="px-4 pt-3 pb-4 flex flex-col">
+          <div className="flex-1 min-h-0 flex flex-col gap-2.5">
             <h2 className="text-3xl flex items-center gap-3 mb-1.5">
               <Crown className="h-8 w-8 text-gold" fill="currentColor" />
               Efstu 6
@@ -524,13 +524,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </FoamCard>
 
         {/* Column 2: Current Beer */}
-        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-10 pt-4 pb-6 flex flex-col items-center text-center gap-2 overflow-y-auto">
+        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-6 pt-4 pb-4 flex flex-col items-center text-center gap-2 overflow-y-auto">
           {currentBeer ? (
             <>
               <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
               {/* Image beside the name, not above it: the card needs the height for the bars and tags */}
               <div key={currentBeer.id} className="flex items-center justify-center gap-6 text-left animate-in fade-in zoom-in-95 duration-500">
-                <div className="beer-bob w-28 h-28 2xl:w-36 2xl:h-36 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
+                <div className="beer-bob w-24 h-24 2xl:w-32 2xl:h-32 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
                   {currentBeer.imageUrl ? (
                     <Image
                       src={beerImageSrc(currentBeer.imageUrl)}
@@ -544,8 +544,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   )}
                 </div>
                 <div className="min-w-0 flex flex-col gap-1.5">
-                <h2 className="text-5xl 2xl:text-6xl leading-none">{currentBeer.name}</h2>
-                <p className="text-2xl 2xl:text-[1.75rem] text-muted-foreground">
+                <h2 className="text-4xl 2xl:text-5xl leading-none">{currentBeer.name}</h2>
+                <p className="text-xl 2xl:text-2xl text-muted-foreground">
                   {currentBeer.brewery}
                   {currentBeer.containerSize && currentBeer.containerType && ` · ${currentBeer.containerSize} ml ${currentBeer.containerType}`}
                 </p>
@@ -559,12 +559,13 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
 
               <div className="mt-auto w-full grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 items-end text-left">
-                <div className="flex flex-col gap-1">
+                <div className={`flex flex-col gap-1 ${pendingRaters?.scoresHidden ? 'col-span-2' : ''}`}>
                   {pendingRaters?.scoresHidden ? (
-                    <span className="flex flex-col gap-2 text-muted-foreground">
-                      <EyeOff className="h-12 w-12" />
-                      <span className="text-2xl font-semibold leading-tight">Einkunnir birtast þegar allir hafa gefið einkunn</span>
-                      <span className="text-5xl font-extrabold text-ink tabular-nums">
+                    // No score bars while hidden, so spread across the whole card
+                    <span className="flex items-center gap-5 text-muted-foreground">
+                      <EyeOff className="h-12 w-12 shrink-0" />
+                      <span className="flex-1 text-2xl font-semibold leading-tight">Einkunnir birtast þegar allir hafa gefið einkunn</span>
+                      <span className="text-5xl font-extrabold text-ink tabular-nums whitespace-nowrap">
                         {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
                       </span>
                     </span>
@@ -647,7 +648,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         </FoamCard>
 
         {/* Column 3: Participation */}
-        <FoamCard as="section" aria-label="Framvinda" tone="pine" size="lg" className="px-6 pt-3 pb-6 flex flex-col gap-5 min-h-0">
+        <FoamCard as="section" aria-label="Framvinda" tone="pine" size="lg" className="px-4 pt-3 pb-4 flex flex-col gap-5 min-h-0">
           <h2 className="text-3xl">Framvinda</h2>
           {!currentBeer || !pendingRaters ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 text-mint">
@@ -678,11 +679,19 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               )}
 
               {pendingRaters.totalParticipants > 0 && pendingRaters.pendingCount === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
-                  <PartyPopper className="h-24 w-24 text-gold" strokeWidth={1.6} />
-                  <p className="text-4xl font-extrabold leading-tight">Allir hafa gefið einkunn!</p>
-                  <p className="text-2xl text-mint">Skál!</p>
-                </div>
+                beerNotes.length > 0 ? (
+                  // One line when notes are showing, so the note bubble stays inside the card
+                  <p className="flex items-center gap-3 text-2xl font-extrabold">
+                    <PartyPopper className="h-9 w-9 shrink-0 text-gold" strokeWidth={1.6} />
+                    Allir búnir. Skál!
+                  </p>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
+                    <PartyPopper className="h-24 w-24 text-gold" strokeWidth={1.6} />
+                    <p className="text-4xl font-extrabold leading-tight">Allir hafa gefið einkunn!</p>
+                    <p className="text-2xl text-mint">Skál!</p>
+                  </div>
+                )
               ) : pendingRaters.pendingCount > 0 ? (
                 <div className="flex-1 min-h-0 flex flex-col gap-3">
                   <span className="text-xl font-semibold text-mint">Bíður eftir {pendingRaters.pendingCount}</span>
