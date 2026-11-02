@@ -69,8 +69,9 @@ export function AppHeader() {
     return () => window.removeEventListener('storage', verify)
   }, [clearActiveTasting])
 
-  // Projector display is fullscreen; embedded views live inside another page
-  if (isEmbedded || /^\/projector\/[^/]+/.test(pathname)) {
+  // Projector display is fullscreen; embedded views live inside another page; while rating a
+  // beer people only need the tasting itself (the tasting tabs still lead to scores and admin)
+  if (isEmbedded || /^\/projector\/[^/]+/.test(pathname) || /^\/t\/[^/]+\/rate/.test(pathname)) {
     return null
   }
 

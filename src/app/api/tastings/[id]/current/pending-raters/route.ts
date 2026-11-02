@@ -83,6 +83,8 @@ export async function GET(
       code: rating.participant.code,
       score: scoresHidden ? null : rating.score,
       groupGuess: scoresHidden ? null : rating.groupGuess,
+      // A note usually gives the verdict away, so it waits for the scores like the guess does
+      note: scoresHidden ? null : rating.note,
       submittedAt: rating.updatedAt.toISOString()
     }))
 

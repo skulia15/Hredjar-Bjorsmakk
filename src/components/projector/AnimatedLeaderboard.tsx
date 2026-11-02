@@ -96,7 +96,7 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
           }}
           className={`flex items-center gap-4 min-h-[84px] px-4 py-2 rounded-[20px] animate-in fade-in slide-in-from-left-4 duration-500 ${
             beer.rank === 1 ? 'bg-cream text-ink' : 'bg-pine'
-          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-gold/60' : ''}`}
+          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-inset ring-gold/70' : ''}`}
         >
           <span className={`w-12 h-12 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
             {beer.rank}

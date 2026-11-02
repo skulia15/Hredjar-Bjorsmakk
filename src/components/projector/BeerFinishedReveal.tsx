@@ -34,7 +34,7 @@ function placement(rank: number, total: number) {
 }
 
 /** Full-screen moment when a beer is finished: drumroll, the average counting up, then where it landed */
-export function BeerFinishedReveal({ reveal, onClose }: { reveal: FinishedBeerReveal; onClose: () => void }) {
+export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { reveal: FinishedBeerReveal; onClose: () => void; showTags?: boolean }) {
   const [phase, setPhase] = useState<'drumroll' | 'score' | 'details'>('drumroll')
 
   useEffect(() => {
@@ -127,9 +127,11 @@ export function BeerFinishedReveal({ reveal, onClose }: { reveal: FinishedBeerRe
               )}
             </div>
 
-            <div className="animate-in fade-in duration-700 fill-mode-both [animation-delay:800ms]">
-              <TagCloud tags={reveal.tags} limit={8} />
-            </div>
+            {showTags && (
+              <div className="animate-in fade-in duration-700 fill-mode-both [animation-delay:800ms]">
+                <TagCloud tags={reveal.tags} limit={8} />
+              </div>
+            )}
           </div>
         )}
       </div>
