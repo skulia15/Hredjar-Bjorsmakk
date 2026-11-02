@@ -12,6 +12,12 @@ export interface Avatar {
 export const AVATARS: Avatar[] = [
   { key: 'thvorusleikir', name: 'Þvörusleikir', cheeky: true },
   { key: 'bossasveinn', name: 'Bossasveinn', cheeky: true },
+  { key: 'hreindyrabossi', name: 'Rúdolf sýnir bossann', cheeky: true },
+  { key: 'snjokarlabossi', name: 'Snjókarlabossinn', cheeky: true },
+  { key: 'alfabossi', name: 'Álfabossinn', cheeky: true },
+  { key: 'bossabraedur', name: 'Bossabræðurnir', cheeky: true },
+  { key: 'klausubossi', name: 'Frú Klaus beygir sig', cheeky: true },
+  { key: 'jolatresbossi', name: 'Jólatrésbossinn', cheeky: true },
   { key: 'fastur-i-strompinum', name: 'Fastur í strompinum', cheeky: true },
   { key: 'jolakulurnar', name: 'Jólakúlurnar', cheeky: true },
   { key: 'snjokonan', name: 'Snjókonan', cheeky: true },
