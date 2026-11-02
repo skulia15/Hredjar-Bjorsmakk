@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { authErrorResponse, isLeaderOrAdmin, requireUser } from '@/lib/auth';
-import { AvatarTakenError, createParticipant, InvalidAvatarError } from '@/lib/participants';
+import { AvatarTakenError, createParticipant, InvalidAvatarError, updateParticipantAvatar } from '@/lib/participants';
 import { AVATARS, resolveAvatar } from '@/lib/avatars';
 
 // GET /api/tastings/[id]/join - Check current user's join status & taken avatars for this tasting
@@ -57,7 +57,7 @@ export async function GET(
   }
 }
 
-// POST /api/tastings/[id]/join - Join tasting as the signed-in user
+// POST /api/tastings/[id]/join - Join tasting as the signed-in user (or update their avatar)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -99,11 +99,15 @@ export async function POST(
     });
 
     if (participant) {
-      // User already joined (or was removed and is rejoining) - update last seen
-      participant = await prisma.participant.update({
-        where: { id: participant.id },
-        data: { lastSeenAt: new Date(), active: true, pausedAt: null }
-      });
+      if (chosenAvatar) {
+        participant = await updateParticipantAvatar(id, participant.id, chosenAvatar);
+      } else {
+        // User already joined (or was removed and is rejoining) - update last seen
+        participant = await prisma.participant.update({
+          where: { id: participant.id },
+          data: { lastSeenAt: new Date(), active: true, pausedAt: null }
+        });
+      }
     } else {
       participant = await createParticipant(id, user.id, chosenAvatar);
     }

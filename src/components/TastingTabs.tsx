@@ -6,11 +6,18 @@ import { Settings, Star, Trophy } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { ChristmasAvatar } from '@/components/ChristmasAvatar'
 import { cn } from '@/lib/utils'
 
 type TastingSummary = {
   status: 'draft' | 'active' | 'closed'
   currentUserIsLeader: boolean
+}
+
+type JoinStatus = {
+  alreadyJoined: boolean
+  participantId: string | null
+  avatar: string | null
 }
 
 export function TastingTabs({ tastingId }: { tastingId: string }) {
@@ -37,6 +44,16 @@ export function TastingTabs({ tastingId }: { tastingId: string }) {
     enabled: !isJoinPage,
   })
 
+  const { data: joinStatus } = useQuery<JoinStatus>({
+    queryKey: ['tasting-join-status', tastingId, isSignedIn, pathname],
+    queryFn: async () => {
+      const res = await fetch(`/api/tastings/${tastingId}/join`)
+      if (!res.ok) throw new Error('Failed to load join status')
+      return res.json()
+    },
+    enabled: !isJoinPage && Boolean(isSignedIn),
+  })
+
   if (isEmbedded || isJoinPage || !tasting) return null
 
   const tabs = [
@@ -47,9 +64,15 @@ export function TastingTabs({ tastingId }: { tastingId: string }) {
 
   if (tabs.length < 2) return null
 
+  const currentTab = pathname.endsWith('/admin')
+    ? 'admin'
+    : pathname.endsWith('/scores')
+      ? 'scores'
+      : 'rate'
+
   return (
     <div className="border-b bg-background/60">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 flex items-center justify-between gap-2">
         <nav aria-label="Smökkun" className="-mb-px flex flex-1 flex-wrap gap-1 sm:flex-none">
           {tabs.map(({ href, label, icon: Icon }) => {
             const active = pathname.startsWith(href)
@@ -71,6 +94,21 @@ export function TastingTabs({ tastingId }: { tastingId: string }) {
             )
           })}
         </nav>
+
+        {isSignedIn && tasting.status !== 'closed' && (
+          <Link
+            href={`${base}?pick=1&next=${currentTab}`}
+            title="Breyta jólamynd"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-card/80 px-2.5 py-1 text-xs font-medium hover:bg-accent transition-colors shrink-0"
+          >
+            <ChristmasAvatar
+              avatar={joinStatus?.avatar}
+              seed={joinStatus?.participantId ?? tastingId}
+              className="h-7 w-7 shrink-0"
+            />
+            <span className="hidden xs:inline sm:inline">Breyta mynd</span>
+          </Link>
+        )}
       </div>
     </div>
   )

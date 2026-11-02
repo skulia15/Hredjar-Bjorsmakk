@@ -20,6 +20,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [suggestedName, setSuggestedName] = useState('')
 
   const [avatarStep, setAvatarStep] = useState<'checking' | 'pick' | 'joining'>('checking')
+  const [alreadyJoined, setAlreadyJoined] = useState(false)
   const [takenAvatars, setTakenAvatars] = useState<string[]>([])
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState('')
@@ -115,8 +116,14 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         code: data.code
       }))
 
-      // Redirect based on role
-      router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
+      // Honor explicit next destination if provided (?next=admin|rate|scores)
+      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+      const next = searchParams?.get('next')
+      if (next === 'admin' || next === 'rate' || next === 'scores') {
+        router.push(`/t/${params.id}/${next}`)
+      } else {
+        router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setSubmittingJoin(false)
@@ -128,12 +135,13 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     if (!isSignedIn || nameStep !== 'done' || !tastingStatus || tastingStatus === 'closed') return
     let cancelled = false
 
+    const forcePick = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pick') === '1'
+
     const checkJoinStatus = async () => {
       try {
         const res = await fetch(`/api/tastings/${params.id}/join`)
         if (cancelled) return
         if (!res.ok) {
-          // Fallback to direct join if status endpoint fails
           setAvatarStep('joining')
           completeJoin()
           return
@@ -141,14 +149,20 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         const data = await res.json()
         if (cancelled) return
 
-        if (data.alreadyJoined) {
+        setAlreadyJoined(Boolean(data.alreadyJoined))
+
+        if (data.alreadyJoined && !forcePick) {
           setAvatarStep('joining')
           completeJoin()
         } else {
           const taken: string[] = data.takenAvatars || []
           setTakenAvatars(taken)
-          const firstFree = AVATARS.find(a => !taken.includes(a.key))?.key ?? AVATARS[0]?.key ?? null
-          setSelectedAvatar(prev => (prev && !taken.includes(prev) ? prev : firstFree))
+          const currentOrFirstFree =
+            (data.avatar && !taken.includes(data.avatar) ? data.avatar : null) ??
+            AVATARS.find(a => !taken.includes(a.key))?.key ??
+            AVATARS[0]?.key ??
+            null
+          setSelectedAvatar(prev => (prev && !taken.includes(prev) ? prev : currentOrFirstFree))
           setAvatarStep('pick')
         }
       } catch {
@@ -165,7 +179,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         const res = await fetch(`/api/tastings/${params.id}/join`)
         if (!res.ok || cancelled) return
         const data = await res.json()
-        if (cancelled || data.alreadyJoined) return
+        if (cancelled || (data.alreadyJoined && !forcePick)) return
         const taken: string[] = data.takenAvatars || []
         setTakenAvatars(taken)
         setSelectedAvatar(prev => {
@@ -299,10 +313,14 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {submittingJoin
-                ? 'Hleypir inn...'
-                : chosenObj
-                  ? `Taka þátt sem ${chosenObj.name}`
-                  : 'Taka þátt'}
+                ? 'Vista...'
+                : alreadyJoined
+                  ? chosenObj
+                    ? `Vista mynd (${chosenObj.name})`
+                    : 'Vista mynd'
+                  : chosenObj
+                    ? `Taka þátt sem ${chosenObj.name}`
+                    : 'Taka þátt'}
             </button>
           </div>
         </div>

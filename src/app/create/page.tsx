@@ -28,8 +28,16 @@ export default function CreateTastingPage() {
 
       const data = await response.json()
 
-      // Redirect to tasting admin page
-      router.push(`/t/${data.id}/admin`)
+      if (data.participant) {
+        localStorage.setItem(`participant_${data.id}`, JSON.stringify({
+          participantId: data.participant.id,
+          userId: data.participant.userId,
+          code: data.participant.code
+        }))
+      }
+
+      // Let the creator pick their avatar first, then continue to the tasting admin page
+      router.push(`/t/${data.id}?pick=1&next=admin`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
     } finally {

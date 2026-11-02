@@ -128,5 +128,21 @@ describe('avatars', () => {
     })
     expect(second.status).toBe(200)
     expect(second.json.avatar).toBe('thvorusleikir')
+
+    // Existing participant can change their avatar to an untaken one, but not to another participant's avatar
+    const switchConflict = await callRoute(join, {
+      method: 'POST',
+      params: { id: tasting.id },
+      body: { avatar: 'gryla' },
+    })
+    expect(switchConflict.status).toBe(409)
+
+    const switched = await callRoute(join, {
+      method: 'POST',
+      params: { id: tasting.id },
+      body: { avatar: 'bossasveinn' },
+    })
+    expect(switched.status).toBe(200)
+    expect(switched.json.avatar).toBe('bossasveinn')
   })
 })
