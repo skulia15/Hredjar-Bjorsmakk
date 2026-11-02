@@ -12,13 +12,7 @@ export const ratingSchema = z.object({
     .min(1.0, 'Score must be at least 1.0')
     .max(10.0, 'Score must be at most 10.0')
     .refine((val) => val % 0.5 === 0, 'Score must be in 0.5 increments'),
-  // Omitted fields keep their stored value
-  // Fixed keys plus a few short free-text "Annað" tags, normalized so spellings group together
-  tags: z.array(z.string().trim().min(1).max(CUSTOM_TAG_MAX_LENGTH))
-    .transform((tags) => [...new Set(tags.map(normalizeTag))])
-    .refine((tags) => tags.filter(isCustomTag).length <= CUSTOM_TAGS_PER_RATING,
-      `At most ${CUSTOM_TAGS_PER_RATING} custom tags`)
-    .optional(),
+  // Omitted fields keep their stored value. Flavor tags are saved apart, see flavorTagsSchema
   note: z.string()
     .trim()
     .max(NOTE_MAX_LENGTH, `Note must be at most ${NOTE_MAX_LENGTH} characters`)
@@ -32,6 +26,16 @@ export const ratingSchema = z.object({
     .transform((guess) => Math.round(guess * 10) / 10)
     .nullable()
     .optional()
+});
+
+// Flavor tags, saved on every tap without touching the rating
+export const flavorTagsSchema = z.object({
+  beerId: z.string().uuid(),
+  // Fixed keys plus a few short free-text "Annað" tags, normalized so spellings group together
+  tags: z.array(z.string().trim().min(1).max(CUSTOM_TAG_MAX_LENGTH))
+    .transform((tags) => [...new Set(tags.map(normalizeTag))])
+    .refine((tags) => tags.filter(isCustomTag).length <= CUSTOM_TAGS_PER_RATING,
+      `At most ${CUSTOM_TAGS_PER_RATING} custom tags`)
 });
 
 // Tasting operations

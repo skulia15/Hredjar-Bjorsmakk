@@ -73,6 +73,10 @@ export async function GET(
     })
 
     const scoresHidden = (await getHiddenTastingBeerId(id)) === tasting.currentTastingBeerId
+    const flavorTags = await prisma.flavorTags.findMany({
+      where: { tastingBeerId: tasting.currentTastingBeerId },
+      select: { tags: true }
+    })
 
     // Create a set of participant IDs who have rated
     const ratedParticipantIds = new Set(ratings.map(r => r.participantId))
@@ -110,7 +114,7 @@ export async function GET(
       paused,
       scoresHidden,
       // Tags say little about the score, so they show even while scores are hidden
-      tags: countTags(ratings),
+      tags: countTags(flavorTags),
       rated,
       pending
     })

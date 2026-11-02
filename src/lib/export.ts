@@ -16,6 +16,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
       tastingBeers: {
         include: {
           beer: true,  // Include catalog beer if referenced
+          flavorTags: { select: { participantId: true, tags: true } },
           ratings: {
             include: {
               participant: {
@@ -66,6 +67,8 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
   tasting.tastingBeers.forEach(tb => {
     const beerName = tb.beer?.name || tb.customName || 'Unknown';
     const brewery = tb.beer?.brewery || tb.customBrewery || 'Unknown';
+    // Tags are saved apart from the rating, so match them up by participant
+    const tagsByParticipant = new Map(tb.flavorTags.map(ft => [ft.participantId, ft.tags]));
 
     tb.ratings.forEach(rating => {
       ratingsSheet.addRow({
@@ -74,7 +77,7 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
         participant: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
         code: rating.participant.code,
         rating: rating.score,
-        tags: rating.tags.map(flavorTagLabel).join(', '),
+        tags: (tagsByParticipant.get(rating.participantId) ?? []).map(flavorTagLabel).join(', '),
         note: rating.note ?? '',
         groupGuess: rating.groupGuess ?? '',
         timestamp: formatDate(rating.createdAt, 'yyyy-MM-dd HH:mm:ss'),

@@ -4,7 +4,8 @@ import { ratingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireParticipant } from '@/lib/auth';
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
 
-// GET /api/tastings/[id]/ratings?beerId=... - The signed-in participant's own rating for a beer (null if none)
+// GET /api/tastings/[id]/ratings?beerId=... - The signed-in participant's own rating and flavor tags for a beer.
+// score is null when they've only tagged it so far; the whole thing is null when they've done neither
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -17,15 +18,29 @@ export async function GET(
     }
 
     const { participant } = await requireParticipant(id);
-    const rating = await prisma.rating.findUnique({
-      where: { tastingBeerId_participantId: { tastingBeerId, participantId: participant.id } },
-      select: { tastingId: true, score: true, tags: true, note: true, groupGuess: true }
-    });
+    const key = { tastingBeerId_participantId: { tastingBeerId, participantId: participant.id } };
+    const [rating, flavorTags] = await Promise.all([
+      prisma.rating.findUnique({
+        where: key,
+        select: { tastingId: true, score: true, note: true, groupGuess: true }
+      }),
+      prisma.flavorTags.findUnique({
+        where: key,
+        select: { tags: true, tastingBeer: { select: { tastingId: true } } }
+      })
+    ]);
 
-    if (!rating || rating.tastingId !== id) {
+    const ownRating = rating?.tastingId === id ? rating : null;
+    const ownTags = flavorTags?.tastingBeer.tastingId === id ? flavorTags.tags : null;
+    if (!ownRating && !ownTags) {
       return NextResponse.json(null);
     }
-    return NextResponse.json({ score: rating.score, tags: rating.tags, note: rating.note, groupGuess: rating.groupGuess });
+    return NextResponse.json({
+      score: ownRating?.score ?? null,
+      tags: ownTags ?? [],
+      note: ownRating?.note ?? null,
+      groupGuess: ownRating?.groupGuess ?? null
+    });
 
   } catch (error) {
     const authResponse = authErrorResponse(error);
@@ -56,7 +71,7 @@ export async function POST(
       );
     }
 
-    const { beerId, score, tags, note, groupGuess: requestedGuess } = validation.data;
+    const { beerId, score, note, groupGuess: requestedGuess } = validation.data;
     const tastingBeerId = beerId; // Accept beerId for backwards compatibility
 
     // The rater is always the signed-in user's participation; any participantId in the body is ignored
@@ -95,7 +110,6 @@ export async function POST(
       },
       update: {
         score,
-        ...(tags !== undefined && { tags }),
         ...(note !== undefined && { note }),
         ...(groupGuess !== undefined && { groupGuess }),
         updatedAt: new Date()
@@ -105,7 +119,6 @@ export async function POST(
         tastingBeerId,
         participantId: participant.id,
         score,
-        tags: tags ?? [],
         note: note ?? null,
         groupGuess: groupGuess ?? null
       }
@@ -121,7 +134,6 @@ export async function POST(
       beerId: rating.tastingBeerId, // Return as beerId for backwards compatibility
       participantId: rating.participantId,
       score: rating.score,
-      tags: rating.tags,
       note: rating.note,
       groupGuess: rating.groupGuess,
       createdAt: rating.createdAt,

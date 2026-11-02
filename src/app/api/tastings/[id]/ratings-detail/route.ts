@@ -29,6 +29,7 @@ export async function GET(
           },
           include: {
             beer: true,
+            flavorTags: { select: { tags: true } },
             ratings: {
               include: {
                 participant: {
@@ -84,7 +85,7 @@ export async function GET(
         average: Number(average.toFixed(2)),
         ratingsCount: ratings.length,
         ratings: ratingsMap,
-        tags: countTags(ratings),
+        tags: countTags(tb.flavorTags),
         guesses: ratings
           .filter(r => r.groupGuess !== null)
           .map(r => ({

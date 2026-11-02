@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ratingSchema, updateUserSchema, validateInput } from './validation'
+import { flavorTagsSchema, ratingSchema, updateUserSchema, validateInput } from './validation'
 
 const ids = {
   beerId: '0549947f-21b4-4feb-8783-56b06cfd0608',
@@ -18,26 +18,41 @@ describe('ratingSchema', () => {
     expect(ratingSchema.safeParse({ ...ids, beerId: 'nope', score: 5 }).success).toBe(false)
   })
 
-  it('dedupes tags', () => {
-    expect(ratingSchema.parse({ ...ids, score: 5, tags: ['hoppy', 'hoppy', 'sour'] }).tags).toEqual(['hoppy', 'sour'])
-  })
-
-  it('normalizes custom tags so spellings group, and maps typed labels to their key', () => {
-    expect(ratingSchema.parse({ ...ids, score: 5, tags: [' negull ', 'NEGULL', 'Kaffi', 'appelsínu  börkur'] }).tags)
-      .toEqual(['Negull', 'coffee', 'Appelsínu börkur'])
-  })
-
-  it('caps custom tags in count and length', () => {
-    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['a', 'b', 'c', 'hoppy'] }).success).toBe(true)
-    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['a', 'b', 'c', 'd'] }).success).toBe(false)
-    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['x'.repeat(25)] }).success).toBe(false)
-    expect(ratingSchema.safeParse({ ...ids, score: 5, tags: ['   '] }).success).toBe(false)
+  it('ignores tags, they are saved apart', () => {
+    expect(ratingSchema.parse({ ...ids, score: 5, tags: ['hoppy'] })).not.toHaveProperty('tags')
   })
 
   it('trims notes and stores blank ones as null', () => {
     expect(ratingSchema.parse({ ...ids, score: 5, note: '  nice  ' }).note).toBe('nice')
     expect(ratingSchema.parse({ ...ids, score: 5, note: '   ' }).note).toBeNull()
     expect(ratingSchema.safeParse({ ...ids, score: 5, note: 'x'.repeat(281) }).success).toBe(false)
+  })
+})
+
+describe('flavorTagsSchema', () => {
+  it('dedupes tags', () => {
+    expect(flavorTagsSchema.parse({ ...ids, tags: ['hoppy', 'hoppy', 'sour'] }).tags).toEqual(['hoppy', 'sour'])
+  })
+
+  it('accepts no tags, so the last one can be untapped', () => {
+    expect(flavorTagsSchema.parse({ ...ids, tags: [] }).tags).toEqual([])
+  })
+
+  it('normalizes custom tags so spellings group, and maps typed labels to their key', () => {
+    expect(flavorTagsSchema.parse({ ...ids, tags: [' negull ', 'NEGULL', 'Kaffi', 'appelsínu  börkur'] }).tags)
+      .toEqual(['Negull', 'coffee', 'Appelsínu börkur'])
+  })
+
+  it('caps custom tags in count and length', () => {
+    expect(flavorTagsSchema.safeParse({ ...ids, tags: ['a', 'b', 'c', 'hoppy'] }).success).toBe(true)
+    expect(flavorTagsSchema.safeParse({ ...ids, tags: ['a', 'b', 'c', 'd'] }).success).toBe(false)
+    expect(flavorTagsSchema.safeParse({ ...ids, tags: ['x'.repeat(25)] }).success).toBe(false)
+    expect(flavorTagsSchema.safeParse({ ...ids, tags: ['   '] }).success).toBe(false)
+  })
+
+  it('requires a tag list and a beer', () => {
+    expect(flavorTagsSchema.safeParse({ ...ids }).success).toBe(false)
+    expect(flavorTagsSchema.safeParse({ beerId: 'nope', tags: [] }).success).toBe(false)
   })
 })
 

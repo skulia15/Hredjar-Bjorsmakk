@@ -185,18 +185,6 @@ export default function RatePage({
 	const [tagsOpen, setTagsOpen] = useState(false);
 	const [customDraft, setCustomDraft] = useState("");
 	const customTagCount = tags.filter(isCustomTag).length;
-	const addCustomTag = () => {
-		if (!customDraft.trim()) return;
-		// Same normalizing as the server, so "Kaffi" typed in lights up the Kaffi chip
-		const tag = normalizeTag(customDraft);
-		editedRef.current = true;
-		setTags((prev) => {
-			if (prev.includes(tag)) return prev;
-			if (isCustomTag(tag) && prev.filter(isCustomTag).length >= CUSTOM_TAGS_PER_RATING) return prev;
-			return [...prev, tag];
-		});
-		setCustomDraft("");
-	};
 	// Set on any edit, so the saved rating arriving late doesn't wipe what was just tapped
 	const editedRef = useRef(false);
 
@@ -325,12 +313,58 @@ export default function RatePage({
 		(b) => b.id === tasting.currentBeerId,
 	);
 
+	// Flavor tags save on every tap, apart from the rating: tagging never submits a score.
+	// Saves go one at a time so a slow request can't land after a newer one
+	const tagsRef = useRef<string[]>([]);
+	const tagSaves = useRef(Promise.resolve());
+	const updateTags = (change: (prev: string[]) => string[]) => {
+		if (!currentBeer) return;
+		const next = change(tagsRef.current);
+		if (next === tagsRef.current) return;
+		editedRef.current = true;
+		tagsRef.current = next;
+		setTags(next);
+		const beerId = currentBeer.id;
+		tagSaves.current = tagSaves.current.then(async () => {
+			try {
+				const response = await fetch(`/api/tastings/${params.id}/flavor-tags`, {
+					method: "PUT",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ beerId, tags: next }),
+				});
+				if (response.status === 401 || response.status === 403) {
+					router.push(`/t/${params.id}`);
+					return;
+				}
+				if (!response.ok) throw new Error("Failed to save flavor tags");
+			} catch (error) {
+				console.error("Error saving flavor tags:", error);
+				setMessage("Villa: bragðlýsing vistaðist ekki");
+				setTimeout(() => setMessage(""), 5000);
+			}
+		});
+	};
+
+	const addCustomTag = () => {
+		if (!customDraft.trim()) return;
+		// Same normalizing as the server, so "Kaffi" typed in lights up the Kaffi chip
+		const tag = normalizeTag(customDraft);
+		updateTags((prev) => {
+			if (prev.includes(tag)) return prev;
+			if (isCustomTag(tag) && prev.filter(isCustomTag).length >= CUSTOM_TAGS_PER_RATING) return prev;
+			return [...prev, tag];
+		});
+		setCustomDraft("");
+	};
+
 	// Load existing rating and stats when current beer changes
 	useEffect(() => {
 		if (currentBeer && participantId) {
 			loadRatingStats();
 			editedRef.current = false;
 			setTagsOpen(false);
+			// The last beer's tags must not ride along on a tap before this beer's load
+			tagsRef.current = [];
 
 			// Load this participant's existing rating for this beer
 			fetch(`/api/tastings/${params.id}/ratings?beerId=${currentBeer.id}`)
@@ -338,17 +372,19 @@ export default function RatePage({
 				.then(
 					(
 						existingRating: {
-							score: number;
+							// null when they've only tagged it so far
+							score: number | null;
 							tags: string[];
 							note: string | null;
 							groupGuess: number | null;
 						} | null,
 					) => {
-						setHasRated(!!existingRating);
+						setHasRated(existingRating?.score != null);
 						if (editedRef.current) return;
 						// Reset for a new beer
 						setRating(existingRating?.score ?? 0);
-						setTags(existingRating?.tags ?? []);
+						tagsRef.current = existingRating?.tags ?? [];
+						setTags(tagsRef.current);
 						setNote(existingRating?.note ?? "");
 						setGroupGuess(existingRating?.groupGuess ?? null);
 					},
@@ -382,7 +418,6 @@ export default function RatePage({
 				body: JSON.stringify({
 					beerId: currentBeer.id,
 					score: rating,
-					tags,
 					note,
 					// Guesses only count while the group's scores are still hidden
 					...(ratingStats?.scoresHidden && { groupGuess }),
@@ -659,7 +694,7 @@ export default function RatePage({
 								className={`h-5 w-5 shrink-0 text-mint transition-transform ${tagsOpen ? "rotate-180" : ""}`}
 							/>
 						</button>
-						{/* Folded: just the picks, so it's clear what will be saved */}
+						{/* Folded: just the picks, so it's clear what's saved */}
 						{!tagsOpen && tags.length > 0 && (
 							<div className="flex flex-wrap gap-1.5 px-4 pb-3">
 								{tags.map((tag) => (
@@ -683,14 +718,13 @@ export default function RatePage({
 										key={tag}
 										type="button"
 										aria-pressed={selected}
-										onClick={() => {
-											editedRef.current = true;
-											setTags((prev) =>
-												selected
+										onClick={() =>
+											updateTags((prev) =>
+												prev.includes(tag)
 													? prev.filter((t) => t !== tag)
 													: [...prev, tag],
-											);
-										}}
+											)
+										}
 										className={`inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-sm font-semibold transition-colors ${
 											selected
 												? "bg-gold text-ink"
@@ -709,10 +743,7 @@ export default function RatePage({
 								key={tag}
 								type="button"
 								aria-label={`Fjarlægja ${tag}`}
-								onClick={() => {
-									editedRef.current = true;
-									setTags((prev) => prev.filter((t) => t !== tag));
-								}}
+								onClick={() => updateTags((prev) => prev.filter((t) => t !== tag))}
 								className="inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-sm font-semibold italic bg-gold text-ink"
 							>
 								<FlavorTagIcon tag={tag} className="h-[1.1em] w-[1.1em] shrink-0" />

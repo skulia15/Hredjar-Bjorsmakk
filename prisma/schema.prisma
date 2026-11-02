@@ -43,6 +43,7 @@ model Participant {
   createdAt     DateTime @default(now())
 
   ratings       Rating[]
+  flavorTags    FlavorTags[]
 
   @@unique([tastingId, userId])  // One participation per user per tasting
   @@unique([tastingId, code])
@@ -134,6 +135,7 @@ model TastingBeer {
   createdAt     DateTime @default(now())
 
   ratings       Rating[]
+  flavorTags    FlavorTags[]
 
   @@index([tastingId, status])
   @@index([tastingId, orderIndex])
@@ -153,7 +155,7 @@ model Rating {
   participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
 
   score           Float       // 1.0 to 10.0, step 0.5
-  tags            String[]    @default([])  // Flavor tag keys from src/lib/flavorTags.ts
+  tags            String[]    @default([])  // Unused: tags moved to FlavorTags, kept until the old deploy is gone
   note            String?     // Optional free-text tasting note
   groupGuess      Float?      // Guess at the group average, only taken while scores are hidden
   createdAt       DateTime    @default(now())
@@ -163,6 +165,21 @@ model Rating {
   @@index([tastingBeerId])
   @@index([participantId])
   @@index([tastingId])  // For fetching all ratings in a tasting (analytics/export)
+}
+
+// A participant's flavor tags for a beer, saved on every tap and apart from the rating,
+// so picking tags never submits a score
+model FlavorTags {
+  tastingBeerId   String
+  tastingBeer     TastingBeer @relation(fields: [tastingBeerId], references: [id], onDelete: Cascade)
+
+  participantId   String
+  participant     Participant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+
+  tags            String[]    @default([])  // Flavor tag keys from src/lib/flavorTags.ts
+  updatedAt       DateTime    @updatedAt
+
+  @@id([tastingBeerId, participantId])
 }
 
 // Admin authentication
