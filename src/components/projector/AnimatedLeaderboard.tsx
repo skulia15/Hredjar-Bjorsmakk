@@ -57,7 +57,13 @@ function MovementBadge({ movement }: { movement?: Movement }) {
 // Gold, silver, bronze; everyone else gets mint
 const RANK_BADGE: Record<number, string> = { 1: 'bg-gold', 2: 'bg-[#D9D3C4]', 3: 'bg-[#E08A5B]' }
 
-export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBeer[]; limit?: number }) {
+export function AnimatedLeaderboard({ beers, limit = 6, selectedBeerId, onSelect }: {
+  beers: LeaderboardBeer[]
+  limit?: number
+  selectedBeerId?: string | null
+  // Clicking a row shows that beer's scores; clicking the shown one again goes back
+  onSelect?: (beerId: string | null) => void
+}) {
   const signature = beers.map(b => `${b.beerId}:${b.rank}`).join(',')
   const [snapshot, setSnapshot] = useState(() => ({ signature, ranks: rankMap(beers), movement: {} as Record<string, Movement> }))
 
@@ -67,7 +73,7 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
   }
 
   // FLIP: rows that changed position animate from where they were
-  const rows = useRef(new Map<string, HTMLDivElement>())
+  const rows = useRef(new Map<string, HTMLButtonElement>())
   const previousTops = useRef(new Map<string, number>())
   useLayoutEffect(() => {
     rows.current.forEach((el, id) => {
@@ -87,8 +93,11 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
     // One equal slot per place so all of them fit the column on the projector, never scrolling
     <div className="flex-1 min-h-0 grid gap-2.5 relative" style={{ gridTemplateRows: `repeat(${limit}, minmax(0, 1fr))` }}>
       {beers.slice(0, limit).map(beer => (
-        <div
+        <button
+          type="button"
           key={beer.beerId}
+          onClick={() => onSelect?.(selectedBeerId === beer.beerId ? null : beer.beerId)}
+          aria-pressed={selectedBeerId === beer.beerId}
           ref={el => {
             if (el) rows.current.set(beer.beerId, el)
             else {
@@ -96,9 +105,11 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
               previousTops.current.delete(beer.beerId)
             }
           }}
-          className={`flex items-center gap-4 min-h-0 overflow-hidden px-4 py-1 rounded-[20px] animate-in fade-in slide-in-from-left-4 duration-500 ${
+          className={`flex items-center gap-4 min-h-0 overflow-hidden px-4 py-1 rounded-[20px] text-left cursor-pointer transition-[filter] hover:brightness-110 animate-in fade-in slide-in-from-left-4 duration-500 ${
             beer.rank === 1 ? 'bg-cream text-ink' : 'bg-pine'
-          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-inset ring-gold/70' : ''}`}
+          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-inset ring-gold/70' : ''} ${
+            selectedBeerId === beer.beerId ? 'outline-4 outline-offset-2 outline-gold' : ''
+          }`}
         >
           <span className={`w-11 h-11 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
             {beer.rank}
@@ -117,7 +128,7 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
             </span>
           </span>
           <span className="text-3xl 2xl:text-4xl font-extrabold tabular-nums">{beer.average.toFixed(2)}</span>
-        </div>
+        </button>
       ))}
     </div>
   )

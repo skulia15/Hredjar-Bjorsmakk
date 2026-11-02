@@ -25,6 +25,7 @@ import { NoteTicker } from '@/components/projector/NoteTicker'
 import { ProgressStrip } from '@/components/projector/ProgressStrip'
 import { ScoreRevealPanel } from '@/components/projector/ScoreRevealPanel'
 import { ScoreBars } from '@/components/projector/ScoreBars'
+import { SelectedBeerPanel, type SelectedBeerRating } from '@/components/projector/SelectedBeerPanel'
 import { TagCloud } from '@/components/projector/TagCloud'
 import { beerImageSrc } from '@/lib/beerImage'
 
@@ -97,7 +98,7 @@ interface PendingRatersData {
 }
 
 interface RatingsDetailData {
-  participants: Array<{ id: string; userName: string }>
+  participants: Array<{ id: string; userName: string; avatar?: string | null }>
   beers: Array<{
     beerId: string
     ratings: Record<string, number | null>
@@ -195,6 +196,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const [revealedBeerId, setRevealedBeerId] = useState<string | null>(null)
   const closeAwards = useCallback(() => setAwardsDismissed(true), [])
   const closeFinishedReveal = useCallback(() => setFinishedReveal(null), [])
+  // A finished beer clicked on the leaderboard, shown in the middle card instead of the current one
+  const [selectedBeerId, setSelectedBeerId] = useState<string | null>(null)
+  const [selectedDetail, setSelectedDetail] = useState<{ beerId: string; ratings: SelectedBeerRating[]; tags: BeerTagCount[] } | null>(null)
   const { isFullscreen, toggleFullscreen, soundOn, toggleSound, tagsOn, toggleTags } = useProjectorControls()
 
   // What the previous poll saw, to spot transitions; undefined until the first load
@@ -210,6 +214,34 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     const interval = setInterval(loadAllData, 5000)
     return () => clearInterval(interval)
   }, [params.id])
+
+  // Load who gave the selected beer what; a finished beer's ratings don't change, so once is enough
+  useEffect(() => {
+    if (!selectedBeerId) return
+    let cancelled = false
+    fetch(`/api/tastings/${params.id}/ratings-detail`)
+      .then(response => (response.ok ? response.json() : null))
+      .then((detail: RatingsDetailData | null) => {
+        if (cancelled || !detail) return
+        const beerDetail = detail.beers.find(b => b.beerId === selectedBeerId)
+        if (!beerDetail) return
+        const ratings = detail.participants.flatMap(p => {
+          const score = beerDetail.ratings[p.id]
+          return score == null ? [] : [{ participantId: p.id, userName: p.userName, avatar: p.avatar, score }]
+        })
+        setSelectedDetail({ beerId: selectedBeerId, ratings, tags: beerDetail.tags })
+      })
+      .catch(err => console.error('Error loading selected beer ratings:', err))
+    return () => { cancelled = true }
+  }, [params.id, selectedBeerId])
+
+  // Escape goes back to the current beer
+  useEffect(() => {
+    if (!selectedBeerId) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedBeerId(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedBeerId])
 
   // Projector shows every nudge (component will auto-hide after duration)
   const handleIncomingNudge = useCallback(() => setShowNudge(true), [])
@@ -401,6 +433,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       )
     : null
 
+  // The picked beer, unless it dropped off the board or everyone just rated and the current beer took the screen
+  const selectedScore = !expanded ? scores?.beers.find(b => b.beerId === selectedBeerId) : undefined
+  const selectedBeer = selectedScore && tasting.beers.find(b => b.id === selectedScore.beerId)
+
   const engagementStats = getEngagementStats()
 
   // Calculate overall tasting stats
@@ -533,7 +569,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 <p className="text-xl">Engir bjórar klárðir ennþá</p>
               </div>
             ) : (
-              <AnimatedLeaderboard beers={scores.beers} limit={6} />
+              <AnimatedLeaderboard beers={scores.beers} limit={6} selectedBeerId={selectedScore?.beerId} onSelect={setSelectedBeerId} />
             )}
           </div>
         </FoamCard>
@@ -560,6 +596,18 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               notes={allNotes.slice(0, 6)}
               justRevealed={justRevealed}
               showTags={tagsOn}
+            />
+          ) : selectedScore ? (
+            <SelectedBeerPanel
+              key={selectedScore.beerId}
+              beer={{ ...selectedBeer, ...selectedScore, imageUrl: selectedScore.imageUrl ?? selectedBeer?.imageUrl }}
+              rank={selectedScore.rank}
+              average={selectedScore.average}
+              ratings={selectedDetail?.beerId === selectedScore.beerId ? selectedDetail.ratings : null}
+              tags={selectedDetail?.beerId === selectedScore.beerId ? selectedDetail.tags : []}
+              showTags={tagsOn}
+              backLabel={currentBeer ? 'Núverandi bjór' : 'Til baka'}
+              onBack={() => setSelectedBeerId(null)}
             />
           ) : currentBeer ? (
             <>
