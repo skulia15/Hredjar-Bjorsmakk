@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   CUSTOM_TAG_MAX_LENGTH, CUSTOM_TAGS_PER_RATING, isCustomTag, normalizeTag, NOTE_MAX_LENGTH,
 } from '@/lib/flavorTags';
+import { DISPLAY_NAME_MAX_LENGTH } from '@/lib/displayName';
 
 // Identity (who is acting) always comes from the Clerk session, never from these bodies
 
@@ -62,11 +63,19 @@ export const setCurrentBeerSchema = z.object({
   beerId: z.string().uuid()
 });
 
+// Display name shown on scores and the projector; not unique
+const displayNameSchema = z.string().trim().min(1, 'Name is required').max(DISPLAY_NAME_MAX_LENGTH);
+
+// The signed-in user renaming themselves
+export const updateOwnNameSchema = z.object({
+  name: displayNameSchema
+});
+
 // Admin operations
 export const updateUserSchema = z.object({
   isLeader: z.boolean().optional(),
   isAdmin: z.boolean().optional(),
-  name: z.string().trim().min(1).max(50).optional()
+  name: displayNameSchema.optional()
 }).refine((data) => data.isLeader !== undefined || data.isAdmin !== undefined || data.name !== undefined, {
   message: "At least one field (isLeader, isAdmin or name) must be provided"
 });

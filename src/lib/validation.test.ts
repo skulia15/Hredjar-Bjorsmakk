@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { flavorTagsSchema, ratingSchema, updateUserSchema, validateInput } from './validation'
+import { flavorTagsSchema, ratingSchema, updateOwnNameSchema, updateUserSchema, validateInput } from './validation'
 
 const ids = {
   beerId: '0549947f-21b4-4feb-8783-56b06cfd0608',
@@ -65,6 +65,18 @@ describe('updateUserSchema', () => {
 
   it('rejects a blank name', () => {
     expect(updateUserSchema.safeParse({ name: '   ' }).success).toBe(false)
+  })
+})
+
+describe('updateOwnNameSchema', () => {
+  it('trims the name', () => {
+    expect(updateOwnNameSchema.parse({ name: '  Bjórbangsi ' })).toEqual({ name: 'Bjórbangsi' })
+  })
+
+  it('rejects a missing, blank or too long name', () => {
+    expect(updateOwnNameSchema.safeParse({}).success).toBe(false)
+    expect(updateOwnNameSchema.safeParse({ name: '   ' }).success).toBe(false)
+    expect(updateOwnNameSchema.safeParse({ name: 'x'.repeat(51) }).success).toBe(false)
   })
 })
 

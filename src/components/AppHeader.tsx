@@ -1,7 +1,8 @@
 'use client'
 
 import { SignInButton, Show, UserButton, useAuth } from '@clerk/nextjs'
-import { Beer as BeerIcon, ListChecks, Shield, Tv } from 'lucide-react'
+import { Beer as BeerIcon, ListChecks, Pencil, Shield, Tv } from 'lucide-react'
+import { NicknameForm } from '@/components/NicknameForm'
 import { SantaMug } from '@/components/SantaMug'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -27,6 +28,7 @@ export function AppHeader() {
   const [session, setSession] = useState<{ name: string; isAdmin: boolean } | null>(null)
   const [activeTastingId, setActiveTastingId] = useState<string | null>(null)
   const [isEmbedded, setIsEmbedded] = useState(false)
+  const [editingName, setEditingName] = useState(false)
 
   useEffect(() => {
     setIsEmbedded(window.self !== window.top)
@@ -138,11 +140,38 @@ export function AppHeader() {
           <Show when="signed-in">
             <div className="flex items-center gap-2 text-sm">
               {session && <span className="hidden max-w-[8rem] truncate font-medium sm:inline">{session.name}</span>}
-              <UserButton />
+              <UserButton>
+                {session && (
+                  <UserButton.MenuItems>
+                    <UserButton.Action
+                      label="Breyta gælunafni"
+                      labelIcon={<Pencil className="h-4 w-4" />}
+                      onClick={() => setEditingName(true)}
+                    />
+                  </UserButton.MenuItems>
+                )}
+              </UserButton>
             </div>
           </Show>
         </div>
       </div>
+
+      {editingName && session && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div role="dialog" aria-modal="true" aria-labelledby="nickname-title" className="w-full max-w-sm space-y-4 rounded-lg bg-card p-6">
+            <h2 id="nickname-title" className="text-xl font-bold">Breyta gælunafni</h2>
+            <NicknameForm
+              initialName={session.name}
+              submitLabel="Vista"
+              onCancel={() => setEditingName(false)}
+              onSaved={name => {
+                setSession({ ...session, name })
+                setEditingName(false)
+              }}
+            />
+          </div>
+        </div>
+      )}
     </header>
   )
 }

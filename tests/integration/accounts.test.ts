@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
-import { GET as session } from '@/app/api/session/route'
+import { GET as session, PATCH as patchSession } from '@/app/api/session/route'
+import { POST as join } from '@/app/api/tastings/[id]/join/route'
 import { GET as listUsers } from '@/app/api/admin/users/route'
 import { DELETE as deleteUser, PATCH as updateUser } from '@/app/api/admin/users/[userId]/route'
 import { POST as linkUser } from '@/app/api/admin/users/[userId]/link/route'
@@ -191,5 +192,42 @@ describe('linking an account to a legacy user', () => {
 
     expect(status).toBe(403)
     expect((await prisma.user.findUniqueOrThrow({ where: { id: legacy.id } })).clerkId).toBeNull()
+  })
+})
+
+describe('choosing a nickname', () => {
+  const rename = (name: unknown) => callRoute(patchSession as never, { method: 'PATCH', params: {}, body: { name } })
+
+  it('a first-timer has not joined before, and has once they join a tasting', async () => {
+    signInAs({ clerkId: 'clerk_new', name: 'Sigga Jóns' })
+    expect((await getSession()).json).toMatchObject({ name: 'Sigga Jóns', hasJoinedBefore: false })
+
+    const { tasting } = await createTastingFixture({ participantNames: [] })
+    await callRoute(join, { method: 'POST', params: { id: tasting.id } })
+
+    expect((await getSession()).json.hasJoinedBefore).toBe(true)
+  })
+
+  it('lets the signed-in user rename themselves', async () => {
+    const user = await createAccount('anna')
+    signInAs(user)
+
+    const { status, json } = await rename('  Bjórbangsi ')
+
+    expect(status).toBe(200)
+    expect(json.name).toBe('Bjórbangsi')
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe('Bjórbangsi')
+  })
+
+  it('rejects a blank name', async () => {
+    const user = await createAccount('anna')
+    signInAs(user)
+
+    expect((await rename('   ')).status).toBe(400)
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: user.id } })).name).toBe('anna')
+  })
+
+  it('requires a signed-in user', async () => {
+    expect((await rename('Bjórbangsi')).status).toBe(401)
   })
 })

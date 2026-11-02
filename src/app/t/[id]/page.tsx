@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { SignInButton, useAuth } from '@clerk/nextjs'
 import { Beer as BeerIcon } from 'lucide-react'
 import { fetchTasting } from '@/lib/fetchTasting'
+import { NicknameForm } from '@/components/NicknameForm'
 
 export default function JoinTastingPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
   const params = use(paramsPromise)
@@ -13,6 +14,9 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [error, setError] = useState('')
   const [tastingTitle, setTastingTitle] = useState('')
   const [tastingStatus, setTastingStatus] = useState<string | null>(null)
+  // First-timers pick a nickname before joining; everyone else joins straight away
+  const [nameStep, setNameStep] = useState<'checking' | 'pick' | 'done'>('checking')
+  const [suggestedName, setSuggestedName] = useState('')
 
   // Fetch tasting details; an outage is retried rather than reported as "not found"
   useEffect(() => {
@@ -45,9 +49,32 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     }
   }, [params.id, router])
 
+  // Offer a nickname only before someone's very first tasting
+  useEffect(() => {
+    if (!isSignedIn) return
+    let cancelled = false
+
+    fetch('/api/session')
+      .then(res => res.json())
+      .then(data => {
+        if (cancelled) return
+        if (data.hasSession && !data.hasJoinedBefore) {
+          setSuggestedName(data.name)
+          setNameStep('pick')
+        } else {
+          setNameStep('done')
+        }
+      })
+      // The name can still be changed from the account menu; don't block joining over it
+      .catch(() => !cancelled && setNameStep('done'))
+    return () => {
+      cancelled = true
+    }
+  }, [isSignedIn])
+
   // Signed-in users join as themselves; identity comes from the session
   useEffect(() => {
-    if (!isSignedIn || !tastingStatus || tastingStatus === 'closed') return
+    if (!isSignedIn || nameStep !== 'done' || !tastingStatus || tastingStatus === 'closed') return
 
     const join = async () => {
       try {
@@ -69,13 +96,31 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
       }
     }
     join()
-  }, [isSignedIn, tastingStatus, params.id, router])
+  }, [isSignedIn, nameStep, tastingStatus, params.id, router])
 
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
         <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm">
           {error}
+        </div>
+      </div>
+    )
+  }
+
+  if (isSignedIn && nameStep === 'pick' && tastingStatus && tastingStatus !== 'closed') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center space-y-2">
+            <BeerIcon className="h-12 w-12 mx-auto text-amber-500" />
+            <h2 className="text-2xl font-bold">{tastingTitle}</h2>
+            <p className="text-muted-foreground">Hvað viltu heita?</p>
+          </div>
+
+          <div className="bg-card p-6 rounded-lg border">
+            <NicknameForm initialName={suggestedName} submitLabel="Taka þátt" onSaved={() => setNameStep('done')} />
+          </div>
         </div>
       </div>
     )
