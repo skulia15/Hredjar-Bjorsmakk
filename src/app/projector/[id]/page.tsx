@@ -25,6 +25,7 @@ import { NoteTicker } from '@/components/projector/NoteTicker'
 import { ProgressStrip } from '@/components/projector/ProgressStrip'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
+import { beerImageSrc } from '@/lib/beerImage'
 
 interface Beer {
   id: string
@@ -532,7 +533,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 <div className="beer-bob w-28 h-28 2xl:w-36 2xl:h-36 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
                   {currentBeer.imageUrl ? (
                     <Image
-                      src={currentBeer.imageUrl}
+                      src={beerImageSrc(currentBeer.imageUrl)}
                       alt={currentBeer.name}
                       width={160}
                       height={160}

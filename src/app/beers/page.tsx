@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowUpDown, Beer as BeerIcon, Edit, Grid, List, Search, Trash2 } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
+import { beerImageSrc } from '@/lib/beerImage'
 
 interface Beer {
   id: string
@@ -360,7 +361,7 @@ export default function BeersPage() {
                       <div className="mb-4 flex justify-center">
                         {beer.imageUrl ? (
                           <img
-                            src={beer.imageUrl}
+                            src={beerImageSrc(beer.imageUrl)}
                             alt={beer.name}
                             className="h-20 w-auto object-contain"
                             onError={(e) => {
@@ -491,7 +492,7 @@ export default function BeersPage() {
                 <div className="mb-4 flex justify-center">
                   {beer.imageUrl ? (
                     <img
-                      src={beer.imageUrl}
+                      src={beerImageSrc(beer.imageUrl)}
                       alt={beer.name}
                       className="h-20 w-auto object-contain"
                       onError={(e) => {

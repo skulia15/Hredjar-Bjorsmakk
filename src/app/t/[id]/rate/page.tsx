@@ -15,6 +15,7 @@ import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
 import { FlavorTagIcon } from "@/components/FlavorTagIcon";
+import { beerImageSrc } from "@/lib/beerImage";
 import {
 	CUSTOM_TAG_MAX_LENGTH,
 	CUSTOM_TAGS_PER_RATING,
@@ -565,7 +566,7 @@ export default function RatePage({
 					<div className="w-[104px] h-[104px] rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
 						{currentBeer.imageUrl ? (
 							<img
-								src={currentBeer.imageUrl}
+								src={beerImageSrc(currentBeer.imageUrl)}
 								alt={currentBeer.name}
 								className="h-[88px] w-auto object-contain"
 								onError={(e) => {
