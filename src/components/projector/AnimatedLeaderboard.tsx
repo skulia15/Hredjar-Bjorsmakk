@@ -103,9 +103,12 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
           <span className={`w-11 h-11 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
             {beer.rank}
           </span>
-          {beer.imageUrl && (
-            <Image src={beerImageSrc(beer.imageUrl)} alt="" width={48} height={48} className="h-10 w-auto shrink-0 object-contain" />
-          )}
+          {/* Fixed slot so names line up; the image grows with the row height */}
+          <span className="w-14 self-stretch shrink-0 py-1.5 flex items-center justify-center">
+            {beer.imageUrl && (
+              <Image src={beerImageSrc(beer.imageUrl)} alt="" width={96} height={96} className="max-h-full max-w-full w-auto h-auto object-contain" />
+            )}
+          </span>
           <span className="flex-1 min-w-0 flex flex-col">
             <span className="text-xl 2xl:text-2xl font-extrabold leading-tight truncate">{beer.name}</span>
             <span className="flex items-center gap-2 min-w-0">
