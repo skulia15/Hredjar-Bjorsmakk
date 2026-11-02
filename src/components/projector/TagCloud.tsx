@@ -1,4 +1,5 @@
 import { flavorTagLabel } from '@/lib/flavorTags'
+import { FlavorTagIcon } from '@/components/FlavorTagIcon'
 import type { BeerTagCount } from '@/components/TastingNotes'
 
 /** The group's flavor tags for a beer, sized by how many picked each */
@@ -14,9 +15,10 @@ export function TagCloud({ tags, limit = 10 }: { tags: BeerTagCount[]; limit?: n
         return (
           <span
             key={tag}
-            className="font-bold text-primary animate-in fade-in zoom-in-50 duration-500"
+            className="inline-flex items-center gap-[0.25em] font-bold text-primary animate-in fade-in zoom-in-50 duration-500"
             style={{ fontSize: `${1.25 + weight * 1.25}rem`, opacity: 0.7 + weight * 0.3 }}
           >
+            <FlavorTagIcon tag={tag} className="h-[0.85em] w-[0.85em] shrink-0" />
             {flavorTagLabel(tag)}
           </span>
         )

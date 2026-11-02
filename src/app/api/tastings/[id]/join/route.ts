@@ -38,7 +38,7 @@ export async function POST(
       // User already joined (or was removed and is rejoining) - update last seen
       participant = await prisma.participant.update({
         where: { id: participant.id },
-        data: { lastSeenAt: new Date(), active: true }
+        data: { lastSeenAt: new Date(), active: true, pausedAt: null }
       });
     } else {
       // Create new participant

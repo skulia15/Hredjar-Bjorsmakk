@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma'
 /**
  * The tasting beer whose scores are hidden right now, or null.
  * With hideScoresUntilAllRated on, the current beer's scores stay hidden from everyone
- * (leaders included) until every active participant has rated it, so nobody anchors on the group.
+ * (leaders included) until every active, unpaused participant has rated it, so nobody anchors on the group.
  */
 export async function getHiddenTastingBeerId(tastingId: string): Promise<string | null> {
   const tasting = await prisma.tasting.findUnique({
@@ -14,7 +14,8 @@ export async function getHiddenTastingBeerId(tastingId: string): Promise<string 
 
   const currentTastingBeerId = tasting.currentTastingBeerId
   const pendingCount = await prisma.participant.count({
-    where: { tastingId, active: true, ratings: { none: { tastingBeerId: currentTastingBeerId } } },
+    // Paused participants have stepped away; waiting on them would hide the scores indefinitely
+    where: { tastingId, active: true, pausedAt: null, ratings: { none: { tastingBeerId: currentTastingBeerId } } },
   })
   return pendingCount > 0 ? currentTastingBeerId : null
 }

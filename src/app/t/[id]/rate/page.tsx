@@ -14,6 +14,7 @@ import { useActiveTasting } from "@/hooks/useActiveTasting";
 import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
+import { FlavorTagIcon } from "@/components/FlavorTagIcon";
 import { FLAVOR_TAGS, type FlavorTag, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
 
 interface Beer {
@@ -622,12 +623,13 @@ export default function RatePage({
 													: [...prev, tag],
 											)
 										}
-										className={`min-h-9 px-3.5 rounded-full text-sm font-semibold transition-colors ${
+										className={`inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-sm font-semibold transition-colors ${
 											selected
 												? "bg-gold text-ink"
 												: "bg-pine-light text-mint hover:bg-pine-line"
 										}`}
 									>
+										<FlavorTagIcon tag={tag} className="h-[1.1em] w-[1.1em] shrink-0" />
 										{label}
 									</button>
 								);
