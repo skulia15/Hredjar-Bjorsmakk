@@ -10,6 +10,7 @@ import { PersonalStats } from '@/components/PersonalStats'
 import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown, Table, Users } from 'lucide-react'
 import { StatCard } from '@/components/StatCard'
 import { FoamCard } from '@/components/FoamCard'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import { RankMedal } from '@/components/RankMedal'
 import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
 
@@ -396,7 +397,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                   key={participant.participantId}
                   className="group rounded-lg border bg-card"
                 >
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
+                    <ParticipantAvatar seed={participant.participantId} className="h-12 w-12 shrink-0" />
                     <span className="flex-1 min-w-[min(10rem,100%)]">
                       <h3 className="font-bold text-lg leading-tight">{participant.userName}</h3>
                       <span className="block text-sm text-muted-foreground">

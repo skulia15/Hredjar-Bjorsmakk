@@ -1,26 +1,11 @@
-import type { ReactNode } from 'react'
-
-// Palette shared by the sprites
-const RED = '#C8323A'
-const DEEP_RED = '#9A2329'
-const GREEN = '#2F7D4F'
-const DARK_GREEN = '#1F5A38'
-const GOLD = '#F2A93B'
-const CREAM = '#FBF6EA'
-const INK = '#1E1B16'
-const BROWN = '#8A5A2B'
-const SKIN = '#F5C9A5'
-const SKY = '#3B6EA8'
-
 interface Sprite {
   name: string
-  bg: string
-  art: ReactNode
-  /** Off the naughty list; picked more often than the classics */
+  src: string
+  /** Extra-raunchy tier; picked for 85% of participants */
   cheeky?: boolean
 }
 
-/** Festive faces and things, many of them off the naughty list, drawn on a 48×48 grid over a coloured disc */
+/** Festive faces and things — every single one well off the naughty list */
 const SPRITES: Sprite[] = [
   {
     name: 'Jólasveinn',
@@ -729,8 +714,8 @@ export const CHRISTMAS_AVATAR_COUNT = SPRITES.length
 
 const CHEEKY = SPRITES.map((sprite, i) => (sprite.cheeky ? i : -1)).filter(i => i >= 0)
 const CLASSIC = SPRITES.map((sprite, i) => (sprite.cheeky ? -1 : i)).filter(i => i >= 0)
-// Share of participants who land on a cheeky sprite
-const CHEEKY_SHARE = 0.8
+// Share of participants who land on the extra-raunchy pool
+const CHEEKY_SHARE = 0.85
 
 /**
  * Stable "random" pick: the same participant always gets the same sprite, on every screen.
@@ -748,36 +733,18 @@ export function avatarIndexFor(seed: string): number {
 export function ChristmasAvatar({ seed, className }: { seed: string; className?: string }) {
   const sprite = SPRITES[avatarIndexFor(seed)]
   return (
-    <svg viewBox="0 0 48 48" className={className} role="img" aria-label={sprite.name}>
-      <circle cx="24" cy="24" r="24" fill={sprite.bg} />
-      {sprite.art}
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element -- static local avatar sprite
+    <img
+      src={sprite.src}
+      alt={sprite.name}
+      title={sprite.name}
+      className={`rounded-full object-cover select-none ${className ?? ''}`}
+    />
   )
 }
 
-/**
- * Whether a stored image is a real photo (e.g. from Google sign-in). Clerk's generated
- * placeholders encode {"type":"default",…} in the path; older rows stored those too.
- */
-export function isRealPhoto(imageUrl: string | null | undefined): imageUrl is string {
-  if (!imageUrl) return false
-  try {
-    const url = new URL(imageUrl)
-    if (url.hostname !== 'img.clerk.com') return true
-    const encoded = url.pathname.split('/').pop() ?? ''
-    const decoded = JSON.parse(atob(encoded.replace(/-/g, '+').replace(/_/g, '/')))
-    return decoded?.type !== 'default'
-  } catch {
-    return true
-  }
-}
-
-/** The person's own photo when they signed in with one, otherwise their Christmas sprite */
-export function ParticipantAvatar({ seed, imageUrl, className }: { seed: string; imageUrl?: string | null; className?: string }) {
-  if (isRealPhoto(imageUrl)) {
-    // eslint-disable-next-line @next/next/no-img-element -- Clerk/Google avatar hosts aren't in images.remotePatterns
-    return <img src={imageUrl} alt="" referrerPolicy="no-referrer" className={`rounded-full object-cover ${className ?? ''}`} />
-  }
+/** Everyone gets their Christmas avatar instead of sign-in provider photos */
+export function ParticipantAvatar({ seed, className }: { seed: string; imageUrl?: string | null; className?: string }) {
   return <ChristmasAvatar seed={seed} className={className} />
 }
 
@@ -786,10 +753,14 @@ export function ChristmasAvatarSheet({ className }: { className?: string }) {
   return (
     <div className="flex flex-wrap gap-3">
       {SPRITES.map(sprite => (
-        <svg key={sprite.name} viewBox="0 0 48 48" className={className} role="img" aria-label={sprite.name}>
-          <circle cx="24" cy="24" r="24" fill={sprite.bg} />
-          {sprite.art}
-        </svg>
+        // eslint-disable-next-line @next/next/no-img-element -- static local avatar sprite
+        <img
+          key={sprite.name}
+          src={sprite.src}
+          alt={sprite.name}
+          title={sprite.name}
+          className={`rounded-full object-cover select-none ${className ?? ''}`}
+        />
       ))}
     </div>
   )

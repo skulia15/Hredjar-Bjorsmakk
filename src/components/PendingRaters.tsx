@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Coffee, EyeOff, Hourglass, PartyPopper, Pause, Play, Star } from 'lucide-react'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 
 interface RatedParticipant {
   participantId: string
@@ -136,7 +137,8 @@ export function PendingRaters({
                 key={participant.participantId}
                 className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950 rounded text-sm"
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5">
+                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
                   <span className="font-medium">{participant.name}</span>
                   {participant.paused && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -192,7 +194,10 @@ export function PendingRaters({
                 key={participant.participantId}
                 className="flex items-center justify-between gap-2 p-2 bg-orange-50 dark:bg-orange-950 rounded text-sm"
               >
-                <span className="font-medium">{participant.name}</span>
+                <div className="flex items-center gap-2.5">
+                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
+                  <span className="font-medium">{participant.name}</span>
+                </div>
                 <div className="flex items-center gap-1">
                 <button
                   onClick={() => setPaused(participant.participantId, true)}
@@ -240,7 +245,10 @@ export function PendingRaters({
                 key={participant.participantId}
                 className="flex items-center justify-between gap-2 p-2 bg-muted rounded text-sm"
               >
-                <span className="font-medium">{participant.name}</span>
+                <div className="flex items-center gap-2.5">
+                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
+                  <span className="font-medium">{participant.name}</span>
+                </div>
                 <button
                   onClick={() => setPaused(participant.participantId, false)}
                   className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"

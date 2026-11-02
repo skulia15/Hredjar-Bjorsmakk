@@ -1,6 +1,7 @@
 import { MessageSquareQuote } from 'lucide-react'
 import { flavorTagLabel } from '@/lib/flavorTags'
 import { FlavorTagIcon } from '@/components/FlavorTagIcon'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import { StatCard } from '@/components/StatCard'
 
 export interface BeerTagCount {
@@ -48,8 +49,8 @@ export function TastingNotes({ beers }: { beers: BeerNotes[] }) {
             {beer.notes.length > 0 && (
               <ul className="space-y-2">
                 {beer.notes.map(n => (
-                  <li key={n.participantId} className="flex gap-2 text-sm">
-                    <MessageSquareQuote className="h-4 w-4 mt-0.5 shrink-0 text-muted-foreground" />
+                  <li key={n.participantId} className="flex items-center gap-2.5 text-sm">
+                    <ParticipantAvatar seed={n.participantId} className="h-9 w-9 shrink-0" />
                     <span>
                       <span className="font-medium">{n.userName}:</span>{' '}
                       <span className="text-muted-foreground whitespace-pre-line break-words">{n.note}</span>

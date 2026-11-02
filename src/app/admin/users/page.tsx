@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { SignInButton } from '@clerk/nextjs'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 
 interface User {
   id: string
@@ -176,12 +177,7 @@ export default function AdminUsersPage() {
                 <div key={user.id} className="bg-card p-4 rounded-lg border space-y-3">
                   <div className="flex items-start justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3 min-w-0">
-                      {user.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- Clerk avatar host isn't in images.remotePatterns
-                        <img src={user.imageUrl} alt="" className="w-10 h-10 rounded-full" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-full bg-muted" />
-                      )}
+                      <ParticipantAvatar seed={user.id} className="w-14 h-14 shrink-0" />
                       <div className="min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-lg">{user.name}</h3>
@@ -267,12 +263,15 @@ export default function AdminUsersPage() {
             <div className="space-y-2">
               {legacyUsers.map((user) => (
                 <div key={user.id} className="bg-card p-4 rounded-lg border flex items-center justify-between gap-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-semibold">{user.name}</h3>
-                      <RoleBadges user={user} />
+                  <div className="flex items-center gap-3 min-w-0">
+                    <ParticipantAvatar seed={user.id} className="w-12 h-12 shrink-0" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold">{user.name}</h3>
+                        <RoleBadges user={user} />
+                      </div>
+                      <UserCounts user={user} />
                     </div>
-                    <UserCounts user={user} />
                   </div>
                   <button
                     type="button"

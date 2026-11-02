@@ -724,9 +724,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     {pendingRaters.pending.map((participant) => (
                       <span
                         key={participant.participantId}
-                        className="inline-flex items-center gap-2.5 pl-2.5 pr-4 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
+                        className="inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
                       >
-                        <ParticipantAvatar seed={participant.participantId} imageUrl={participant.imageUrl} className="w-9 h-9 shrink-0" />
+                        <ParticipantAvatar seed={participant.participantId} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
                         {participant.name}
                       </span>
                     ))}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import { RankMedal } from '@/components/RankMedal'
 
 interface Participant {
@@ -128,12 +129,15 @@ export function RatingsTable({ participants, beers }: RatingsTableProps) {
               {participants.map(p => (
                 <th
                   key={p.id}
-                  className={`px-4 py-3 text-center text-sm font-semibold min-w-[80px] ${
+                  className={`px-3 py-3 text-center text-sm font-semibold min-w-[88px] ${
                     selectedParticipant === p.id ? 'bg-primary/10' : ''
                   }`}
                 >
-                  <div className="truncate" title={p.userName}>
-                    {p.userName}
+                  <div className="flex flex-col items-center gap-1">
+                    <ParticipantAvatar seed={p.id} className="h-10 w-10 shrink-0" />
+                    <div className="truncate max-w-[80px]" title={p.userName}>
+                      {p.userName}
+                    </div>
                   </div>
                 </th>
               ))}
