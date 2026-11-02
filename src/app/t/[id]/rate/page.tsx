@@ -1,7 +1,7 @@
 "use client";
 
 import { use, useState, useEffect, useCallback, useRef } from "react";
-import { Beer as BeerIcon, Brain, Check, ChevronDown, EyeOff, Hourglass, PartyPopper, Plus, Trophy, X } from "lucide-react";
+import { Beer as BeerIcon, Brain, Check, ChevronDown, Hourglass, PartyPopper, Plus, Trophy, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -904,38 +904,8 @@ export default function RatePage({
 								}}
 							/>
 						</div>
-						{ratingStats.scoresHidden && (
-							<p className="text-sm text-mint">
-								<EyeOff className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />
-								Einkunnir eru faldar þar til allir hafa gefið einkunn
-							</p>
-						)}
-						{ratingStats.pendingCount > 0 ? (
-							<p className="text-sm text-mint">
-								{ratingStats.pendingCount <= 3 &&
-								ratingStats.pending.length > 0 ? (
-									<>
-										Bíður eftir{" "}
-										{ratingStats.pending.map((p, idx) => {
-											const isLast = idx === ratingStats.pending.length - 1;
-											const isSecondToLast =
-												idx === ratingStats.pending.length - 2;
-											return (
-												<span key={p.participantId} className="font-semibold text-cream">
-													{p.name}
-													{!isLast && (isSecondToLast ? " og " : ", ")}
-												</span>
-											);
-										})}
-									</>
-								) : (
-									<>
-										Bíður eftir {ratingStats.pendingCount}{" "}
-										{ratingStats.pendingCount === 1 ? "aðila" : "aðilum"}
-									</>
-								)}
-							</p>
-						) : (
+						{/* Who's still rating shows in the bar and count above; only the finish line gets words */}
+						{ratingStats.pendingCount === 0 && (
 							<p className="text-sm text-gold font-semibold">
 								<PartyPopper className="inline h-4 w-4 mr-1 -mt-0.5" /> Allir hafa gefið einkunn! Skál!
 							</p>
