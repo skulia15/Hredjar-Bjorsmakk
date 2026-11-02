@@ -20,7 +20,6 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   const [suggestedName, setSuggestedName] = useState('')
 
   const [avatarStep, setAvatarStep] = useState<'checking' | 'pick' | 'joining'>('checking')
-  const [alreadyJoined, setAlreadyJoined] = useState(false)
   const [takenAvatars, setTakenAvatars] = useState<string[]>([])
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null)
   const [avatarError, setAvatarError] = useState('')
@@ -116,14 +115,8 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         code: data.code
       }))
 
-      // Honor explicit next destination if provided (?next=admin|rate|scores)
-      const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-      const next = searchParams?.get('next')
-      if (next === 'admin' || next === 'rate' || next === 'scores') {
-        router.push(`/t/${params.id}/${next}`)
-      } else {
-        router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
-      }
+      // Redirect based on role
+      router.push(data.isLeader ? `/t/${params.id}/admin` : `/t/${params.id}/rate`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred')
       setSubmittingJoin(false)
@@ -134,8 +127,6 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
   useEffect(() => {
     if (!isSignedIn || nameStep !== 'done' || !tastingStatus || tastingStatus === 'closed') return
     let cancelled = false
-
-    const forcePick = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('pick') === '1'
 
     const checkJoinStatus = async () => {
       try {
@@ -149,20 +140,15 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         const data = await res.json()
         if (cancelled) return
 
-        setAlreadyJoined(Boolean(data.alreadyJoined))
-
-        if (data.alreadyJoined && !forcePick) {
+        if (data.alreadyJoined) {
+          // Already joined — cannot change avatar; rejoin straight away
           setAvatarStep('joining')
           completeJoin()
         } else {
           const taken: string[] = data.takenAvatars || []
           setTakenAvatars(taken)
-          const currentOrFirstFree =
-            (data.avatar && !taken.includes(data.avatar) ? data.avatar : null) ??
-            AVATARS.find(a => !taken.includes(a.key))?.key ??
-            AVATARS[0]?.key ??
-            null
-          setSelectedAvatar(prev => (prev && !taken.includes(prev) ? prev : currentOrFirstFree))
+          const firstFree = AVATARS.find(a => !taken.includes(a.key))?.key ?? AVATARS[0]?.key ?? null
+          setSelectedAvatar(prev => (prev && !taken.includes(prev) ? prev : firstFree))
           setAvatarStep('pick')
         }
       } catch {
@@ -179,7 +165,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
         const res = await fetch(`/api/tastings/${params.id}/join`)
         if (!res.ok || cancelled) return
         const data = await res.json()
-        if (cancelled || (data.alreadyJoined && !forcePick)) return
+        if (cancelled || data.alreadyJoined) return
         const taken: string[] = data.takenAvatars || []
         setTakenAvatars(taken)
         setSelectedAvatar(prev => {
@@ -313,14 +299,10 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {submittingJoin
-                ? 'Vista...'
-                : alreadyJoined
-                  ? chosenObj
-                    ? `Vista mynd (${chosenObj.name})`
-                    : 'Vista mynd'
-                  : chosenObj
-                    ? `Taka þátt sem ${chosenObj.name}`
-                    : 'Taka þátt'}
+                ? 'Hleypir inn...'
+                : chosenObj
+                  ? `Taka þátt sem ${chosenObj.name}`
+                  : 'Taka þátt'}
             </button>
           </div>
         </div>

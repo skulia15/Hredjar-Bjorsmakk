@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title } = validation.data;
+    const { title, avatar } = validation.data;
 
     // Create tasting
     const tasting = await prisma.tasting.create({
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create participant for creator
-    const participant = await createParticipant(tasting.id, user.id);
+    const participant = await createParticipant(tasting.id, user.id, avatar);
 
     return NextResponse.json({
       id: tasting.id,

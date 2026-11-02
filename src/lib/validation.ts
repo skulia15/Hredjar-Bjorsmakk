@@ -41,7 +41,8 @@ export const flavorTagsSchema = z.object({
 
 // Tasting operations
 export const createTastingSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(100)
+  title: z.string().min(1, 'Title is required').max(100),
+  avatar: z.string().min(1).optional()
 });
 
 export const updateTastingSchema = z.object({

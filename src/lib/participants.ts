@@ -60,32 +60,3 @@ export async function createParticipant(tastingId: string, userId: string, chose
     });
   });
 }
-
-/**
- * Change an existing participant's avatar in a tasting, ensuring no one else in the tasting has it.
- */
-export async function updateParticipantAvatar(tastingId: string, participantId: string, chosenAvatar: string) {
-  if (!AVATARS.some((a) => a.key === chosenAvatar)) {
-    throw new InvalidAvatarError(chosenAvatar);
-  }
-
-  return prisma.$transaction(async (tx) => {
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${tastingId}))`;
-    const others = await tx.participant.findMany({
-      where: { tastingId, id: { not: participantId } },
-      select: { id: true, avatar: true }
-    });
-    const taken = others.map((p) => resolveAvatar(p.avatar, p.id).key);
-    const takenSet = new Set(taken);
-    const allTaken = AVATARS.every((a) => takenSet.has(a.key));
-
-    if (takenSet.has(chosenAvatar) && !allTaken) {
-      throw new AvatarTakenError(chosenAvatar);
-    }
-
-    return tx.participant.update({
-      where: { id: participantId },
-      data: { lastSeenAt: new Date(), active: true, pausedAt: null, avatar: chosenAvatar }
-    });
-  });
-}
