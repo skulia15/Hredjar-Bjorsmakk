@@ -1,7 +1,7 @@
 "use client";
 
-import { use, useState, useEffect, useCallback } from "react";
-import { Beer as BeerIcon, Brain, Check, EyeOff, Hourglass, PartyPopper, Plus, Trophy } from "lucide-react";
+import { use, useState, useEffect, useCallback, useRef } from "react";
+import { Beer as BeerIcon, Brain, Check, ChevronDown, EyeOff, Hourglass, PartyPopper, Plus, Trophy } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BeerPlaceholder } from "@/components/BeerPlaceholder";
@@ -15,7 +15,7 @@ import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
 import { FlavorTagIcon } from "@/components/FlavorTagIcon";
-import { FLAVOR_TAGS, type FlavorTag, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
+import { FLAVOR_TAGS, type FlavorTag, flavorTagLabel, NOTE_MAX_LENGTH } from "@/lib/flavorTags";
 
 interface Beer {
 	id: string;
@@ -172,6 +172,9 @@ export default function RatePage({
 		pending: Array<{ participantId: string; name: string; code: string }>;
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
+	const [tagsOpen, setTagsOpen] = useState(false);
+	// Set on any edit, so the saved rating arriving late doesn't wipe what was just tapped
+	const editedRef = useRef(false);
 
 	// Nudge notification state with timestamp to force re-renders on each nudge
 	const [nudgeTimestamp, setNudgeTimestamp] = useState<number | null>(null);
@@ -302,6 +305,8 @@ export default function RatePage({
 	useEffect(() => {
 		if (currentBeer && participantId) {
 			loadRatingStats();
+			editedRef.current = false;
+			setTagsOpen(false);
 
 			// Load this participant's existing rating for this beer
 			fetch(`/api/tastings/${params.id}/ratings?beerId=${currentBeer.id}`)
@@ -315,12 +320,13 @@ export default function RatePage({
 							groupGuess: number | null;
 						} | null,
 					) => {
+						setHasRated(!!existingRating);
+						if (editedRef.current) return;
 						// Reset for a new beer
 						setRating(existingRating?.score ?? 0);
 						setTags(existingRating?.tags ?? []);
 						setNote(existingRating?.note ?? "");
 						setGroupGuess(existingRating?.groupGuess ?? null);
-						setHasRated(!!existingRating);
 					},
 				)
 				.catch((err) => console.error("Error loading existing rating:", err));
@@ -599,15 +605,52 @@ export default function RatePage({
 				<form onSubmit={handleSubmit} className="flex flex-col gap-3">
 					<StarRating
 						value={rating}
-						onChange={setRating}
+						onChange={(value) => {
+							editedRef.current = true;
+							setRating(value);
+						}}
 						max={10}
 						size={44}
 						perRow={5}
 						showNumeric={true}
 					/>
 
-					{/* Flavor tags */}
-					<div className="flex flex-wrap justify-center gap-2">
+					{/* Flavor tags, folded away by default: eighteen chips made the screen busy */}
+					<div className="rounded-2xl bg-pine-light/60">
+						<button
+							type="button"
+							aria-expanded={tagsOpen}
+							aria-controls="flavor-tags"
+							onClick={() => setTagsOpen((open) => !open)}
+							className="w-full min-h-11 flex items-center justify-between gap-3 px-4 py-2 text-left"
+						>
+							<span className="font-semibold text-cream">
+								Bragðlýsingar
+								<span className="ml-2 text-sm font-normal text-mint">
+									{tags.length > 0 ? `${tags.length} valin` : "valfrjálst"}
+								</span>
+							</span>
+							<ChevronDown
+								aria-hidden
+								className={`h-5 w-5 shrink-0 text-mint transition-transform ${tagsOpen ? "rotate-180" : ""}`}
+							/>
+						</button>
+						{/* Folded: just the picks, so it's clear what will be saved */}
+						{!tagsOpen && tags.length > 0 && (
+							<div className="flex flex-wrap gap-1.5 px-4 pb-3">
+								{tags.map((tag) => (
+									<span
+										key={tag}
+										className="inline-flex items-center gap-1 rounded-full bg-gold px-2.5 py-1 text-xs font-semibold text-ink"
+									>
+										<FlavorTagIcon tag={tag} className="h-[1.1em] w-[1.1em] shrink-0" />
+										{flavorTagLabel(tag)}
+									</span>
+								))}
+							</div>
+						)}
+						{tagsOpen && (
+							<div id="flavor-tags" className="flex flex-wrap justify-center gap-2 px-3 pb-3">
 						{(Object.entries(FLAVOR_TAGS) as Array<[FlavorTag, string]>).map(
 							([tag, label]) => {
 								const selected = tags.includes(tag);
@@ -616,13 +659,14 @@ export default function RatePage({
 										key={tag}
 										type="button"
 										aria-pressed={selected}
-										onClick={() =>
+										onClick={() => {
+											editedRef.current = true;
 											setTags((prev) =>
 												selected
 													? prev.filter((t) => t !== tag)
 													: [...prev, tag],
-											)
-										}
+											);
+										}}
 										className={`inline-flex items-center gap-1.5 min-h-9 px-3.5 rounded-full text-sm font-semibold transition-colors ${
 											selected
 												? "bg-gold text-ink"
@@ -635,12 +679,17 @@ export default function RatePage({
 								);
 							},
 						)}
+							</div>
+						)}
 					</div>
 
 					<div className="space-y-1">
 						<textarea
 							value={note}
-							onChange={(e) => setNote(e.target.value)}
+							onChange={(e) => {
+								editedRef.current = true;
+								setNote(e.target.value);
+							}}
 							maxLength={NOTE_MAX_LENGTH}
 							rows={2}
 							placeholder="Athugasemd (valfrjálst)"
