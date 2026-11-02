@@ -63,6 +63,7 @@ interface ParticipantStats {
   participantId: string
   userName: string
   code: string
+  avatar?: string | null
   ratingsCount: number
   possibleRatings: number
   engagementRate: number
@@ -136,7 +137,7 @@ interface RatingsDetailData {
     ratingsCount: number
     ratings: Record<string, number | null>
     tags: BeerTagCount[]
-    notes: Array<{ participantId: string; userName: string; note: string }>
+    notes: Array<{ participantId: string; userName: string; avatar?: string | null; note: string }>
   }>
 }
 
@@ -398,7 +399,7 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                   className="group rounded-lg border bg-card"
                 >
                   <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
-                    <ParticipantAvatar seed={participant.participantId} className="h-12 w-12 shrink-0" />
+                    <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="h-12 w-12 shrink-0" />
                     <span className="flex-1 min-w-[min(10rem,100%)]">
                       <h3 className="font-bold text-lg leading-tight">{participant.userName}</h3>
                       <span className="block text-sm text-muted-foreground">

@@ -8,6 +8,7 @@ interface Participant {
   id: string
   userName: string
   code: string
+  avatar?: string | null
 }
 
 interface BeerRating {
@@ -134,7 +135,7 @@ export function RatingsTable({ participants, beers }: RatingsTableProps) {
                   }`}
                 >
                   <div className="flex flex-col items-center gap-1">
-                    <ParticipantAvatar seed={p.id} className="h-10 w-10 shrink-0" />
+                    <ParticipantAvatar avatar={p.avatar} seed={p.id} className="h-10 w-10 shrink-0" />
                     <div className="truncate max-w-[80px]" title={p.userName}>
                       {p.userName}
                     </div>

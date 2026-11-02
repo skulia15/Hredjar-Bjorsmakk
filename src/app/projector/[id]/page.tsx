@@ -80,6 +80,7 @@ interface PendingParticipant {
   participantId: string
   name: string
   code: string
+  avatar?: string | null
   imageUrl?: string | null
 }
 
@@ -726,7 +727,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                         key={participant.participantId}
                         className="inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
                       >
-                        <ParticipantAvatar seed={participant.participantId} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
+                        <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
                         {participant.name}
                       </span>
                     ))}

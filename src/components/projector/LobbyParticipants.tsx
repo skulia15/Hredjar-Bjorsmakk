@@ -3,6 +3,7 @@ import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 export interface LobbyParticipant {
   id: string
   name: string
+  avatar?: string | null
   imageUrl?: string | null
 }
 
@@ -24,7 +25,7 @@ export function LobbyParticipants({ participants }: { participants: LobbyPartici
             className="flex flex-col items-center gap-2 w-28 animate-in zoom-in-50 fade-in fill-mode-both duration-500"
             style={{ animationDelay: `${Math.min(index, 12) * 60}ms` }}
           >
-            <ParticipantAvatar seed={p.id} className="h-24 w-24 2xl:h-28 2xl:w-28 shrink-0 shadow-md" />
+            <ParticipantAvatar avatar={p.avatar} seed={p.id} className="h-24 w-24 2xl:h-28 2xl:w-28 shrink-0 shadow-md" />
             <span className="text-lg font-semibold truncate max-w-full">{p.name}</span>
           </div>
         ))}

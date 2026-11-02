@@ -14,7 +14,7 @@ interface BeerNotes {
   name: string
   brewery: string
   tags: BeerTagCount[]
-  notes: Array<{ participantId: string; userName: string; note: string }>
+  notes: Array<{ participantId: string; userName: string; avatar?: string | null; note: string }>
 }
 
 export function TagChips({ tags, limit }: { tags: BeerTagCount[]; limit?: number }) {
@@ -50,7 +50,7 @@ export function TastingNotes({ beers }: { beers: BeerNotes[] }) {
               <ul className="space-y-2">
                 {beer.notes.map(n => (
                   <li key={n.participantId} className="flex items-center gap-2.5 text-sm">
-                    <ParticipantAvatar seed={n.participantId} className="h-9 w-9 shrink-0" />
+                    <ParticipantAvatar avatar={n.avatar} seed={n.participantId} className="h-9 w-9 shrink-0" />
                     <span>
                       <span className="font-medium">{n.userName}:</span>{' '}
                       <span className="text-muted-foreground whitespace-pre-line break-words">{n.note}</span>

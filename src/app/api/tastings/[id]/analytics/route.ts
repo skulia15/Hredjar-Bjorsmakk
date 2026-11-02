@@ -377,6 +377,7 @@ export async function GET(
         participantId: p.id,
         userName: p.user?.name || `Notandi ${p.code}`,
         code: p.code,
+        avatar: p.avatar,
         ratingsCount,
         possibleRatings,
         engagementRate: Math.round(engagementRate * 10) / 10,

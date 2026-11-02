@@ -39,6 +39,7 @@ model Participant {
   rejoinToken   String   @unique
   active        Boolean  @default(true)  // false = soft-deleted, ratings preserved
   pausedAt      DateTime?                // Stepped away: not waited on until they rate or rejoin
+  avatar        String?                  // Christmas avatar key, unique within the tasting while pictures last
   lastSeenAt    DateTime @default(now())
   createdAt     DateTime @default(now())
 

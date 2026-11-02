@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { POST as join } from '@/app/api/tastings/[id]/join/route'
 import { prisma } from '@/lib/prisma'
-import { callRoute, createTastingFixture, signInAs } from './helpers'
+import { AVATARS, resolveAvatar } from '@/lib/avatars'
+import { createParticipant } from '@/lib/participants'
+import { callRoute, createAccount, createTastingFixture, signInAs } from './helpers'
 
 describe('POST /api/tastings/[id]/join', () => {
   it('requires a signed-in user', async () => {
@@ -52,5 +54,42 @@ describe('POST /api/tastings/[id]/join', () => {
       params: { id: '00000000-0000-0000-0000-000000000000' },
     })
     expect(status).toBe(404)
+  })
+})
+
+describe('avatars', () => {
+  it('gives everyone who joins a picture nobody else in the tasting has', async () => {
+    const { tasting } = await createTastingFixture({ participantNames: [] })
+    const users = await Promise.all(Array.from({ length: 10 }, (_, i) => createAccount(`guest${i}`)))
+
+    // All at once: the per-tasting lock must stop two people grabbing the same free picture
+    await Promise.all(users.map(user => createParticipant(tasting.id, user.id)))
+
+    const avatars = (await prisma.participant.findMany({ where: { tastingId: tasting.id } })).map(p => p.avatar)
+    expect(avatars).toHaveLength(10)
+    expect(avatars.every(Boolean)).toBe(true)
+    expect(new Set(avatars).size).toBe(10)
+  })
+
+  it('steers clear of the seeded picture of someone who joined before avatars were stored', async () => {
+    const { tasting, participants } = await createTastingFixture({ participantNames: ['anna'] })
+    const legacy = resolveAvatar(null, participants[0].id).key
+    const users = await Promise.all(Array.from({ length: AVATARS.length - 1 }, (_, i) => createAccount(`guest${i}`)))
+
+    for (const user of users) await createParticipant(tasting.id, user.id)
+
+    const avatars = (await prisma.participant.findMany({ where: { tastingId: tasting.id, avatar: { not: null } } })).map(p => p.avatar)
+    expect(avatars).not.toContain(legacy)
+  })
+
+  it('keeps a rejoining participant on the same picture', async () => {
+    const { tasting } = await createTastingFixture({ participantNames: [] })
+    signInAs({ clerkId: 'clerk_new', name: 'Sigga' })
+
+    await callRoute(join, { method: 'POST', params: { id: tasting.id } })
+    const before = await prisma.participant.findFirstOrThrow({ where: { tastingId: tasting.id } })
+    await callRoute(join, { method: 'POST', params: { id: tasting.id } })
+
+    expect((await prisma.participant.findUniqueOrThrow({ where: { id: before.id } })).avatar).toBe(before.avatar)
   })
 })

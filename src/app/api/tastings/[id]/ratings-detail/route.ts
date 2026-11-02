@@ -60,7 +60,8 @@ export async function GET(
     const participants = tasting.participants.map(p => ({
       id: p.id,
       userName: p.user?.name || `Notandi ${p.code}`,
-      code: p.code
+      code: p.code,
+      avatar: p.avatar
     }));
 
     // Build beers with ratings
@@ -98,6 +99,7 @@ export async function GET(
           .map(r => ({
             participantId: r.participantId,
             userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
+            avatar: r.participant.avatar,
             note: r.note as string
           }))
       };

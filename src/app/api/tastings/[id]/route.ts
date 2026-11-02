@@ -26,7 +26,7 @@ export async function GET(
         // For the projector lobby
         participants: {
           where: { active: true },
-          select: { id: true, code: true, user: { select: { name: true, imageUrl: true } } },
+          select: { id: true, code: true, avatar: true, user: { select: { name: true, imageUrl: true } } },
           orderBy: { createdAt: 'asc' }
         },
         _count: {
@@ -123,6 +123,7 @@ export async function GET(
       participants: tasting.participants.map(p => ({
         id: p.id,
         name: p.user?.name || `Notandi ${p.code}`,
+        avatar: p.avatar,
         imageUrl: p.user?.imageUrl ?? null
       })),
       beers: beersWithStats, // Map tastingBeers to beers for backwards compatibility

@@ -182,7 +182,7 @@ describe('flavor tags and notes', () => {
     await finish(fixture, beer.id)
     const detail = (await callRoute(ratingsDetail, { params: { id: fixture.tasting.id } })).json.beers[0]
     expect(detail.tags).toEqual([{ tag: 'hoppy', count: 2 }, { tag: 'bitter', count: 1 }])
-    expect(detail.notes).toEqual([{ participantId: fixture.participants[0].id, userName: 'anna', note: 'Beiskur!' }])
+    expect(detail.notes).toEqual([{ participantId: fixture.participants[0].id, userName: 'anna', avatar: null, note: 'Beiskur!' }])
   })
 })
 
@@ -259,8 +259,8 @@ describe('projector lobby', () => {
 
     const { participants } = await tastingJson(fixture)
     expect(participants).toEqual([
-      { id: fixture.participants[0].id, name: 'anna', imageUrl: 'https://img.clerk.test/anna.png' },
-      { id: fixture.participants[2].id, name: 'gunna', imageUrl: null },
+      { id: fixture.participants[0].id, name: 'anna', avatar: null, imageUrl: 'https://img.clerk.test/anna.png' },
+      { id: fixture.participants[2].id, name: 'gunna', avatar: null, imageUrl: null },
     ])
   })
 })

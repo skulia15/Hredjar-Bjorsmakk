@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { authErrorResponse, generateUniqueParticipantCode, isLeaderOrAdmin, requireUser } from '@/lib/auth';
-import { randomUUID } from 'crypto';
+import { authErrorResponse, isLeaderOrAdmin, requireUser } from '@/lib/auth';
+import { createParticipant } from '@/lib/participants';
 
 // POST /api/tastings/[id]/join - Join tasting as the signed-in user
 export async function POST(
@@ -41,18 +41,7 @@ export async function POST(
         data: { lastSeenAt: new Date(), active: true, pausedAt: null }
       });
     } else {
-      // Create new participant
-      const code = await generateUniqueParticipantCode(id);
-
-      participant = await prisma.participant.create({
-        data: {
-          tastingId: id,
-          userId: user.id,
-          code,
-          // Legacy column from cookie sessions; no longer used as a credential
-          rejoinToken: randomUUID()
-        }
-      });
+      participant = await createParticipant(id, user.id);
     }
 
     return NextResponse.json({

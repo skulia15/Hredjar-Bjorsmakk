@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { createTastingSchema, validateInput } from '@/lib/validation';
-import { authErrorResponse, generateUniqueParticipantCode, requireLeader } from '@/lib/auth';
-import { randomUUID } from 'crypto';
+import { authErrorResponse, requireLeader } from '@/lib/auth';
+import { createParticipant } from '@/lib/participants';
 
 // GET /api/tastings - List all tastings
 export async function GET() {
@@ -64,16 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Create participant for creator
-    const participantCode = await generateUniqueParticipantCode(tasting.id);
-    const participant = await prisma.participant.create({
-      data: {
-        tastingId: tasting.id,
-        userId: user.id,
-        code: participantCode,
-        // Legacy column from cookie sessions; no longer used as a credential
-        rejoinToken: randomUUID()
-      }
-    });
+    const participant = await createParticipant(tasting.id, user.id);
 
     return NextResponse.json({
       id: tasting.id,

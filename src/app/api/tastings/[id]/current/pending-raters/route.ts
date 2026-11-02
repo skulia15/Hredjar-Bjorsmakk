@@ -86,6 +86,7 @@ export async function GET(
       participantId: rating.participantId,
       name: rating.participant.user?.name || `Notandi ${rating.participant.code}`,
       code: rating.participant.code,
+      avatar: rating.participant.avatar,
       // Rated, then left: paused so the next beer won't wait on them
       paused: rating.participant.pausedAt !== null,
       score: scoresHidden ? null : rating.score,
@@ -99,6 +100,7 @@ export async function GET(
       participantId: p.id,
       name: p.user?.name || `Notandi ${p.code}`,
       code: p.code,
+      avatar: p.avatar,
       imageUrl: p.user?.imageUrl ?? null
     })
     const notRated = tasting.participants.filter(p => !ratedParticipantIds.has(p.id))

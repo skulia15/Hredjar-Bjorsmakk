@@ -8,6 +8,7 @@ interface RatedParticipant {
   participantId: string
   name: string
   code: string
+  avatar?: string | null
   score: number | null  // null while the tasting hides scores until everyone has rated
   paused?: boolean
   submittedAt: string
@@ -17,6 +18,7 @@ interface PendingParticipant {
   participantId: string
   name: string
   code: string
+  avatar?: string | null
 }
 
 interface PendingRatersData {
@@ -138,7 +140,7 @@ export function PendingRaters({
                 className="flex items-center justify-between p-2 bg-green-50 dark:bg-green-950 rounded text-sm"
               >
                 <div className="flex items-center gap-2.5">
-                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
+                  <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-10 h-10 shrink-0" />
                   <span className="font-medium">{participant.name}</span>
                   {participant.paused && (
                     <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -195,7 +197,7 @@ export function PendingRaters({
                 className="flex items-center justify-between gap-2 p-2 bg-orange-50 dark:bg-orange-950 rounded text-sm"
               >
                 <div className="flex items-center gap-2.5">
-                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
+                  <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-10 h-10 shrink-0" />
                   <span className="font-medium">{participant.name}</span>
                 </div>
                 <div className="flex items-center gap-1">
@@ -246,7 +248,7 @@ export function PendingRaters({
                 className="flex items-center justify-between gap-2 p-2 bg-muted rounded text-sm"
               >
                 <div className="flex items-center gap-2.5">
-                  <ParticipantAvatar seed={participant.participantId} className="w-10 h-10 shrink-0" />
+                  <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-10 h-10 shrink-0" />
                   <span className="font-medium">{participant.name}</span>
                 </div>
                 <button
