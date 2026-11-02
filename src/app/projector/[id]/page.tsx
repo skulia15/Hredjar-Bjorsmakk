@@ -10,7 +10,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { Beer as BeerIcon, Brain, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { Beer as BeerIcon, Brain, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
@@ -87,6 +87,7 @@ interface PendingRatersData {
   tags: BeerTagCount[]
   rated: RatedParticipant[]
   pending: PendingParticipant[]
+  paused?: PendingParticipant[]
 }
 
 interface RatingsDetailData {
@@ -574,7 +575,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                       ) : (
                         <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
                       )}
-                      <span className="text-8xl 2xl:text-[6.5rem] leading-[0.9] font-extrabold text-cranberry tabular-nums">
+                      {/* Sized to the narrow column beside the score bars; "8.00" must never wrap */}
+                      <span className="text-[length:min(6rem,5.5vw)] whitespace-nowrap leading-[0.9] font-extrabold text-cranberry tabular-nums">
                         <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
                       </span>
                       <span className="flex flex-wrap gap-x-4 mt-3 text-lg font-semibold text-muted-foreground">
@@ -662,6 +664,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   }}
                 />
               </div>
+              {pendingRaters.paused && pendingRaters.paused.length > 0 && (
+                <p className="flex items-center gap-2 text-xl text-mint">
+                  <Coffee className="h-5 w-5 shrink-0" aria-hidden />
+                  Í pásu: {pendingRaters.paused.map(p => p.name).join(', ')}
+                </p>
+              )}
 
               {pendingRaters.totalParticipants > 0 && pendingRaters.pendingCount === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">

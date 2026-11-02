@@ -111,6 +111,11 @@ export async function POST(
       }
     });
 
+    // Rating again means they're back
+    if (participant.pausedAt) {
+      await prisma.participant.update({ where: { id: participant.id }, data: { pausedAt: null } });
+    }
+
     return NextResponse.json({
       id: rating.id,
       beerId: rating.tastingBeerId, // Return as beerId for backwards compatibility

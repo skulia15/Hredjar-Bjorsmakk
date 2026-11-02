@@ -1,5 +1,6 @@
 import { MessageSquareQuote } from 'lucide-react'
 import { flavorTagLabel } from '@/lib/flavorTags'
+import { FlavorTagIcon } from '@/components/FlavorTagIcon'
 import { StatCard } from '@/components/StatCard'
 
 export interface BeerTagCount {
@@ -20,7 +21,8 @@ export function TagChips({ tags, limit }: { tags: BeerTagCount[]; limit?: number
   return (
     <div className="flex flex-wrap gap-1.5">
       {tags.slice(0, limit).map(({ tag, count }) => (
-        <span key={tag} className="px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground">
+        <span key={tag} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground">
+          <FlavorTagIcon tag={tag} className="h-[1.1em] w-[1.1em] shrink-0" />
           {flavorTagLabel(tag)} <span className="font-semibold">{count}</span>
         </span>
       ))}

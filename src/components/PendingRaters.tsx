@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { EyeOff, Hourglass, PartyPopper, Star } from 'lucide-react'
+import { Coffee, EyeOff, Hourglass, PartyPopper, Pause, Play, Star } from 'lucide-react'
 
 interface RatedParticipant {
   participantId: string
@@ -24,6 +24,7 @@ interface PendingRatersData {
   pendingCount: number
   rated: RatedParticipant[]
   pending: PendingParticipant[]
+  paused?: PendingParticipant[]
 }
 
 interface PendingRatersProps {
@@ -66,6 +67,20 @@ export function PendingRaters({
       console.error('Error loading pending raters:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const setPaused = async (participantId: string, paused: boolean) => {
+    try {
+      const response = await fetch(`/api/tastings/${tastingId}/participants/${participantId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused })
+      })
+      if (!response.ok) throw new Error('Failed to update participant')
+      await loadData()
+    } catch (error) {
+      console.error('Error pausing participant:', error)
     }
   }
 
@@ -163,6 +178,14 @@ export function PendingRaters({
                   <span className="font-medium">{participant.name}</span>
                   <span className="text-xs text-muted-foreground">({participant.code})</span>
                 </div>
+                <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPaused(participant.participantId, true)}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-orange-700 hover:bg-orange-100 transition-colors"
+                  title="Setja í pásu: ekki beðið eftir viðkomandi fyrr en hann gefur einkunn aftur"
+                >
+                  <Pause className="h-3.5 w-3.5" /> Pása
+                </button>
                 {onRemoveParticipant && (
                   <button
                     onClick={() => onRemoveParticipant(participant.participantId)}
@@ -183,6 +206,32 @@ export function PendingRaters({
                     </svg>
                   </button>
                 )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Paused: stepped away, not waited on */}
+      {data.paused && data.paused.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground">
+            <Coffee className="inline h-3.5 w-3.5 mr-1 -mt-0.5" />Í pásu ({data.paused.length})
+          </h4>
+          <div className="space-y-1">
+            {data.paused.map((participant) => (
+              <div
+                key={participant.participantId}
+                className="flex items-center justify-between gap-2 p-2 bg-muted rounded text-sm"
+              >
+                <span className="font-medium">{participant.name}</span>
+                <button
+                  onClick={() => setPaused(participant.participantId, false)}
+                  className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold text-green-700 hover:bg-green-100 transition-colors"
+                >
+                  <Play className="h-3.5 w-3.5" /> Halda áfram
+                </button>
               </div>
             ))}
           </div>

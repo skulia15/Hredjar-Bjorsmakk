@@ -88,20 +88,22 @@ export async function GET(
       submittedAt: rating.updatedAt.toISOString()
     }))
 
-    const pending = tasting.participants
-      .filter(p => !ratedParticipantIds.has(p.id))
-      .map(p => ({
-        participantId: p.id,
-        name: p.user?.name || `Notandi ${p.code}`,
-        code: p.code
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name))
+    const toPending = (p: (typeof tasting.participants)[number]) => ({
+      participantId: p.id,
+      name: p.user?.name || `Notandi ${p.code}`,
+      code: p.code
+    })
+    const notRated = tasting.participants.filter(p => !ratedParticipantIds.has(p.id))
+    const pending = notRated.filter(p => !p.pausedAt).map(toPending).sort((a, b) => a.name.localeCompare(b.name))
+    // Stepped away: not waited on or counted, until they rate or the leader resumes them
+    const paused = notRated.filter(p => p.pausedAt).map(toPending).sort((a, b) => a.name.localeCompare(b.name))
 
     return NextResponse.json({
       currentBeerId: tasting.currentTastingBeerId,
-      totalParticipants: tasting.participants.length,
+      totalParticipants: tasting.participants.length - paused.length,
       ratedCount: rated.length,
       pendingCount: pending.length,
+      paused,
       scoresHidden,
       // Tags say little about the score, so they show even while scores are hidden
       tags: countTags(ratings),

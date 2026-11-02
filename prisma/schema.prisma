@@ -38,6 +38,7 @@ model Participant {
   code          String   // 4-char alphanumeric, unique per tasting
   rejoinToken   String   @unique
   active        Boolean  @default(true)  // false = soft-deleted, ratings preserved
+  pausedAt      DateTime?                // Stepped away: not waited on until they rate or rejoin
   lastSeenAt    DateTime @default(now())
   createdAt     DateTime @default(now())
 

@@ -61,7 +61,8 @@ export async function POST(
         currentTastingBeerId: true,
         participants: {
           where: {
-            active: true  // Only include active participants
+            active: true,  // Only include active participants
+            pausedAt: null  // Someone who stepped away isn't blasted with an airhorn
           },
           select: {
             id: true
