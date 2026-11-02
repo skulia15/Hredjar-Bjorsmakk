@@ -15,26 +15,29 @@ export function ScoreBars({ scores }: { scores: number[] }) {
   const maxCount = Math.max(...counts, 1)
 
   return (
-    <div className="bg-card p-4 rounded-lg border">
-      <div className="text-sm font-medium mb-3 text-center">Einkunnir</div>
-      <div className="flex items-end justify-between gap-1">
+    <div className="flex flex-col gap-2.5">
+      <div className="text-xl font-semibold text-muted-foreground">Einkunnir</div>
+      <div className="flex items-end justify-between gap-2">
         {counts.map((count, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
-            <div className="w-full flex flex-col justify-end items-center h-[100px]">
+          <div key={i} className="flex-1 flex flex-col items-center gap-2">
+            <div className="w-full flex flex-col justify-end items-center h-36">
               <div
-                className="w-full bg-primary rounded-t flex items-start justify-center transition-[height] duration-700 ease-out"
+                // High scores in cranberry, the rest in a quiet sand so the shape reads at a distance
+                className={`w-full rounded-t-[10px] rounded-b flex items-start justify-center transition-[height] duration-700 ease-out ${
+                  i >= 6 ? 'bg-cranberry text-white' : 'bg-[#E6D9BC] text-ink'
+                }`}
                 style={{
                   height: grown ? `${(count / maxCount) * 100}%` : '0%',
-                  minHeight: grown && count > 0 ? '20px' : 0,
+                  minHeight: grown ? (count > 0 ? '28px' : '4px') : 0,
                   transitionDelay: `${i * 60}ms`,
                 }}
               >
                 {count > 0 && grown && (
-                  <span className="text-xs font-bold text-primary-foreground pt-1">{count}</span>
+                  <span className="text-base font-extrabold pt-1">{count}</span>
                 )}
               </div>
             </div>
-            <span className="text-xs font-medium">{i + 1}</span>
+            <span className="text-lg font-extrabold">{i + 1}</span>
           </div>
         ))}
       </div>

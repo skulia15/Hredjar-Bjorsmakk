@@ -3,7 +3,6 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ArrowDown, ArrowUp } from 'lucide-react'
-import { RankMedal } from '@/components/RankMedal'
 
 export interface LeaderboardBeer {
   beerId: string
@@ -34,7 +33,7 @@ function MovementBadge({ movement }: { movement?: Movement }) {
   if (movement === undefined) return null
   if (movement === 'new') {
     return (
-      <span className="px-2 py-0.5 rounded-full bg-amber-500 text-white text-xs font-bold animate-in zoom-in-50 duration-500">
+      <span className="px-2 py-0.5 rounded-full bg-gold text-ink text-xs font-extrabold animate-in zoom-in-50 duration-500">
         NÝTT
       </span>
     )
@@ -42,7 +41,7 @@ function MovementBadge({ movement }: { movement?: Movement }) {
   const up = movement > 0
   const Icon = up ? ArrowUp : ArrowDown
   return (
-    <span className={`inline-flex items-center text-sm font-bold animate-in fade-in duration-500 ${up ? 'text-green-600' : 'text-red-500'}`}>
+    <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-sm font-extrabold animate-in fade-in duration-500 ${up ? 'bg-holly-soft text-holly' : 'bg-red-50 text-red-600'}`}>
       <Icon className="h-4 w-4" />
       {Math.abs(movement)}
     </span>
@@ -54,6 +53,9 @@ function MovementBadge({ movement }: { movement?: Movement }) {
  * (or NÝTT) showing how each moved since the last change. Mount it only once scores have
  * loaded, so the first data isn't mistaken for every beer being new.
  */
+// Gold, silver, bronze; everyone else gets mint
+const RANK_BADGE: Record<number, string> = { 1: 'bg-gold', 2: 'bg-[#D9D3C4]', 3: 'bg-[#E08A5B]' }
+
 export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBeer[]; limit?: number }) {
   const signature = beers.map(b => `${b.beerId}:${b.rank}`).join(',')
   const [snapshot, setSnapshot] = useState(() => ({ signature, ranks: rankMap(beers), movement: {} as Record<string, Movement> }))
@@ -81,7 +83,7 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
   }, [signature])
 
   return (
-    <div className="space-y-3 relative">
+    <div className="space-y-2.5 relative">
       {beers.slice(0, limit).map(beer => (
         <div
           key={beer.beerId}
@@ -92,32 +94,24 @@ export function AnimatedLeaderboard({ beers, limit = 6 }: { beers: LeaderboardBe
               previousTops.current.delete(beer.beerId)
             }
           }}
-          className={`p-4 rounded-lg border-2 animate-in fade-in slide-in-from-left-4 duration-500 ${
-            beer.rank <= 3 ? 'bg-primary/5 border-primary' : 'bg-muted/50 border-border'
-          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-amber-400/60' : ''}`}
+          className={`flex items-center gap-4 min-h-[84px] px-4 py-2 rounded-[20px] animate-in fade-in slide-in-from-left-4 duration-500 ${
+            beer.rank === 1 ? 'bg-cream text-ink' : 'bg-pine'
+          } ${snapshot.movement[beer.beerId] === 'new' ? 'ring-4 ring-gold/60' : ''}`}
         >
-          <div className="flex items-start gap-3">
-            {beer.imageUrl && (
-              <div className="flex-shrink-0 h-16 w-16 flex items-center justify-center">
-                <Image src={beer.imageUrl} alt={beer.name} width={64} height={64} className="rounded object-contain max-h-16" />
-              </div>
-            )}
-            <div className="flex-1 min-w-0 flex items-start justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <RankMedal rank={beer.rank} className="h-8 w-8" />
-                  <span className="text-xl font-bold text-muted-foreground">#{beer.rank}</span>
-                  <MovementBadge movement={snapshot.movement[beer.beerId]} />
-                </div>
-                <h3 className="font-bold text-lg leading-tight mb-1">{beer.name}</h3>
-                <p className="text-sm text-muted-foreground truncate">{beer.brewery}</p>
-              </div>
-              <div className="text-right flex-shrink-0">
-                <div className="text-3xl font-bold text-primary">{beer.average.toFixed(2)}</div>
-                <div className="text-xs text-muted-foreground">{beer.count} eink.</div>
-              </div>
-            </div>
-          </div>
+          <span className={`w-12 h-12 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-mint'} text-ink flex items-center justify-center text-2xl font-extrabold`}>
+            {beer.rank}
+          </span>
+          {beer.imageUrl && (
+            <Image src={beer.imageUrl} alt="" width={48} height={48} className="h-10 w-auto shrink-0 object-contain" />
+          )}
+          <span className="flex-1 min-w-0 flex flex-col">
+            <span className="text-2xl font-extrabold leading-tight line-clamp-2">{beer.name}</span>
+            <span className="flex items-center gap-2 min-w-0">
+              <span className="text-base opacity-80 truncate">{beer.brewery} · {beer.count} eink.</span>
+              <MovementBadge movement={snapshot.movement[beer.beerId]} />
+            </span>
+          </span>
+          <span className="text-4xl font-extrabold tabular-nums">{beer.average.toFixed(2)}</span>
         </div>
       ))}
     </div>

@@ -179,7 +179,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <CorrIcon className="h-8 w-8 mx-auto" />
           <div className="text-xs text-muted-foreground mt-1">
             {corrDesc.text} fylgni
-            <div className="text-xs opacity-60">r = {data.overview.correlation.toFixed(2)}</div>
+            <div className="text-xs text-muted-foreground">r = {data.overview.correlation.toFixed(2)}</div>
           </div>
         </div>
         <div className="p-4 rounded-lg border bg-card text-center">
@@ -191,14 +191,14 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
       </div>
 
       {/* Best Value Highlight */}
-      <div className="p-4 rounded-lg border-2 border-primary bg-primary/5">
+      <div className="p-4 rounded-lg border-2 border-primary bg-card">
         <div className="flex items-start gap-3">
           <Gem className="h-8 w-8 text-primary flex-shrink-0" />
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <div className="font-semibold text-sm text-muted-foreground mb-1">BESTU KAUP</div>
             <div className="font-bold text-lg">{data.bestValue.name}</div>
             <div className="text-sm text-muted-foreground">{data.bestValue.brewery}</div>
-            <div className="mt-2 flex gap-4 text-sm">
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <span className="text-primary font-semibold">
                 {data.bestValue.rating} einkunn
               </span>
@@ -284,7 +284,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           </h3>
           <div className="grid grid-cols-2 gap-3">
             {data.quadrants.hiddenGems.length > 0 && (
-              <div className="rounded-lg border bg-green-500/10 border-green-500/20">
+              <div className="rounded-lg border bg-green-50 border-green-500/20">
                 <button
                   onClick={() => toggleQuadrant('hiddenGems')}
                   className="w-full p-3 text-left hover:bg-green-500/5 transition-colors"
@@ -383,7 +383,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
               </div>
             )}
             {data.quadrants.overpriced.length > 0 && (
-              <div className="rounded-lg border bg-red-500/10 border-red-500/20">
+              <div className="rounded-lg border bg-red-50 border-red-500/20">
                 <button
                   onClick={() => toggleQuadrant('overpriced')}
                   className="w-full p-3 text-left hover:bg-red-500/5 transition-colors"
@@ -429,7 +429,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
           <div
             key={beer.beerId}
             className={`p-4 rounded-lg border ${
-              beer.rank <= 3 ? 'bg-primary/5 border-primary' : 'bg-card'
+              beer.rank <= 3 ? 'bg-card border-2 border-primary' : 'bg-card'
             }`}
           >
             <div className="flex items-start justify-between gap-4">

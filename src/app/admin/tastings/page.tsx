@@ -59,7 +59,7 @@ export default function AdminTastingsPage() {
   const getStatusBadge = (status: string) => {
     const styles = {
       draft: 'bg-gray-500/10 text-gray-600',
-      active: 'bg-green-500/10 text-green-600',
+      active: 'bg-green-50 text-green-600',
       closed: 'bg-blue-500/10 text-blue-600'
     }
 

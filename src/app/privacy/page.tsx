@@ -56,7 +56,7 @@ export default function PrivacyPage() {
           </p>
         </section>
 
-        <Link href="/" className="inline-block text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/" className="inline-flex items-center min-h-11 text-sm text-muted-foreground hover:text-foreground">
           ← Forsíða
         </Link>
       </article>

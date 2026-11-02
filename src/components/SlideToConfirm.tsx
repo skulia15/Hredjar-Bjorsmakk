@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { Check, ChevronRight } from 'lucide-react'
 
 interface SlideToConfirmProps {
   onConfirm: () => void
@@ -13,7 +14,7 @@ interface SlideToConfirmProps {
 export function SlideToConfirm({
   onConfirm,
   text = 'Strjúka til að staðfesta',
-  confirmText = '→',
+  confirmText,
   className = '',
   disabled = false
 }: SlideToConfirmProps) {
@@ -123,20 +124,20 @@ export function SlideToConfirm({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-14 bg-orange-100 dark:bg-orange-950/30 rounded-lg overflow-hidden select-none ${
+      className={`relative w-full h-14 bg-pine-deep rounded-full overflow-hidden select-none ${
         disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-grab'
       } ${className}`}
     >
       {/* Background track */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-        <span className="text-orange-600 dark:text-orange-400 font-semibold text-sm">
+        <span className="text-mint font-semibold text-[0.9375rem]">
           {text}
         </span>
       </div>
 
       {/* Progress fill */}
       <div
-        className="absolute inset-y-0 left-0 bg-orange-600/20 dark:bg-orange-600/30 transition-all pointer-events-none"
+        className="absolute inset-y-0 left-0 rounded-full bg-gold/25 transition-all pointer-events-none"
         style={{
           width: sliderRef.current
             ? `${position + (sliderRef.current.offsetWidth || 0)}px`
@@ -147,9 +148,9 @@ export function SlideToConfirm({
       {/* Slider handle */}
       <div
         ref={sliderRef}
-        className={`absolute top-1 left-1 bottom-1 w-20 bg-orange-600 rounded-md flex items-center justify-center text-white font-bold text-xl shadow-lg transition-transform ${
+        className={`absolute top-1 left-1 bottom-1 w-12 bg-gold text-ink rounded-full flex items-center justify-center font-bold text-xl shadow-lg transition-transform ${
           isDragging ? 'cursor-grabbing scale-105' : 'cursor-grab'
-        } ${isConfirmed ? 'bg-green-600' : ''}`}
+        } ${isConfirmed ? '!bg-holly !text-white' : ''}`}
         style={{
           transform: `translateX(${position}px)`,
           transition: isDragging ? 'none' : 'transform 0.3s ease-out'
@@ -157,7 +158,7 @@ export function SlideToConfirm({
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
       >
-        {isConfirmed ? '✓' : confirmText}
+        {isConfirmed ? <Check className="h-6 w-6" strokeWidth={3} /> : confirmText ?? <ChevronRight className="h-6 w-6" strokeWidth={2.6} />}
       </div>
     </div>
   )

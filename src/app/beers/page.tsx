@@ -253,7 +253,7 @@ export default function BeersPage() {
         {error && (
           <div className={`p-4 border rounded-md whitespace-pre-line ${
             error.toLowerCase().includes('success')
-              ? 'bg-green-500/10 border-green-500 text-green-600'
+              ? 'bg-green-50 border-green-500 text-green-600'
               : 'bg-destructive/10 border-destructive text-destructive'
           }`}>
             {error}
@@ -275,7 +275,7 @@ export default function BeersPage() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
-                className="flex-1 px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+                className="flex-1 min-w-0 px-3 py-2 bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <option value="brewery-asc">Brugghús (A-Z)</option>
                 <option value="brewery-desc">Brugghús (Z-A)</option>
@@ -435,7 +435,7 @@ export default function BeersPage() {
                             href={beer.vinbudinUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline"
+                            className="inline-block py-1.5 text-xs text-primary hover:underline"
                           >
                             Sjá á Vínbúðin.is →
                           </a>
@@ -444,7 +444,7 @@ export default function BeersPage() {
                             href={`https://www.vinbudin.is/heim/vorur/stoek-vara.aspx/?productid=${beer.productNumber}/`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-primary hover:underline"
+                            className="inline-block py-1.5 text-xs text-primary hover:underline"
                           >
                             Sjá á Vínbúðin.is →
                           </a>

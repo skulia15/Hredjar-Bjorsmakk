@@ -9,7 +9,10 @@ import { useProjectorControls } from '@/hooks/useProjectorControls'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { BarChart3, Beer as BeerIcon, Brain, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { Beer as BeerIcon, Brain, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Sparkles, Star, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { BeerPlaceholder } from '@/components/BeerPlaceholder'
+import { FoamCard } from '@/components/FoamCard'
+import { SantaMug } from '@/components/SantaMug'
 import { JoinQrCode } from '@/components/JoinQrCode'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { AnimatedLeaderboard } from '@/components/projector/AnimatedLeaderboard'
@@ -214,9 +217,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       setScores(scoresData)
 
       // Load analytics
+      // Keep the last good analytics if a poll fails, rather than storing the error body
       const analyticsResponse = await fetch(`/api/tastings/${params.id}/analytics`)
-      const analyticsData = await analyticsResponse.json()
-      setAnalytics(analyticsData)
+      if (analyticsResponse.ok) {
+        setAnalytics(await analyticsResponse.json())
+      }
 
       // Load pending raters if there's a current beer
       let pendingData: PendingRatersData | null = null
@@ -296,7 +301,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
           <p className="text-xl text-muted-foreground">Hleður skjávarpasýn...</p>
@@ -307,7 +312,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
   if (!tasting) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-3xl font-bold mb-2">Smökkun fannst ekki</h2>
         </div>
@@ -356,8 +361,47 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // Calculate overall tasting stats
   const totalRatingsGiven = analytics?.participantStats?.reduce((sum, p) => sum + p.ratingsCount, 0) || 0
 
+  const statTiles = [
+    engagementStats?.fastestRater && {
+      icon: Rocket,
+      label: 'Hraðastur',
+      name: engagementStats.fastestRater.userName,
+      detail: `⌀ ${engagementStats.fastestRater.averageMinutes} mín`,
+    },
+    engagementStats?.slowestRater && {
+      icon: Snail,
+      label: 'Hægastur',
+      name: engagementStats.slowestRater.userName,
+      detail: `⌀ ${engagementStats.slowestRater.averageMinutes} mín`,
+    },
+    engagementStats?.mostGenerous && {
+      icon: Gift,
+      label: 'Rausnarlegastur',
+      name: engagementStats.mostGenerous.userName,
+      detail: `⌀ ${engagementStats.mostGenerous.averageRating.toFixed(2)}`,
+    },
+    engagementStats?.toughestCritic && {
+      icon: Search,
+      label: 'Strangastur',
+      name: engagementStats.toughestCritic.userName,
+      detail: `⌀ ${engagementStats.toughestCritic.averageRating.toFixed(2)}`,
+    },
+    engagementStats?.mostDeviant && {
+      icon: Target,
+      label: 'Útlaginn',
+      name: engagementStats.mostDeviant.userName,
+      detail: `${engagementStats.mostDeviant.deviation > 0 ? '+' : ''}${engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali`,
+    },
+    totalRatingsGiven > 0 && {
+      icon: Star,
+      label: 'Einkunnir alls',
+      name: String(totalRatingsGiven),
+      detail: null,
+    },
+  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; name: string; detail: string | null }>
+
   return (
-    <div className="h-screen w-screen overflow-x-hidden overflow-y-hidden bg-gradient-to-br from-background to-muted relative flex flex-col">
+    <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-6 2xl:gap-8 px-4 pt-6 pb-8 lg:px-8 2xl:px-14 2xl:pt-10 2xl:pb-12">
       {/* Awards reveal once the tasting is closed */}
       {showingAwards && (
         <AwardsReveal awards={awards} winnerName={scores?.beers[0]?.name} onClose={closeAwards} />
@@ -365,9 +409,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       {awards.length > 0 && awardsDismissed && (
         <button
           onClick={() => setAwardsDismissed(false)}
-          className="fixed bottom-4 right-4 z-40 px-4 py-2 rounded-lg border bg-card hover:bg-muted font-medium shadow"
+          className="wiggle fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 px-5 min-h-12 rounded-full bg-cranberry text-white font-extrabold shadow-lg"
         >
-          <Medal className="inline h-4 w-4 mr-1 -mt-0.5 text-yellow-500" />Sýna verðlaun
+          <Medal className="h-5 w-5" />Sýna verðlaun
         </button>
       )}
 
@@ -381,346 +425,249 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         <NudgeNotification
           onComplete={() => setShowNudge(false)}
           duration={3000}
+          sound={soundOn}
         />
       )}
 
-      {/* Progress through the tasting, with screen controls */}
-      <div className="flex items-center">
-        <div className="flex-1 min-w-0">
+      <header className="flex flex-wrap lg:flex-nowrap items-center gap-6 relative">
+        <SantaMug className="w-14 2xl:w-16 h-auto shrink-0" />
+        <div className="min-w-0 shrink">
+          <div className="text-base 2xl:text-xl font-semibold tracking-[0.2em] uppercase text-gold">Hreðjar Jólabjórsmakk</div>
+          <h1 className="text-4xl 2xl:text-5xl leading-none truncate">{tasting.title}</h1>
+        </div>
+        {/* Progress through the tasting */}
+        <div className="flex-1 min-w-0 max-w-2xl ml-auto">
           <ProgressStrip beers={tasting.beers} currentBeerId={tasting.currentBeerId} />
         </div>
-        <div className="flex gap-1 pr-4 md:pr-6 opacity-40 hover:opacity-100 transition-opacity">
+        <div className="flex gap-1 shrink-0 opacity-60 hover:opacity-100 transition-opacity">
           <button
             onClick={toggleSound}
-            className="p-2 rounded-md hover:bg-muted"
+            className="p-2.5 rounded-xl hover:bg-pine-light"
             aria-label={soundOn ? 'Slökkva á hljóði' : 'Kveikja á hljóði'}
             title={soundOn ? 'Slökkva á hljóði' : 'Kveikja á hljóði'}
           >
-            {soundOn ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+            {soundOn ? <Volume2 className="h-6 w-6" /> : <VolumeX className="h-6 w-6" />}
           </button>
           <button
             onClick={toggleFullscreen}
-            className="p-2 rounded-md hover:bg-muted"
+            className="p-2.5 rounded-xl hover:bg-pine-light"
             aria-label={isFullscreen ? 'Hætta í fullum skjá' : 'Fullur skjár'}
             title={isFullscreen ? 'Hætta í fullum skjá' : 'Fullur skjár'}
           >
-            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+            {isFullscreen ? <Minimize className="h-6 w-6" /> : <Maximize className="h-6 w-6" />}
           </button>
         </div>
-      </div>
+      </header>
 
-      {/* 3-Column Layout */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 px-4 md:px-6 pb-4 md:pb-6 min-h-0 w-full">
+      {/* One column on small screens, three on a projector */}
+      <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,29fr)_minmax(0,47fr)_minmax(0,24fr)] gap-6 2xl:gap-8 relative">
         {/* Column 1: Top 6 Beers */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col min-h-0 min-w-0">
-          <div className="flex-1 min-h-0 overflow-y-auto">
-          <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-            <Trophy className="h-6 w-6 text-yellow-500" />
-            <span>Efstu 6</span>
-          </h2>
-
-          {!scores || scores.beers.length === 0 ? (
-            <div className="text-center py-12">
-              <BeerIcon className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Engir bjórar klárðir ennþá</p>
-            </div>
-          ) : (
-            <AnimatedLeaderboard beers={scores.beers} limit={6} />
-          )}
+        <FoamCard as="section" aria-label="Efstu 6" tone="pine" size="lg" className="px-6 pt-3 pb-6 flex flex-col">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col gap-2.5">
+            <h2 className="text-3xl flex items-center gap-3 mb-1.5">
+              <Crown className="h-8 w-8 text-gold" fill="currentColor" />
+              Efstu 6
+            </h2>
+            {!scores || scores.beers.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 text-mint">
+                <BeerIcon className="h-12 w-12" />
+                <p className="text-xl">Engir bjórar klárðir ennþá</p>
+              </div>
+            ) : (
+              <AnimatedLeaderboard beers={scores.beers} limit={6} />
+            )}
           </div>
 
           {/* Latecomers can still join while a beer is on screen; in flow so it never covers the list */}
           {currentBeer && tasting.status !== 'closed' && (
-            <div className="pt-4 mt-4 border-t flex items-center gap-4 shrink-0">
+            <div className="pt-4 mt-4 border-t border-pine-line flex items-center gap-4 shrink-0">
               <JoinQrCode tastingId={tasting.id} size={96} />
-              <p className="text-lg font-semibold leading-tight">Skannaðu til<br />að taka þátt</p>
+              <p className="text-xl font-extrabold leading-tight">Skannaðu til<br />að taka þátt</p>
             </div>
           )}
-        </div>
+        </FoamCard>
 
-        {/* Column 2: Current Beer Stats */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col overflow-y-auto min-w-0">
-          <h2 className="text-2xl font-bold mb-4 text-center flex items-center justify-center gap-2">
-            <BeerIcon className="h-6 w-6 text-amber-500" />
-            <span>Núverandi bjór</span>
-          </h2>
-
+        {/* Column 2: Current Beer */}
+        <FoamCard as="section" aria-label="Núverandi bjór" size="lg" className="px-10 pt-4 pb-8 flex flex-col items-center text-center gap-2 overflow-y-auto">
           {currentBeer ? (
-            <div className="flex-1 space-y-4">
-              {/* Beer Image & Name */}
-              <div key={currentBeer.id} className="bg-green-50 dark:bg-green-950/20 p-4 rounded-xl border-2 border-green-500 animate-in fade-in zoom-in-95 duration-500">
-                {currentBeer.imageUrl && (
-                  <div className="flex justify-center mb-3">
+            <>
+              <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
+              <div key={currentBeer.id} className="flex flex-col items-center gap-2 animate-in fade-in zoom-in-95 duration-500">
+                <div className="beer-bob mt-1 w-36 h-36 2xl:w-44 2xl:h-44 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
+                  {currentBeer.imageUrl ? (
                     <Image
                       src={currentBeer.imageUrl}
                       alt={currentBeer.name}
-                      width={100}
-                      height={100}
-                      className="rounded-lg object-contain max-h-24"
+                      width={160}
+                      height={160}
+                      className="object-contain max-h-[80%] w-auto"
                     />
-                  </div>
-                )}
-                <h3 className="text-2xl md:text-3xl font-bold text-center leading-tight">
-                  {currentBeer.name}
-                </h3>
-                <p className="text-lg md:text-xl text-muted-foreground text-center">
+                  ) : (
+                    <BeerPlaceholder className="h-3/4 w-auto text-[#7A3B12]" />
+                  )}
+                </div>
+                <h2 className="mt-1 text-5xl 2xl:text-7xl leading-none">{currentBeer.name}</h2>
+                <p className="text-2xl 2xl:text-[1.75rem] text-muted-foreground">
                   {currentBeer.brewery}
+                  {currentBeer.containerSize && currentBeer.containerType && ` · ${currentBeer.containerSize} ml ${currentBeer.containerType}`}
                 </p>
-                {currentBeer.currentSince && (
-                  <div className="flex justify-center mt-2">
-                    <CurrentBeerTimer currentSince={currentBeer.currentSince} colorCoded={false} size="sm" />
+                {currentBeer.currentSince && currentBeer.status !== 'finished' && (
+                  <div className="text-lg">
+                    <CurrentBeerTimer currentSince={currentBeer.currentSince} colorCoded={false} size="md" />
                   </div>
                 )}
               </div>
 
-              {/* Live Average Score */}
-              {pendingRaters?.scoresHidden ? (
-                <div className="bg-muted/50 p-6 rounded-lg text-center">
-                  <EyeOff className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
-                  <div className="text-muted-foreground">Einkunnir birtast þegar allir hafa gefið einkunn</div>
-                  <div className="text-3xl font-bold mt-2 tabular-nums">
-                    {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
-                  </div>
+              <div className="mt-auto w-full grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 items-end text-left">
+                <div className="flex flex-col gap-1">
+                  {pendingRaters?.scoresHidden ? (
+                    <span className="flex flex-col gap-2 text-muted-foreground">
+                      <EyeOff className="h-12 w-12" />
+                      <span className="text-2xl font-semibold leading-tight">Einkunnir birtast þegar allir hafa gefið einkunn</span>
+                      <span className="text-5xl font-extrabold text-ink tabular-nums">
+                        {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
+                      </span>
+                    </span>
+                  ) : liveAverage !== null ? (
+                    <div
+                      // Remount on reveal so the average counts up from zero
+                      key={`average-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`}
+                      className={`flex flex-col gap-1 ${justRevealed ? 'animate-in zoom-in-90 duration-700' : ''}`}
+                    >
+                      {justRevealed ? (
+                        <span className="inline-flex items-center gap-2 text-2xl font-extrabold text-holly">
+                          <Sparkles className="h-6 w-6" /> Einkunnir birtar!
+                        </span>
+                      ) : (
+                        <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
+                      )}
+                      <span className="text-8xl 2xl:text-[7.5rem] leading-[0.9] font-extrabold text-cranberry tabular-nums">
+                        <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
+                      </span>
+                      <span className="flex flex-wrap gap-x-4 mt-3 text-lg font-semibold text-muted-foreground">
+                        <span>{currentBeerRatings.length} einkunn{currentBeerRatings.length !== 1 ? 'ir' : ''}</span>
+                        {highestScore !== null && lowestScore !== null && (
+                          <>
+                            <span>Hæsta {highestScore.toFixed(1)}</span>
+                            <span>Lægsta {lowestScore.toFixed(1)}</span>
+                          </>
+                        )}
+                      </span>
+                      {bestGuess && (
+                        <span className="mt-2 inline-flex items-center gap-2 text-2xl font-extrabold text-purple-600 animate-in fade-in fill-mode-both duration-700 [animation-delay:1800ms]">
+                          <Brain className="h-5 w-5" />
+                          {bestGuess.userName} giskaði næst: {bestGuess.guess.toFixed(1)}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <>
+                      <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
+                      <span className="text-3xl font-semibold text-muted-foreground">Engar einkunnir ennþá</span>
+                    </>
+                  )}
                 </div>
-              ) : liveAverage !== null ? (
-                <div
-                  // Remount on reveal so the average counts up from zero
-                  key={`average-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`}
-                  className={`p-6 rounded-lg border-2 text-center ${
-                    justRevealed ? 'bg-yellow-400/15 border-yellow-400 animate-in zoom-in-90 duration-700' : 'bg-primary/10 border-primary'
-                  }`}
-                >
-                  {justRevealed && (
-                    <div className="flex items-center justify-center gap-2 text-lg font-bold text-yellow-600 dark:text-yellow-400 mb-1">
-                      <Sparkles className="h-5 w-5" /> Einkunnir birtar!
+
+                <div className="flex flex-col gap-4">
+                  {/* Score Distribution; remounts on reveal so the bars grow in */}
+                  {currentBeerRatings.length > 0 && (
+                    <ScoreBars key={`bars-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`} scores={currentBeerRatings.map(r => r.score)} />
+                  )}
+                  {/* Flavor tags; shown even while scores are hidden, they don't give the score away */}
+                  {pendingRaters && pendingRaters.tags.length > 0 && (
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xl font-semibold text-muted-foreground">Bragðlýsingar</span>
+                      <TagCloud tags={pendingRaters.tags} />
                     </div>
                   )}
-                  <div className="text-sm text-muted-foreground mb-1">Meðaleinkunn</div>
-                  <div className="text-5xl font-bold text-primary">
-                    <CountUp value={liveAverage} durationMs={justRevealed ? 1800 : 600} />
-                  </div>
-                  <div className="text-sm text-muted-foreground mt-1">
-                    {currentBeerRatings.length} einkunn{currentBeerRatings.length !== 1 ? 'ir' : ''}
-                  </div>
-                  {bestGuess && (
-                    <div className="mt-3 inline-flex items-center gap-2 text-sm font-medium text-violet-600 animate-in fade-in fill-mode-both duration-700 [animation-delay:1800ms]">
-                      <Brain className="h-4 w-4" />
-                      {bestGuess.userName} giskaði næst: {bestGuess.guess.toFixed(1)}
-                    </div>
-                  )}
                 </div>
-              ) : (
-                <div className="bg-muted/50 p-6 rounded-lg text-center">
-                  <div className="text-muted-foreground">Engar einkunnir ennþá</div>
-                </div>
-              )}
-
-              {/* Score Distribution; remounts on reveal so the bars grow in */}
-              {currentBeerRatings.length > 0 && (
-                <ScoreBars key={`bars-${currentBeer.id}-${justRevealed ? 'revealed' : 'live'}`} scores={currentBeerRatings.map(r => r.score)} />
-              )}
-
-              {/* High/Low Scores */}
-              {highestScore !== null && lowestScore !== null && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800 text-center">
-                    <div className="text-xs text-muted-foreground">Hæsta</div>
-                    <div className="text-2xl font-bold text-green-600">{highestScore.toFixed(1)}</div>
-                  </div>
-                  <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 text-center">
-                    <div className="text-xs text-muted-foreground">Lægsta</div>
-                    <div className="text-2xl font-bold text-orange-600">{lowestScore.toFixed(1)}</div>
-                  </div>
-                </div>
-              )}
-
-              {/* Flavor tags; shown even while scores are hidden, they don't give the score away */}
-              {pendingRaters && pendingRaters.tags.length > 0 && (
-                <div className="bg-card p-4 rounded-lg border">
-                  <div className="text-sm font-medium mb-2 text-center">Bragðlýsingar</div>
-                  <TagCloud tags={pendingRaters.tags} />
-                </div>
-              )}
-            </div>
+              </div>
+            </>
           ) : tasting.status !== 'closed' ? (
             // Between beers (and before the start) the screen is a lobby: big scan-to-join code
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-6">
-                <p className="text-3xl font-bold">Skannaðu til að taka þátt</p>
-                <JoinQrCode tastingId={tasting.id} size={240} showUrl />
-                <LobbyParticipants participants={tasting.participants} />
-              </div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-6">
+              <p className="text-5xl font-extrabold">Skannaðu til að taka þátt</p>
+              <JoinQrCode tastingId={tasting.id} size={240} showUrl />
+              <LobbyParticipants participants={tasting.participants} />
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center py-12">
-                <Trophy className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
-                <p className="text-2xl text-muted-foreground">
-                  Smökkun lokið
-                </p>
-              </div>
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <Trophy className="h-20 w-20 text-gold" />
+              <p className="text-4xl font-extrabold">Smökkun lokið</p>
             </div>
           )}
-        </div>
+        </FoamCard>
 
-        {/* Column 3: Stats & Participation */}
-        <div className="bg-card rounded-xl border-2 border-border p-6 flex flex-col gap-4 min-w-0">
-          {/* Top Section: tasting-wide stats, kept up between beers */}
-          {engagementStats && (
-            <div className="flex flex-col flex-shrink-0">
-              <h3 className="text-lg font-semibold mb-3 text-center"><BarChart3 className="inline h-5 w-5 mr-1 -mt-0.5" /> Tölfræði</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {/* Fastest Rater */}
-                {engagementStats.fastestRater && (
-                  <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-lg border border-green-200 dark:border-green-800 flex flex-col items-center justify-center text-center">
-                    <Rocket className="h-10 w-10 mx-auto mb-2 text-green-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Hraðastur</div>
-                    <div className="text-lg font-bold text-green-600 truncate max-w-full">
-                      {engagementStats.fastestRater.userName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      ⌀ {engagementStats.fastestRater.averageMinutes} mín
-                    </div>
-                  </div>
-                )}
-
-                {/* Slowest Rater */}
-                {engagementStats.slowestRater && (
-                  <div className="bg-orange-50 dark:bg-orange-950/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800 flex flex-col items-center justify-center text-center">
-                    <Snail className="h-10 w-10 mx-auto mb-2 text-orange-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Hægastur</div>
-                    <div className="text-lg font-bold text-orange-600 truncate max-w-full">
-                      {engagementStats.slowestRater.userName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      ⌀ {engagementStats.slowestRater.averageMinutes} mín
-                    </div>
-                  </div>
-                )}
-
-                {/* Most Generous */}
-                {engagementStats.mostGenerous && (
-                  <div className="bg-purple-50 dark:bg-purple-950/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800 flex flex-col items-center justify-center text-center">
-                    <Gift className="h-10 w-10 mx-auto mb-2 text-purple-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Rausnarlegastur</div>
-                    <div className="text-lg font-bold text-purple-600 truncate max-w-full">
-                      {engagementStats.mostGenerous.userName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      ⌀ {engagementStats.mostGenerous.averageRating.toFixed(2)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Toughest Critic */}
-                {engagementStats.toughestCritic && (
-                  <div className="bg-red-50 dark:bg-red-950/20 p-3 rounded-lg border border-red-200 dark:border-red-800 flex flex-col items-center justify-center text-center">
-                    <Search className="h-10 w-10 mx-auto mb-2 text-red-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Strangastur</div>
-                    <div className="text-lg font-bold text-red-600 truncate max-w-full">
-                      {engagementStats.toughestCritic.userName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      ⌀ {engagementStats.toughestCritic.averageRating.toFixed(2)}
-                    </div>
-                  </div>
-                )}
-
-                {/* Most Deviant Rater */}
-                {engagementStats.mostDeviant && (
-                  <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800 flex flex-col items-center justify-center text-center">
-                    <Target className="h-10 w-10 mx-auto mb-2 text-blue-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Útlaginn</div>
-                    <div className="text-lg font-bold text-blue-600 truncate max-w-full">
-                      {engagementStats.mostDeviant.userName}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {engagementStats.mostDeviant.deviation > 0 ? '+' : ''}{engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali
-                    </div>
-                  </div>
-                )}
-                {/* Total Ratings */}
-                {totalRatingsGiven > 0 && (
-                  <div className="bg-indigo-50 dark:bg-indigo-950/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800 flex flex-col items-center justify-center text-center">
-                    <Star className="h-10 w-10 mx-auto mb-2 text-indigo-600" />
-                    <div className="text-sm text-muted-foreground mb-1">Heildarfjöldi einkunna</div>
-                    <div className="text-3xl font-bold text-indigo-600">
-                      {totalRatingsGiven}
-                    </div>
-                  </div>
-                )}
-              </div>
+        {/* Column 3: Participation */}
+        <FoamCard as="section" aria-label="Framvinda" tone="pine" size="lg" className="px-6 pt-3 pb-6 flex flex-col gap-5 min-h-0">
+          <h2 className="text-3xl">Framvinda</h2>
+          {!currentBeer || !pendingRaters ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center gap-3 text-mint">
+              <Hourglass className="h-12 w-12" />
+              <p className="text-xl">{tasting.status === 'closed' ? 'Takk fyrir kvöldið!' : 'Bíður eftir næsta bjór'}</p>
             </div>
-          )}
-
-          {/* Bottom Section: Participation (Variable Height) */}
-          {currentBeer && pendingRaters ? (
-            <div className={`flex flex-col pt-4 flex-1 min-h-0 ${engagementStats ? 'border-t-2' : ''}`}>
-              {/* Progress */}
-              <div className="space-y-2 flex-shrink-0">
-                <div className="flex items-center justify-between text-sm font-medium">
-                  <span>Framvinda</span>
-                  <span className="text-primary">
-                    {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
-                  </span>
-                </div>
-                <div className="w-full bg-muted rounded-full h-3">
-                  <div
-                    className="bg-primary h-3 rounded-full transition-all duration-500"
-                    style={{
-                      width: pendingRaters.totalParticipants > 0
-                        ? `${(pendingRaters.ratedCount / pendingRaters.totalParticipants) * 100}%`
-                        : '0%'
-                    }}
-                  />
-                </div>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-2.5">
+                <span className="text-8xl leading-[0.9] font-extrabold text-gold tabular-nums">{pendingRaters.ratedCount}</span>
+                <span className="text-3xl font-semibold text-mint">/ {pendingRaters.totalParticipants} búin</span>
+              </div>
+              <div className="h-5 rounded-full bg-pine-deep overflow-hidden shrink-0">
+                <div
+                  className="h-full rounded-full bg-gold transition-all duration-500"
+                  style={{
+                    width: pendingRaters.totalParticipants > 0
+                      ? `${(pendingRaters.ratedCount / pendingRaters.totalParticipants) * 100}%`
+                      : '0%'
+                  }}
+                />
               </div>
 
-              {/* All Done */}
               {pendingRaters.totalParticipants > 0 && pendingRaters.pendingCount === 0 ? (
-                <div className="flex-1 flex items-center justify-center">
-                  <div className="text-center py-8">
-                    <PartyPopper className="h-16 w-16 mx-auto mb-3 text-green-600" />
-                    <p className="text-lg font-medium text-green-600">
-                      Allir hafa gefið einkunn!
-                    </p>
-                  </div>
+                <div className="flex-1 flex flex-col items-center justify-center text-center gap-4">
+                  <PartyPopper className="h-24 w-24 text-gold" strokeWidth={1.6} />
+                  <p className="text-4xl font-extrabold leading-tight">Allir hafa gefið einkunn!</p>
+                  <p className="text-2xl text-mint">Skál!</p>
                 </div>
               ) : pendingRaters.pendingCount > 0 ? (
-                /* Pending List */
-                <div className="flex-1 flex flex-col min-h-0">
-                  <h3 className="text-lg font-semibold text-orange-600 flex items-center gap-2 mb-2">
-                    <Hourglass className="h-5 w-5" />
-                    <span>Bíður eftir {pendingRaters.pendingCount} einkunnargjöfum</span>
-                  </h3>
-                  <div className="flex-1 space-y-1 overflow-y-auto">
+                <div className="flex-1 min-h-0 flex flex-col gap-3">
+                  <span className="text-xl font-semibold text-mint">Bíður eftir {pendingRaters.pendingCount}</span>
+                  <div className="flex flex-wrap content-start gap-2.5 overflow-y-auto">
                     {pendingRaters.pending.map((participant) => (
-                      <div
+                      <span
                         key={participant.participantId}
-                        className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg border border-orange-200 dark:border-orange-800"
+                        className="inline-flex items-center gap-2.5 pl-2.5 pr-4 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
                       >
-                        <div className="flex items-center justify-between">
-                          <span className="font-medium text-base">{participant.name}</span>
-                          <span className="text-sm text-muted-foreground">({participant.code})</span>
-                        </div>
-                      </div>
+                        <span className="w-8 h-8 rounded-full bg-gold shrink-0" aria-hidden />
+                        {participant.name}
+                        <span className="text-lg text-ink-soft">({participant.code})</span>
+                      </span>
                     ))}
                   </div>
                 </div>
               ) : null}
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center py-12">
-                <Hourglass className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                <p className="text-muted-foreground">
-                  {tasting.status === 'closed' ? 'Takk fyrir kvöldið!' : 'Bíður eftir næsta bjór'}
-                </p>
-              </div>
-            </div>
+            </>
           )}
-        </div>
+        </FoamCard>
       </div>
+
+      {/* Tasting-wide stats, kept up between beers */}
+      {statTiles.length > 0 && (
+        <footer aria-label="Tölfræði" className="grid grid-cols-2 lg:grid-cols-6 gap-4 relative">
+          {statTiles.map((tile) => (
+            <div key={tile.label} className="flex items-center gap-3.5 px-5 py-4 rounded-[20px] bg-pine-deep min-w-0">
+              <span className="w-12 h-12 shrink-0 rounded-[14px] bg-pine-light flex items-center justify-center">
+                <tile.icon className="h-6 w-6 text-gold" />
+              </span>
+              <span className="flex flex-col min-w-0">
+                <span className="text-base text-mint">{tile.label}</span>
+                <span className="text-2xl font-extrabold truncate">{tile.name}</span>
+                {tile.detail && <span className="text-sm text-mint truncate">{tile.detail}</span>}
+              </span>
+            </div>
+          ))}
+        </footer>
+      )}
     </div>
   )
 }

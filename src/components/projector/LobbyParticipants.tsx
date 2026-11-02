@@ -4,7 +4,8 @@ export interface LobbyParticipant {
   imageUrl: string | null
 }
 
-const AVATAR_COLORS = ['bg-amber-500', 'bg-emerald-500', 'bg-sky-500', 'bg-rose-500', 'bg-violet-500', 'bg-orange-500', 'bg-teal-500', 'bg-fuchsia-500']
+// Deep enough for white initials to stay readable
+const AVATAR_COLORS = ['bg-cranberry', 'bg-holly', 'bg-blue-700', 'bg-purple-700', 'bg-orange-700', 'bg-red-800', 'bg-teal-700', 'bg-pine-line']
 
 function colorFor(name: string) {
   let hash = 0
@@ -19,30 +20,30 @@ function initials(name: string) {
 /** Everyone who has joined; each avatar pops in as it arrives (keys are stable, so only newcomers animate) */
 export function LobbyParticipants({ participants }: { participants: LobbyParticipant[] }) {
   if (participants.length === 0) {
-    return <p className="text-lg text-muted-foreground animate-pulse">Enginn kominn enn…</p>
+    return <p className="text-2xl text-muted-foreground animate-pulse">Enginn kominn enn…</p>
   }
 
   return (
     <div className="space-y-3">
-      <p className="text-lg font-semibold">
+      <p className="text-2xl font-extrabold">
         {participants.length} {participants.length === 1 ? 'mættur' : 'mættir'}
       </p>
-      <div className="flex flex-wrap justify-center gap-3 max-w-xl">
+      <div className="flex flex-wrap justify-center gap-4 max-w-3xl">
         {participants.map((p, index) => (
           <div
             key={p.id}
-            className="flex flex-col items-center gap-1 w-16 animate-in zoom-in-50 fade-in fill-mode-both duration-500"
+            className="flex flex-col items-center gap-1.5 w-20 animate-in zoom-in-50 fade-in fill-mode-both duration-500"
             style={{ animationDelay: `${Math.min(index, 12) * 60}ms` }}
           >
             {p.imageUrl ? (
               // eslint-disable-next-line @next/next/no-img-element -- Clerk avatars come from a host next/image isn't configured for
-              <img src={p.imageUrl} alt="" className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/40" />
+              <img src={p.imageUrl} alt="" className="h-16 w-16 rounded-full object-cover ring-2 ring-gold" />
             ) : (
-              <div className={`h-12 w-12 rounded-full flex items-center justify-center text-white font-bold ${colorFor(p.name)}`}>
+              <div className={`h-16 w-16 rounded-full flex items-center justify-center text-white text-xl font-extrabold ${colorFor(p.name)}`}>
                 {initials(p.name)}
               </div>
             )}
-            <span className="text-xs font-medium truncate max-w-full">{p.name}</span>
+            <span className="text-base font-semibold truncate max-w-full">{p.name}</span>
           </div>
         ))}
       </div>

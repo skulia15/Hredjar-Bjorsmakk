@@ -3,7 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Beer as BeerIcon } from 'lucide-react'
-import { RankMedal } from '@/components/RankMedal'
+import { FoamCard } from '@/components/FoamCard'
+
+// Gold, silver, bronze
+const RANK_BADGE: Record<number, string> = { 1: 'bg-gold', 2: 'bg-[#D9D3C4]', 3: 'bg-[#E08A5B]' }
 
 interface LeaderboardBeer {
   beerId: string
@@ -135,7 +138,7 @@ export function LeaderboardWaiting({
       <div className="max-w-md w-full space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <h1 className="text-2xl font-bold">Bestu bjórarnir hingað til</h1>
+          <h1 className="text-3xl">Bestu bjórarnir hingað til</h1>
           <p className="text-sm text-muted-foreground">
             {isLeader ? 'Veldu næsta bjór til að halda áfram' : 'Bíður eftir næsta bjór...'}
           </p>
@@ -145,8 +148,8 @@ export function LeaderboardWaiting({
         {message && (
           <div className={`p-3 rounded-md text-sm text-center ${
             message.includes('Villa')
-              ? 'bg-destructive/10 text-destructive'
-              : 'bg-green-500/10 text-green-600'
+              ? 'bg-red-50 text-red-600'
+              : 'bg-green-50 text-green-600'
           }`}>
             {message}
           </div>
@@ -154,34 +157,28 @@ export function LeaderboardWaiting({
 
         {/* Leaderboard */}
         {beers.length > 0 ? (
-          <div className="space-y-3">
-            {beers.slice(0, 5).map((beer) => (
-              <div
-                key={beer.beerId}
-                className={`bg-card p-4 rounded-lg border ${
-                  beer.rank <= 3 ? 'border-primary' : ''
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <RankMedal rank={beer.rank} className="h-7 w-7" />
-                      <h3 className="font-bold text-lg">{beer.name}</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{beer.brewery}</p>
-                  </div>
-                  <div className="text-right ml-4">
-                    <div className="text-2xl font-bold text-primary">
-                      {beer.average.toFixed(2)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
+          // Same list style as the scores page
+          <FoamCard as="section" aria-label="Efstu 5" className="px-4 pt-1 pb-2">
+            <ol>
+              {beers.slice(0, 5).map((beer) => (
+                <li key={beer.beerId} className="flex flex-wrap items-center gap-x-3 gap-y-1 min-h-14 py-2 border-b border-cream-line last:border-b-0">
+                  <span className={`w-9 h-9 shrink-0 rounded-full ${RANK_BADGE[beer.rank] ?? 'bg-cream-dim'} flex items-center justify-center text-base font-extrabold`}>
+                    {beer.rank}
+                  </span>
+                  <span className="flex-1 min-w-[min(9rem,100%)] flex flex-col">
+                    <span className="text-base font-semibold leading-tight">{beer.name}</span>
+                    <span className="text-[0.8125rem] text-muted-foreground truncate">{beer.brewery}</span>
+                  </span>
+                  <span className="text-right shrink-0 ml-auto">
+                    <span className="block text-xl font-extrabold text-holly tabular-nums">{beer.average.toFixed(2)}</span>
+                    <span className="block text-xs text-muted-foreground">
                       {beer.count} einkunn{beer.count !== 1 ? 'ir' : ''}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </FoamCard>
         ) : (
           <div className="text-center py-8">
             <BeerIcon className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
@@ -192,7 +189,7 @@ export function LeaderboardWaiting({
         {/* Leader Controls */}
         {isLeader && untastedBeers.length > 0 && (
           <div className="bg-card p-4 rounded-lg border space-y-3">
-            <h3 className="font-semibold text-blue-600 dark:text-blue-400">
+            <h3 className="font-extrabold text-lg">
               Veldu næsta bjór
             </h3>
 
@@ -260,7 +257,7 @@ export function LeaderboardWaiting({
         <div className="text-center">
           <Link
             href={`/t/${tastingId}/scores`}
-            className="text-sm text-primary hover:underline"
+            className="inline-flex items-center min-h-11 text-sm text-primary hover:underline"
           >
             Skoða allar einkunnir →
           </Link>

@@ -6,17 +6,22 @@ interface NudgeNotificationProps {
   message?: string
   onComplete?: () => void
   duration?: number
+  /** Play the airhorn; the projector passes its mute setting */
+  sound?: boolean
 }
 
 export function NudgeNotification({
   message = 'Drífa sig!',
   onComplete,
-  duration = 3000
+  duration = 3000,
+  sound = true
 }: NudgeNotificationProps) {
   const [visible, setVisible] = useState(true)
   const [fadeOut, setFadeOut] = useState(false)
   const [animationKey, setAnimationKey] = useState(0)
   const onCompleteRef = useRef(onComplete)
+  // Read once when the nudge appears; toggling mute mid-nudge shouldn't restart it
+  const soundRef = useRef(sound)
 
   // Keep onComplete ref up to date
   useEffect(() => {
@@ -30,15 +35,17 @@ export function NudgeNotification({
     setAnimationKey(prev => prev + 1)
 
     // Play an airhorn sound from MP3 file
-    try {
-      const audio = new Audio('/airhorn.mp3')
-      audio.volume = 0.5
-      audio.play().catch(e => {
+    if (soundRef.current) {
+      try {
+        const audio = new Audio('/airhorn.mp3')
+        audio.volume = 0.5
+        audio.play().catch(e => {
+          console.log('[NudgeNotification] Audio playback failed:', e)
+        })
+      } catch (e) {
+        // Ignore audio errors
         console.log('[NudgeNotification] Audio playback failed:', e)
-      })
-    } catch (e) {
-      // Ignore audio errors
-      console.log('[NudgeNotification] Audio playback failed:', e)
+      }
     }
 
     // Start fade out 500ms before completion
@@ -72,11 +79,12 @@ export function NudgeNotification({
       className={`fixed inset-0 z-[9999] flex items-center justify-center transition-opacity duration-500 ${
         fadeOut ? 'opacity-0' : 'opacity-100'
       }`}
+      // forwards: hold the last red/white frame while fading out, instead of dropping to a transparent overlay
       style={{
-        animation: fadeOut ? 'none' : 'blinkRedWhite 0.2s ease-in-out 10'
+        animation: 'blinkRedWhite 0.2s ease-in-out 10 forwards'
       }}
     >
-      <div className="text-6xl md:text-8xl font-bold text-center px-4 drop-shadow-2xl">
+      <div className="text-6xl md:text-8xl font-bold text-center px-4">
         {message}
       </div>
 

@@ -496,7 +496,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
     <div className="mt-8 space-y-8">
       {/* Headline awards */}
       {awards.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(min(100%,10rem),1fr))] gap-3">
           {awards.map(award => (
             <div key={award.title} className="bg-card p-4 rounded-lg border text-center">
               <AwardIcon kind={award.kind} className="h-8 w-8 mx-auto mb-1 text-primary" />
@@ -524,13 +524,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 dataKey="beerIndex"
                 label={{ value: 'Bjór númer', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
                 stroke={chart.axis}
               />
               <YAxis
                 domain={ratingDomain(ratingTrend.map(p => p.average))}
                 label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
                 stroke={chart.axis}
               />
               <Tooltip
@@ -557,7 +557,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 dot={{ fill: chart.primary, r: 5 }}
                 activeDot={{ r: 7 }}
               >
-                <LabelList dataKey="average" position="top" fontSize={11} formatter={(v) => Number(v).toFixed(1)} />
+                <LabelList dataKey="average" position="top" fontSize="0.6875rem" formatter={(v) => Number(v).toFixed(1)} />
               </Line>
               <Line
                 type="linear"
@@ -685,12 +685,12 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 dataKey="rating"
                 label={{ value: 'Einkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
                 stroke={chart.axis}
               />
               <YAxis
                 label={{ value: 'Fjöldi', angle: -90, position: 'insideLeft' }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
                 stroke={chart.axis}
                 allowDecimals={false}
               />
@@ -731,13 +731,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -795,13 +795,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Mínútur', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -845,13 +845,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="userName"
                 width={100}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -877,7 +877,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                     fill={p.averageRating >= analytics.overview.overallAverage ? chart.success : chart.warning}
                   />
                 ))}
-                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+                <LabelList dataKey="averageRating" position="right" fontSize="0.75rem" formatter={(v) => Number(v).toFixed(2)} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -901,13 +901,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -958,7 +958,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   )
                 }}
               >
-                <LabelList dataKey="standardDeviation" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+                <LabelList dataKey="standardDeviation" position="right" fontSize="0.75rem" formatter={(v) => Number(v).toFixed(2)} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -970,9 +970,9 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               .map(b => (
                 <div key={b.beerId} className="flex flex-wrap items-center justify-between gap-2 p-3 bg-muted/50 rounded">
                   <div className="font-medium text-sm">{b.name}</div>
-                  <div className="text-sm">
+                  <div className="flex flex-wrap items-center gap-x-2 text-sm">
                     <span className="text-green-600 font-semibold"><ThumbsUp className="inline h-4 w-4 -mt-0.5" /> {b.highestRater!.userName} {b.highestRater!.score}</span>
-                    <span className="text-muted-foreground mx-2">vs</span>
+                    <span className="text-muted-foreground">vs</span>
                     <span className="text-red-600 font-semibold"><ThumbsDown className="inline h-4 w-4 -mt-0.5" /> {b.lowestRater!.userName} {b.lowestRater!.score}</span>
                   </div>
                 </div>
@@ -999,7 +999,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 dataKey="abv"
                 name="ABV"
                 label={{ value: 'Áfengisstyrkur (%)', position: 'insideBottom', offset: -10 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="number"
@@ -1007,7 +1007,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 name="Einkunn"
                 domain={ratingDomain(abvVsRating.map(b => b.averageRating))}
                 label={{ value: 'Meðaleinkunn', angle: -90, position: 'insideLeft' }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1047,7 +1047,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 : abvFit.r > 0
                 ? <IconLabel icon={TrendingUp}>Sterkari bjórar fengu hærri einkunnir (+{abvFit.slope.toFixed(2)} stig á hvert %)</IconLabel>
                 : <IconLabel icon={TrendingDown}>Sterkari bjórar fengu lægri einkunnir ({abvFit.slope.toFixed(2)} stig á hvert %)</IconLabel>}
-              <span className="block text-xs opacity-70">Fylgni r = {abvFit.r.toFixed(2)}</span>
+              <span className="block text-xs text-muted-foreground">Fylgni r = {abvFit.r.toFixed(2)}</span>
             </p>
           )}
         </div>
@@ -1070,13 +1070,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Mínútur til einkunnagjaafar', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1119,14 +1119,14 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 angle={-45}
                 textAnchor="end"
                 height={100}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <YAxis
                 type="number"
                 dataKey="deviation"
                 name="Frávik"
                 label={{ value: 'Frávik frá hópmeðaltali', angle: -90, position: 'insideLeft' }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
                 tickFormatter={(value) => value.toFixed(2)}
                 domain={['dataMin - 0.5', 'dataMax + 0.5']}
               />
@@ -1187,13 +1187,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Samstaða', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1270,13 +1270,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="beerStyle"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1296,7 +1296,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 }}
               />
               <Bar dataKey="averageRating" fill={chart.primary}>
-                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+                <LabelList dataKey="averageRating" position="right" fontSize="0.75rem" formatter={(v) => Number(v).toFixed(2)} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -1323,13 +1323,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="beerStyle"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1426,13 +1426,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="name"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1448,7 +1448,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                         <p className="text-xs mt-1">
                           <span className={
                             data.unanimity === 'Very High' ? 'text-green-600 font-semibold' :
-                            data.unanimity === 'High' ? 'text-green-500 font-semibold' :
+                            data.unanimity === 'High' ? 'text-green-600 font-semibold' :
                             'text-orange-600 font-semibold'
                           }>
                             {data.unanimity === 'Very High' ? <IconLabel icon={CircleCheck}>Mjög há samstaða</IconLabel> :
@@ -1504,13 +1504,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Einkunna-svið (max - min)', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="userName"
                 width={100}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1583,13 +1583,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="brewery"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1627,11 +1627,11 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                   )
                 }}
               >
-                <LabelList dataKey="averageRating" position="right" fontSize={12} formatter={(v) => Number(v).toFixed(2)} />
+                <LabelList dataKey="averageRating" position="right" fontSize="0.75rem" formatter={(v) => Number(v).toFixed(2)} />
               </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <div className="mt-4 flex items-center justify-center gap-4 text-sm">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 rounded-full bg-blue-500"></div>
               <span>Íslensk brugghús</span>
@@ -1731,13 +1731,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="brewery"
                 width={150}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -1924,13 +1924,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
                 type="number"
                 domain={[0, 10]}
                 label={{ value: 'Meðaleinkunn', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="country"
                 width={120}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
@@ -2174,13 +2174,13 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <XAxis
                 type="number"
                 label={{ value: 'Staðalfrávik', position: 'insideBottom', offset: -5 }}
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: '0.75rem' }}
               />
               <YAxis
                 type="category"
                 dataKey="country"
                 width={120}
-                tick={{ fontSize: 11 }}
+                tick={{ fontSize: '0.6875rem' }}
               />
               <Tooltip
                 content={({ active, payload }) => {
