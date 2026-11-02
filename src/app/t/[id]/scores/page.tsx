@@ -7,7 +7,8 @@ import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { PersonalStats } from '@/components/PersonalStats'
-import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown, Table, Users } from 'lucide-react'
+import { StatCard } from '@/components/StatCard'
 import { FoamCard } from '@/components/FoamCard'
 import { RankMedal } from '@/components/RankMedal'
 import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
@@ -365,53 +366,54 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
         {/* Detailed Ratings Table */}
         {isClient && ratingsDetail && ratingsDetail.beers.length > 0 && ratingsDetail.participants.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Einkunnatafla</h2>
-              <p className="text-sm text-muted-foreground">
-                Einkunnir hvers þátttakanda fyrir hvern bjór
-              </p>
-            </div>
+          // Folded by default: on a phone the full table is several screens long
+          <StatCard
+            tone="section"
+            className="mt-8"
+            icon={Table}
+            title="Einkunnatafla"
+            description={`Einkunnir hvers þátttakanda fyrir hvern bjór (${ratingsDetail.beers.length} bjórar × ${ratingsDetail.participants.length})`}
+          >
             <RatingsTable participants={ratingsDetail.participants} beers={ratingsDetail.beers} />
-          </div>
+          </StatCard>
         )}
 
         {isClient && ratingsDetail && <TastingNotes beers={ratingsDetail.beers} />}
 
         {/* User Statistics - Only show for closed tastings */}
         {scores.status === 'closed' && analytics && analytics.participantStats.length > 0 && (
-          <div className="mt-8 space-y-4">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Ítarleg tölfræði þátttakenda</h2>
-              <p className="text-sm text-muted-foreground">
-                Meðaleinkunn: {analytics.overview.overallAverage.toFixed(2)} • {analytics.overview.totalRatings} einkunnir samtals
-              </p>
-            </div>
-
-            <div className="space-y-3">
+          <StatCard
+            tone="section"
+            className="mt-8"
+            icon={Users}
+            title="Ítarleg tölfræði þátttakenda"
+            description={`Meðaleinkunn: ${analytics.overview.overallAverage.toFixed(2)} • ${analytics.overview.totalRatings} einkunnir samtals`}
+          >
+            {/* Each person folds open on tap; the summary row alone answers "who rated what on average" */}
+            <div className="space-y-2">
               {analytics.participantStats.map((participant) => (
-                <div
+                <details
                   key={participant.participantId}
-                  className="p-4 rounded-lg border bg-card"
+                  className="group rounded-lg border bg-card"
                 >
-                  <div className="space-y-3">
-                    {/* Participant name and average */}
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-lg">{participant.userName}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {participant.ratingsCount} af {participant.possibleRatings} bjórum gefin einkunn ({participant.engagementRate}%)
-                        </p>
-                      </div>
-                      <div className="text-right flex-shrink-0">
-                        <div className="text-2xl font-bold text-primary">
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 p-4 [&::-webkit-details-marker]:hidden">
+                    <span className="flex-1 min-w-[min(10rem,100%)]">
+                      <h3 className="font-bold text-lg leading-tight">{participant.userName}</h3>
+                      <span className="block text-sm text-muted-foreground">
+                        {participant.ratingsCount} af {participant.possibleRatings} bjórum ({participant.engagementRate}%)
+                      </span>
+                    </span>
+                    <span className="ml-auto flex items-center gap-3">
+                      <span className="text-right">
+                        <span className="block text-2xl font-bold text-primary tabular-nums">
                           {participant.averageRating.toFixed(2)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          meðaleinkunn
-                        </div>
-                      </div>
-                    </div>
+                        </span>
+                        <span className="block text-xs text-muted-foreground">meðaleinkunn</span>
+                      </span>
+                      <ChevronDown className="h-5 w-5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
+                    </span>
+                  </summary>
+                  <div className="space-y-3 px-4 pb-4">
 
                     {/* Top 3 beers */}
                     {participant.topBeers && participant.topBeers.length > 0 && (
@@ -450,10 +452,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       </div>
                     )}
                   </div>
-                </div>
+                </details>
               ))}
             </div>
-          </div>
+          </StatCard>
         )}
 
       </div>
