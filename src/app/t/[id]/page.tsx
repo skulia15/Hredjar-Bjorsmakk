@@ -217,22 +217,38 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
     const chosenObj = AVATARS.find(a => a.key === selectedAvatar)
 
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
-        <div className="max-w-xl w-full space-y-6 my-6">
-          <div className="text-center space-y-1.5">
-            <BeerIcon className="h-10 w-10 mx-auto text-amber-500" />
-            <h2 className="text-2xl font-bold">{tastingTitle}</h2>
+      <div className="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 bg-gradient-to-b from-background to-muted">
+        <div className="max-w-3xl w-full space-y-4 my-4">
+          <div className="text-center space-y-1">
+            <h2 className="text-xl sm:text-2xl font-bold">{tastingTitle}</h2>
             <p className="text-muted-foreground text-sm">Veldu þér jólamynd fyrir smökkunina</p>
           </div>
 
-          <div className="bg-card p-5 rounded-xl border space-y-5">
+          <div className="bg-card p-4 sm:p-6 rounded-xl border space-y-5">
             {avatarError && (
               <div className="p-3 bg-destructive/10 border border-destructive text-destructive rounded-md text-sm text-center">
                 {avatarError}
               </div>
             )}
 
-            <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-[55vh] overflow-y-auto p-1">
+            {/* Large featured preview of the currently selected avatar */}
+            {chosenObj && (
+              <div className="flex flex-col items-center gap-2.5 pb-4 border-b">
+                <div className="relative w-40 h-40 sm:w-48 sm:h-48 rounded-full overflow-hidden ring-4 ring-amber-500 shadow-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatarSrc(chosenObj)}
+                    alt={chosenObj.name}
+                    className="w-full h-full object-cover select-none"
+                  />
+                </div>
+                <div className="text-center">
+                  <div className="text-lg sm:text-xl font-bold text-foreground">{chosenObj.name}</div>
+                </div>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[48vh] overflow-y-auto p-1">
               {AVATARS.map(avatar => {
                 const isTaken = !allTaken && takenSet.has(avatar.key)
                 const isSelected = selectedAvatar === avatar.key
@@ -242,7 +258,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
                     type="button"
                     disabled={isTaken || submittingJoin}
                     onClick={() => setSelectedAvatar(avatar.key)}
-                    className={`group flex flex-col items-center gap-1.5 p-2 rounded-xl border text-center transition-all ${
+                    className={`group flex flex-col items-center gap-2 p-3 rounded-xl border text-center transition-all ${
                       isTaken
                         ? 'opacity-35 cursor-not-allowed border-transparent bg-muted/40'
                         : isSelected
@@ -250,7 +266,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
                           : 'border-border hover:border-amber-500/50 hover:bg-accent/40'
                     }`}
                   >
-                    <div className="relative w-16 h-16 sm:w-18 sm:h-18">
+                    <div className="relative w-28 h-28 sm:w-32 sm:h-32">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={avatarSrc(avatar)}
@@ -259,16 +275,16 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
                       />
                       {isTaken && (
                         <div className="absolute inset-0 rounded-full bg-black/55 flex items-center justify-center">
-                          <Lock className="w-5 h-5 text-white/90" />
+                          <Lock className="w-7 h-7 text-white/90" />
                         </div>
                       )}
                       {isSelected && !isTaken && (
-                        <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-500 text-black flex items-center justify-center shadow">
+                        <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-amber-500 text-black flex items-center justify-center shadow">
                           <Check className="w-4 h-4 stroke-[3]" />
                         </div>
                       )}
                     </div>
-                    <span className="text-[11px] font-medium leading-tight line-clamp-2">
+                    <span className="text-xs sm:text-sm font-medium leading-tight line-clamp-2">
                       {avatar.name}
                     </span>
                   </button>
@@ -280,7 +296,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               type="button"
               disabled={!selectedAvatar || submittingJoin}
               onClick={() => completeJoin(selectedAvatar)}
-              className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {submittingJoin
                 ? 'Hleypir inn...'
