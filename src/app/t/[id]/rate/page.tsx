@@ -592,10 +592,6 @@ export default function RatePage({
 		<div className="min-h-screen flex flex-col items-center px-4 pt-4 pb-6">
 			<div className="max-w-md w-full flex-1 flex flex-col gap-4">
 				{/* Navigation lives in the app header and tasting tabs */}
-				<h1 className="text-center text-[0.8125rem] font-semibold tracking-[0.14em] uppercase text-gold truncate">
-					{tasting.title}
-				</h1>
-
 				{/* Current Beer Card */}
 				<FoamCard className="px-5 pt-1.5 pb-5 flex flex-col items-center text-center gap-1">
 					<div className="w-[104px] h-[104px] rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
