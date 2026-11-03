@@ -45,6 +45,7 @@ export const AVATARS: Avatar[] = [
   { key: 'peysualfur', name: 'Peysuálfurinn', cheeky: true },
   { key: 'tungusnjokarl', name: 'Tungusnjókarlinn', cheeky: true },
   { key: 'nagdakaka', name: 'Nagða kakan', cheeky: true },
+  { key: 'stufur-litli', name: 'Litli Stúfur', cheeky: true },
   { key: 'bumbusveinn', name: 'Bumbusveinn' },
   { key: 'fulli-jolasveinninn', name: 'Fulli jólasveinninn' },
   { key: 'thunna-hreindyrid', name: 'Þunna hreindýrið' },
