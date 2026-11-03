@@ -1,72 +1,97 @@
 // Christmas avatars, one picture per participant within a tasting.
 // Participant.avatar stores the key, so reordering or adding pictures never moves anyone's
 
+export type AvatarColor =
+  | 'rautt'
+  | 'graent'
+  | 'blatt'
+  | 'gult'
+  | 'appelsinugult'
+
+export const AVATAR_COLOR_ORDER: AvatarColor[] = [
+  'rautt',
+  'graent',
+  'blatt',
+  'gult',
+  'appelsinugult',
+]
+
 export interface Avatar {
   key: string
   name: string
   /** Extra-raunchy tier; picked for 85% of participants */
   cheeky?: boolean
+  color: AvatarColor
 }
 
-/** Festive faces and things — every single one well off the naughty list */
+/** Festive faces and things — every single one well off the naughty list, ordered by color */
 export const AVATARS: Avatar[] = [
-  { key: 'thvorusleikir', name: 'Þvörusleikir', cheeky: true },
-  { key: 'bossasveinn', name: 'Bossasveinn', cheeky: true },
-  { key: 'hreindyrabossi', name: 'Rúdolf sýnir bossann', cheeky: true },
-  { key: 'snjokarlabossi', name: 'Snjókarlabossinn', cheeky: true },
-  { key: 'alfabossi', name: 'Álfabossinn', cheeky: true },
-  { key: 'bossabraedur', name: 'Bossabræðurnir', cheeky: true },
-  { key: 'klausubossi', name: 'Frú Klaus beygir sig', cheeky: true },
-  { key: 'jolatresbossi', name: 'Jólatrésbossinn', cheeky: true },
-  { key: 'fastur-i-strompinum', name: 'Fastur í strompinum', cheeky: true },
-  { key: 'jolakulurnar', name: 'Jólakúlurnar', cheeky: true },
-  { key: 'snjokonan', name: 'Snjókonan', cheeky: true },
-  { key: 'osaemilegi-snjokarlinn', name: 'Ósæmilegi snjókarlinn', cheeky: true },
-  { key: 'eldflaugasnjokarl', name: 'Eldflaugasnjókarlinn', cheeky: true },
-  { key: 'sveinki-a-brokinni', name: 'Sveinki á brókinni', cheeky: true },
-  { key: 'pakki', name: 'Pakkinn', cheeky: true },
-  { key: 'bitni-piparkokukarlinn', name: 'Bitni piparkökubossinn', cheeky: true },
-  { key: 'mistilteinn-a-beltinu', name: 'Mistilteinn á beltinu', cheeky: true },
-  { key: 'bjugnakraekir', name: 'Bjúgnakrækir', cheeky: true },
-  { key: 'bjugnakraekir-v2', name: 'Bjúgnakrækir á bóner', cheeky: true },
-  { key: 'kertasnikir', name: 'Kertasníkir', cheeky: true },
-  { key: 'skyrgamur', name: 'Skyrgámur', cheeky: true },
-  { key: 'gluggagaegir', name: 'Gluggagægir', cheeky: true },
-  { key: 'jolakotturinn', name: 'Jólakötturinn', cheeky: true },
-  { key: 'alfastelpa', name: 'Bjórálfastelpan', cheeky: true },
-  { key: 'isbjorn', name: 'Leðurbjörninn', cheeky: true },
-  { key: 'hreindyr', name: 'Rúdolf á djamminu', cheeky: true },
-  { key: 'morgaes', name: 'Partýmörgæsin', cheeky: true },
-  { key: 'jolasveinn', name: 'Sveinki í pottinum', cheeky: true },
-  { key: 'kutaalfurinn', name: 'Kútaálfurinn', cheeky: true },
-  { key: 'hnotubrjoturinn', name: 'Hnotubrjóturinn', cheeky: true },
-  { key: 'fastur-i-mursteinum', name: 'Fastur í múrsteinum', cheeky: true },
-  { key: 'kulanef', name: 'Kúlanef', cheeky: true },
-  { key: 'peysualfur', name: 'Peysuálfurinn', cheeky: true },
-  { key: 'tungusnjokarl', name: 'Tungusnjókarlinn', cheeky: true },
-  { key: 'nagdakaka', name: 'Nagða kakan', cheeky: true },
-  { key: 'stufur-litli', name: 'Litli Stúfur', cheeky: true },
-  { key: 'bumbusveinn', name: 'Bumbusveinn' },
-  { key: 'fulli-jolasveinninn', name: 'Fulli jólasveinninn' },
-  { key: 'thunna-hreindyrid', name: 'Þunna hreindýrið' },
-  { key: 'gryla', name: 'Grýla á djamminu' },
-  { key: 'gryla-v2', name: 'Grýla í kjólnum', cheeky: true },
-  { key: 'bumbusveinn-v2', name: 'Bumbusveinn í nærbuxum', cheeky: true },
-  { key: 'leppaludi', name: 'Leppalúði', cheeky: true },
-  { key: 'stekkjarstaur', name: 'Stekkjarstaur', cheeky: true },
-  { key: 'stekkjarstaur-v2', name: 'Stekkjarstaur á hækjum', cheeky: true },
-  { key: 'giljagaur', name: 'Giljagaur', cheeky: true },
-  { key: 'askasleikir', name: 'Askasleikir', cheeky: true },
-  { key: 'leppaludi-v2', name: 'Leppalúði í hægindastólnum', cheeky: true },
-  { key: 'sledafylleri', name: 'Sleðafylleríið', cheeky: true },
-  { key: 'jolatred', name: 'Fulla jólatréð', cheeky: true },
-  { key: 'ljota-peysan', name: 'Ljóta peysan', cheeky: true },
-  { key: 'jolakentarinn', name: 'Jólakentárinn', cheeky: true },
-  { key: 'dj-hangikjot', name: 'DJ Hangikjöt', cheeky: true },
-  { key: 'ljosaseria', name: 'Ljósaserían', cheeky: true },
-  { key: 'kertastjakinn', name: 'Kertastjakinn', cheeky: true },
-  { key: 'jolahermann', name: 'Jólahermanninn', cheeky: true },
-  { key: 'hurdaskellir', name: 'Hurðaskellir' },
+  // Rauður
+  { key: 'bossabraedur', name: 'Bossabræðurnir', cheeky: true, color: 'rautt' },
+  { key: 'jolakulurnar', name: 'Jólakúlurnar', cheeky: true, color: 'rautt' },
+  { key: 'snjokonan', name: 'Snjókonan', cheeky: true, color: 'rautt' },
+  { key: 'osaemilegi-snjokarlinn', name: 'Ósæmilegi snjókarlinn', cheeky: true, color: 'rautt' },
+  { key: 'eldflaugasnjokarl', name: 'Eldflaugasnjókarlinn', cheeky: true, color: 'rautt' },
+  { key: 'alfastelpa', name: 'Bjórálfastelpan', cheeky: true, color: 'rautt' },
+  { key: 'tungusnjokarl', name: 'Tungusnjókarlinn', cheeky: true, color: 'rautt' },
+  { key: 'stufur-litli', name: 'Litli Stúfur', cheeky: true, color: 'rautt' },
+  { key: 'ljota-peysan', name: 'Ljóta peysan', cheeky: true, color: 'rautt' },
+  { key: 'kertastjakinn', name: 'Kertastjakinn', cheeky: true, color: 'rautt' },
+
+  // Grænn
+  { key: 'bossasveinn', name: 'Bossasveinn', cheeky: true, color: 'graent' },
+  { key: 'snjokarlabossi', name: 'Snjókarlabossinn', cheeky: true, color: 'graent' },
+  { key: 'bjugnakraekir', name: 'Bjúgnakrækir', cheeky: true, color: 'graent' },
+  { key: 'bjugnakraekir-v2', name: 'Bjúgnakrækir á bóner', cheeky: true, color: 'graent' },
+  { key: 'kertasnikir', name: 'Kertasníkir', cheeky: true, color: 'graent' },
+  { key: 'isbjorn', name: 'Leðurbjörninn', cheeky: true, color: 'graent' },
+  { key: 'jolasveinn', name: 'Sveinki í pottinum', cheeky: true, color: 'graent' },
+  { key: 'kutaalfurinn', name: 'Kútaálfurinn', cheeky: true, color: 'graent' },
+  { key: 'kulanef', name: 'Kúlanef', cheeky: true, color: 'graent' },
+  { key: 'gryla', name: 'Grýla á djamminu', color: 'graent' },
+  { key: 'gryla-v2', name: 'Grýla í kjólnum', cheeky: true, color: 'graent' },
+  { key: 'leppaludi', name: 'Leppalúði', cheeky: true, color: 'graent' },
+  { key: 'giljagaur', name: 'Giljagaur', cheeky: true, color: 'graent' },
+  { key: 'ljosaseria', name: 'Ljósaserían', cheeky: true, color: 'graent' },
+
+  // Blár
+  { key: 'hreindyrabossi', name: 'Rúdolf sýnir bossann', cheeky: true, color: 'blatt' },
+  { key: 'klausubossi', name: 'Frú Klaus beygir sig', cheeky: true, color: 'blatt' },
+  { key: 'jolatresbossi', name: 'Jólatrésbossinn', cheeky: true, color: 'blatt' },
+  { key: 'fastur-i-strompinum', name: 'Fastur í strompinum', cheeky: true, color: 'blatt' },
+  { key: 'sveinki-a-brokinni', name: 'Sveinki á brókinni', cheeky: true, color: 'blatt' },
+  { key: 'pakki', name: 'Pakkinn', cheeky: true, color: 'blatt' },
+  { key: 'bitni-piparkokukarlinn', name: 'Bitni piparkökubossinn', cheeky: true, color: 'blatt' },
+  { key: 'skyrgamur', name: 'Skyrgámur', cheeky: true, color: 'blatt' },
+  { key: 'gluggagaegir', name: 'Gluggagægir', cheeky: true, color: 'blatt' },
+  { key: 'morgaes', name: 'Partýmörgæsin', cheeky: true, color: 'blatt' },
+  { key: 'peysualfur', name: 'Peysuálfurinn', cheeky: true, color: 'blatt' },
+  { key: 'fulli-jolasveinninn', name: 'Fulli jólasveinninn', color: 'blatt' },
+  { key: 'thunna-hreindyrid', name: 'Þunna hreindýrið', color: 'blatt' },
+  { key: 'stekkjarstaur-v2', name: 'Stekkjarstaur á hækjum', cheeky: true, color: 'blatt' },
+  { key: 'askasleikir', name: 'Askasleikir', cheeky: true, color: 'blatt' },
+  { key: 'sledafylleri', name: 'Sleðafylleríið', cheeky: true, color: 'blatt' },
+  { key: 'jolahermann', name: 'Jólahermanninn', cheeky: true, color: 'blatt' },
+
+  // Gulur
+  { key: 'thvorusleikir', name: 'Þvörusleikir', cheeky: true, color: 'gult' },
+  { key: 'mistilteinn-a-beltinu', name: 'Mistilteinn á beltinu', cheeky: true, color: 'gult' },
+  { key: 'jolakotturinn', name: 'Jólakötturinn', cheeky: true, color: 'gult' },
+  { key: 'hreindyr', name: 'Rúdolf á djamminu', cheeky: true, color: 'gult' },
+  { key: 'hnotubrjoturinn', name: 'Hnotubrjóturinn', cheeky: true, color: 'gult' },
+  { key: 'fastur-i-mursteinum', name: 'Fastur í múrsteinum', cheeky: true, color: 'gult' },
+  { key: 'bumbusveinn', name: 'Bumbusveinn', color: 'gult' },
+  { key: 'bumbusveinn-v2', name: 'Bumbusveinn í nærbuxum', cheeky: true, color: 'gult' },
+  { key: 'stekkjarstaur', name: 'Stekkjarstaur', cheeky: true, color: 'gult' },
+  { key: 'leppaludi-v2', name: 'Leppalúði í hægindastólnum', cheeky: true, color: 'gult' },
+  { key: 'hurdaskellir', name: 'Hurðaskellir', color: 'gult' },
+
+  // Appelsínugulur / Fjólublár
+  { key: 'alfabossi', name: 'Álfabossinn', cheeky: true, color: 'appelsinugult' },
+  { key: 'nagdakaka', name: 'Nagða kakan', cheeky: true, color: 'appelsinugult' },
+  { key: 'jolatred', name: 'Fulla jólatréð', cheeky: true, color: 'appelsinugult' },
+  { key: 'jolakentarinn', name: 'Jólakentárinn', cheeky: true, color: 'appelsinugult' },
+  { key: 'dj-hangikjot', name: 'DJ Hangikjöt', cheeky: true, color: 'appelsinugult' },
 ]
 
 const CHEEKY_SHARE = 0.85

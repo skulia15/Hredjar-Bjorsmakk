@@ -1,5 +1,34 @@
+import { readdirSync } from 'node:fs'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { AVATARS, pickAvatar, resolveAvatar } from './avatars'
+import {
+  AVATARS,
+  AVATAR_COLOR_ORDER,
+  pickAvatar,
+  resolveAvatar,
+} from './avatars'
+
+describe('AVATARS grouping', () => {
+  it('registers every image in public/avatars and vice versa', () => {
+    const dir = join(process.cwd(), 'public', 'avatars')
+    const diskKeys = readdirSync(dir)
+      .filter(f => f.endsWith('.jpg'))
+      .map(f => f.replace(/\.jpg$/, ''))
+      .sort()
+    const codeKeys = AVATARS.map(a => a.key).sort()
+    expect(codeKeys).toEqual(diskKeys)
+  })
+
+  it('orders avatars contiguously by color', () => {
+    const seenColors: string[] = []
+    for (const avatar of AVATARS) {
+      if (seenColors[seenColors.length - 1] !== avatar.color) {
+        seenColors.push(avatar.color)
+      }
+    }
+    expect(seenColors).toEqual(AVATAR_COLOR_ORDER)
+  })
+})
 
 describe('pickAvatar', () => {
   it('hands out every picture once before doubling any up', () => {
