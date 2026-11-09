@@ -42,6 +42,15 @@ export default function BeersPage() {
   const [groupByBrewery, setGroupByBrewery] = useState(true)
   const [updatingImages, setUpdatingImages] = useState(false)
   const [imageStats, setImageStats] = useState<{ needingImages: number; withImages: number } | null>(null)
+  // Guests just browse; editing is for leaders and deleting for admins, as the API enforces
+  const [role, setRole] = useState<{ isLeader: boolean; isAdmin: boolean }>({ isLeader: false, isAdmin: false })
+
+  useEffect(() => {
+    fetch('/api/session')
+      .then(res => res.json())
+      .then(data => setRole({ isLeader: !!data.isLeader, isAdmin: !!data.isAdmin }))
+      .catch(() => {})
+  }, [])
 
   useEffect(() => {
     loadBeers()
@@ -228,7 +237,7 @@ export default function BeersPage() {
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <h1 className="text-3xl font-bold">Bjórlisti</h1>
             <div className="flex items-center gap-3">
-              {imageStats && imageStats.needingImages > 0 && (
+              {role.isLeader && imageStats && imageStats.needingImages > 0 && (
                 <button
                   onClick={handleUpdateImages}
                   disabled={updatingImages}
@@ -243,7 +252,7 @@ export default function BeersPage() {
             <p className="text-muted-foreground">
               Skoða listann af {beers.length} bjórum
             </p>
-            {imageStats && (
+            {role.isLeader && imageStats && (
               <p className="text-xs text-muted-foreground">
                 {imageStats.withImages} með myndum • {imageStats.needingImages} án mynda
               </p>
@@ -341,20 +350,24 @@ export default function BeersPage() {
                     >
                       {/* Action Buttons */}
                       <div className="absolute top-4 right-4 flex gap-2">
-                        <button
-                          className="p-2 rounded-md hover:bg-accent transition-colors"
-                          onClick={() => setEditingBeer(beer)}
-                          title="Breyta bjór"
-                        >
-                          <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                        </button>
-                        <button
-                          className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
-                          onClick={() => handleDeleteBeer(beer)}
-                          title="Eyða bjór"
-                        >
-                          <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                        </button>
+                        {role.isLeader && (
+                          <button
+                            className="p-2 rounded-md hover:bg-accent transition-colors"
+                            onClick={() => setEditingBeer(beer)}
+                            title="Breyta bjór"
+                          >
+                            <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                          </button>
+                        )}
+                        {role.isAdmin && (
+                          <button
+                            className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
+                            onClick={() => handleDeleteBeer(beer)}
+                            title="Eyða bjór"
+                          >
+                            <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        )}
                       </div>
 
                       {/* Beer Image */}
@@ -472,20 +485,24 @@ export default function BeersPage() {
               >
                 {/* Action Buttons */}
                 <div className="absolute top-4 right-4 flex gap-2">
-                  <button
-                    className="p-2 rounded-md hover:bg-accent transition-colors"
-                    onClick={() => setEditingBeer(beer)}
-                    title="Breyta bjór"
-                  >
-                    <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                  </button>
-                  <button
-                    className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
-                    onClick={() => handleDeleteBeer(beer)}
-                    title="Eyða bjór"
-                  >
-                    <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
-                  </button>
+                  {role.isLeader && (
+                    <button
+                      className="p-2 rounded-md hover:bg-accent transition-colors"
+                      onClick={() => setEditingBeer(beer)}
+                      title="Breyta bjór"
+                    >
+                      <Edit className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                    </button>
+                  )}
+                  {role.isAdmin && (
+                    <button
+                      className="p-2 rounded-md hover:bg-destructive/10 transition-colors"
+                      onClick={() => handleDeleteBeer(beer)}
+                      title="Eyða bjór"
+                    >
+                      <Trash2 className="w-4 h-4 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  )}
                 </div>
 
                 {/* Beer Image */}

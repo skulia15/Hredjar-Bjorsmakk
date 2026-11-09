@@ -21,6 +21,11 @@ export function AvatarPicker({
   const [canScrollDown, setCanScrollDown] = useState(true)
 
   const takenSet = new Set(takenAvatars)
+  // Free pictures first, so the grid doesn't open on a row of padlocks. Ordered once: the taken
+  // list refreshes while people join, and a reshuffle would move pictures under someone's finger
+  const [order] = useState(() =>
+    [...AVATARS].sort((a, b) => Number(takenSet.has(a.key)) - Number(takenSet.has(b.key))),
+  )
   const allTaken = AVATARS.every(a => takenSet.has(a.key))
   const chosenObj = AVATARS.find(a => a.key === selectedAvatar)
   const availableCount = allTaken ? AVATARS.length : AVATARS.filter(a => !takenSet.has(a.key)).length
@@ -50,14 +55,14 @@ export function AvatarPicker({
           Veldu þér jólamynd
         </span>
         <span className="text-xs font-medium text-muted-foreground">
-          {availableCount} af {AVATARS.length} lausar · skrollaðu fyrir fleiri ↓
+          {availableCount} af {AVATARS.length} lausar
         </span>
       </div>
 
       {/* Large featured preview of the currently selected avatar */}
       {chosenObj && (
         <div className="flex flex-col items-center pb-4 border-b">
-          <div className="relative w-36 h-36 sm:w-44 sm:h-44 rounded-full overflow-hidden ring-4 ring-amber-500 shadow-xl">
+          <div className="relative w-24 h-24 sm:w-44 sm:h-44 rounded-full overflow-hidden ring-4 ring-amber-500 shadow-xl">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={avatarSrc(chosenObj)}
@@ -73,9 +78,9 @@ export function AvatarPicker({
         <div
           ref={scrollRef}
           onScroll={updateScrollState}
-          className="grid grid-cols-3 sm:grid-cols-4 gap-3 h-[340px] sm:h-[360px] overflow-y-scroll p-3 pb-12"
+          className="grid grid-cols-3 sm:grid-cols-4 gap-3 h-[300px] sm:h-[360px] overflow-y-scroll p-3 pb-12"
         >
-          {AVATARS.map(avatar => {
+          {order.map(avatar => {
             const isTaken = !allTaken && takenSet.has(avatar.key)
             const isSelected = selectedAvatar === avatar.key
             return (
@@ -84,7 +89,9 @@ export function AvatarPicker({
                 type="button"
                 disabled={isTaken || disabled}
                 onClick={() => onSelect(avatar.key)}
-                className={`group flex items-center justify-center p-2.5 rounded-xl border transition-all ${
+                aria-label={isTaken ? `${avatar.name} (frátekin)` : avatar.name}
+                aria-pressed={isSelected}
+                className={`group flex items-center justify-center p-1.5 rounded-xl border transition-all ${
                   isTaken
                     ? 'opacity-35 cursor-not-allowed border-transparent bg-muted/40'
                     : isSelected
@@ -92,7 +99,7 @@ export function AvatarPicker({
                       : 'border-border bg-card hover:border-amber-500/50 hover:bg-accent/40'
                 }`}
               >
-                <div className="relative w-24 h-24 sm:w-28 sm:h-28">
+                <div className="relative w-full max-w-28 aspect-square">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={avatarSrc(avatar)}
@@ -122,7 +129,7 @@ export function AvatarPicker({
               onClick={scrollDownMore}
               className="pointer-events-auto inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-3.5 py-1 text-xs font-bold text-black shadow-md hover:bg-amber-400 transition-colors"
             >
-              <span>Sjá fleiri myndir ({AVATARS.length})</span>
+              <span>Sjá fleiri myndir</span>
               <ChevronDown className="w-4 h-4 animate-bounce" />
             </button>
           </div>

@@ -60,7 +60,7 @@ export function NicknameForm({
           maxLength={DISPLAY_NAME_MAX_LENGTH}
           value={name}
           onChange={e => setName(e.target.value)}
-          className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full min-h-12 px-4 py-2 border-0 rounded-2xl bg-cream-dim text-ink text-[1.0625rem] font-semibold focus:outline-none focus:ring-2 focus:ring-gold"
         />
         <p className="mt-1 text-xs text-muted-foreground">Birtist öðrum á stigatöflunni og skjávarpanum</p>
       </div>
@@ -72,7 +72,7 @@ export function NicknameForm({
           <button
             type="button"
             onClick={onCancel}
-            className="flex-1 px-4 py-3 border rounded-md font-medium hover:bg-accent transition-colors"
+            className="flex-1 min-h-12 px-4 py-3 border rounded-2xl font-semibold hover:bg-accent transition-colors"
           >
             Hætta við
           </button>
@@ -80,7 +80,7 @@ export function NicknameForm({
         <button
           type="submit"
           disabled={saving || !name.trim()}
-          className="flex-1 px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="flex-1 min-h-12 px-4 py-3 bg-primary text-primary-foreground rounded-2xl font-extrabold hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           {saving ? 'Vista...' : submitLabel}
         </button>

@@ -11,6 +11,8 @@ const config = {
     './src/**/*.{ts,tsx}',
   ],
   prefix: "",
+  // hover: styles only on devices that can hover, so a tapped star or button doesn't stay lifted on phones
+  future: { hoverOnlyWhenSupported: true },
   theme: {
     container: {
       center: true,

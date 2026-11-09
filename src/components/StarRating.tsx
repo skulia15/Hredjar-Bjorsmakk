@@ -33,8 +33,9 @@ export function StarRating({
     onChange(newValue);
   };
 
-  const handleStarHover = (starIndex: number, isHalf: boolean) => {
-    if (disabled) return;
+  // Mouse only: touch has no hover, and a touch-emulated hover would stick on the screen
+  const handleStarHover = (starIndex: number, isHalf: boolean, e: React.PointerEvent) => {
+    if (disabled || e.pointerType !== 'mouse') return;
     const newValue = starIndex + (isHalf ? 0.5 : 1);
     setHoverValue(newValue);
   };
@@ -115,10 +116,13 @@ export function StarRating({
       }
     }
 
-    // If it wasn't a long press and wasn't a scroll, it's a quick tap - set full star
+    // Stop the browser's emulated mouse click on the half-star under the finger, which would
+    // otherwise overwrite this tap with a half point
+    e.preventDefault();
+
+    // A quick tap sets the full star; tapping the star that's already picked takes off half a point
     if (!isLongPress) {
-      const newValue = starIndex + 1;
-      onChange(newValue);
+      onChange(value === starIndex + 1 ? starIndex + 0.5 : starIndex + 1);
     }
 
     setIsLongPress(false);
@@ -183,8 +187,10 @@ export function StarRating({
             onTouchMove={(e) => e.preventDefault()}
             disabled={disabled}
             aria-label="Einkunn"
-            className="w-[2.4em] bg-transparent text-center text-[length:min(3.75rem,17vw)] font-extrabold leading-none text-gold placeholder:text-gold/40 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed touch-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-            placeholder="0.0"
+            // Sized to the number so "8 / 10" stays centred over the stars
+            style={{ width: `${Math.max(1, String(value || '?').length) + 0.3}ch` }}
+            className="bg-transparent text-center tabular-nums text-[length:min(3.75rem,17vw)] font-extrabold leading-none text-gold placeholder:text-mint/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed touch-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            placeholder="?"
           />
           <span className="text-xl font-semibold text-mint">/ {max}</span>
         </div>
@@ -193,7 +199,7 @@ export function StarRating({
         className="flex items-center gap-1 justify-center flex-wrap mx-auto"
         // gap-1 is 0.25rem, so it grows with the text size; include it in rem rather than px
         style={perRow ? { maxWidth: `calc(${perRow * size}px + ${perRow - 1} * 0.25rem)` } : undefined}
-        onMouseLeave={handleMouseLeave}
+        onPointerLeave={handleMouseLeave}
       >
         {Array.from({ length: max }, (_, i) => {
           const fill = getStarFill(i);
@@ -214,7 +220,7 @@ export function StarRating({
                   disabled ? 'cursor-default' : 'cursor-pointer'
                 }`}
                 onClick={() => handleStarClick(i, true)}
-                onMouseEnter={() => handleStarHover(i, true)}
+                onPointerEnter={(e) => handleStarHover(i, true, e)}
               />
 
               {/* Right half (for full-star clicks on desktop) */}
@@ -223,7 +229,7 @@ export function StarRating({
                   disabled ? 'cursor-default' : 'cursor-pointer'
                 }`}
                 onClick={() => handleStarClick(i, false)}
-                onMouseEnter={() => handleStarHover(i, false)}
+                onPointerEnter={(e) => handleStarHover(i, false, e)}
               />
 
               {/* Background star (empty) */}
@@ -259,6 +265,9 @@ export function StarRating({
           );
         })}
       </div>
+      {!disabled && (
+        <p className="text-center text-xs text-mint/80">Pikkaðu aftur á sömu stjörnu fyrir ½ minna</p>
+      )}
 
     </div>
   );

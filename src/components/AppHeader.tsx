@@ -14,8 +14,9 @@ import { cn } from '@/lib/utils'
 const NAV_ITEMS = [
   { href: '/tastings', label: 'Smakkanir', icon: ListChecks },
   { href: '/beers', label: 'Bjórlisti', icon: BeerIcon },
-  { href: '/projector', label: 'Skjávarpi', icon: Tv },
 ]
+// Only leaders run the projector
+const PROJECTOR_ITEM = { href: '/projector', label: 'Skjávarpi', icon: Tv }
 const ADMIN_ITEM = { href: '/admin/users', label: 'Notendur', icon: Shield }
 
 function isActive(pathname: string, href: string) {
@@ -26,7 +27,7 @@ export function AppHeader() {
   const pathname = usePathname() ?? '/'
   const { isSignedIn } = useAuth()
   const { clearActiveTasting } = useActiveTasting()
-  const [session, setSession] = useState<{ userId: string; name: string; isAdmin: boolean } | null>(null)
+  const [session, setSession] = useState<{ userId: string; name: string; isAdmin: boolean; isLeader: boolean } | null>(null)
   const [activeTastingId, setActiveTastingId] = useState<string | null>(null)
   const [isEmbedded, setIsEmbedded] = useState(false)
   const [editingName, setEditingName] = useState(false)
@@ -42,7 +43,7 @@ export function AppHeader() {
     }
     fetch('/api/session')
       .then(res => res.json())
-      .then(data => setSession(data.hasSession ? { userId: data.userId, name: data.name, isAdmin: data.isAdmin } : null))
+      .then(data => setSession(data.hasSession ? { userId: data.userId, name: data.name, isAdmin: data.isAdmin, isLeader: data.isLeader } : null))
       .catch(err => console.error('Error loading session:', err))
   }, [isSignedIn])
 
@@ -72,15 +73,25 @@ export function AppHeader() {
     return () => window.removeEventListener('storage', verify)
   }, [clearActiveTasting])
 
+  const isInActiveTasting = !!activeTastingId && pathname.startsWith(`/t/${activeTastingId}`)
+
   // Projector display is fullscreen; embedded views live inside another page; while rating a
-  // beer people only need the tasting itself (the tasting tabs still lead to scores and admin)
-  if (isEmbedded || /^\/projector\/[^/]+/.test(pathname) || /^\/t\/[^/]+\/rate/.test(pathname)) {
+  // beer people only need the tasting itself (the tasting tabs still lead to scores and admin).
+  // Scores too while the tasting runs, so switching tabs doesn't make the header pop in and out
+  if (
+    isEmbedded ||
+    /^\/projector\/[^/]+/.test(pathname) ||
+    /^\/t\/[^/]+\/rate/.test(pathname) ||
+    (isInActiveTasting && /^\/t\/[^/]+\/scores/.test(pathname))
+  ) {
     return null
   }
 
-  const navItems = session?.isAdmin ? [...NAV_ITEMS, ADMIN_ITEM] : NAV_ITEMS
-  const isInActiveTasting = !!activeTastingId && pathname.startsWith(`/t/${activeTastingId}`)
-
+  const navItems = [
+    ...NAV_ITEMS,
+    ...(session?.isLeader ? [PROJECTOR_ITEM] : []),
+    ...(session?.isAdmin ? [ADMIN_ITEM] : []),
+  ]
   return (
     <header data-app-header className="relative z-40 w-full border-b bg-background sm:sticky sm:top-0">
       <div className="container mx-auto flex min-h-14 flex-wrap items-center gap-x-1 gap-y-1 px-2 py-1 sm:gap-x-2 sm:px-4">
@@ -123,7 +134,7 @@ export function AppHeader() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary-foreground opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-primary-foreground" />
               </span>
-              <span className="hidden sm:inline">Í gangi</span>
+              <span>Í gangi</span>
               <span>→</span>
             </Link>
           )}

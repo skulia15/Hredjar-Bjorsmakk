@@ -40,10 +40,13 @@ export default async function HomePage() {
               <Beer className="h-5 w-5 text-holly" />
               Skoða bjórlistann
             </Link>
-            <Link href="/projector" className={secondaryLink}>
-              <Monitor className="h-5 w-5 text-holly" />
-              Skjávarpasýn
-            </Link>
+            {/* The projector is run by whoever leads the tasting */}
+            {canCreate && (
+              <Link href="/projector" className={secondaryLink}>
+                <Monitor className="h-5 w-5 text-holly" />
+                Skjávarpasýn
+              </Link>
+            )}
           </FoamCard>
           {isAdmin && (
             <div className="text-center mt-4">

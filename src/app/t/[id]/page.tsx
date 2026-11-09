@@ -238,7 +238,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
               type="button"
               disabled={!selectedAvatar || submittingJoin}
               onClick={() => completeJoin(selectedAvatar)}
-              className="w-full px-4 py-3.5 bg-primary text-primary-foreground rounded-md font-semibold text-base hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="w-full min-h-14 px-4 py-3.5 bg-primary text-primary-foreground rounded-2xl font-extrabold text-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
               {submittingJoin ? 'Hleypir inn...' : 'Taka þátt'}
             </button>
@@ -274,7 +274,7 @@ export default function JoinTastingPage({ params: paramsPromise }: { params: Pro
           <SignInButton mode="modal" forceRedirectUrl={`/t/${params.id}`} signUpForceRedirectUrl={`/t/${params.id}`}>
             <button
               type="button"
-              className="w-full px-4 py-3 bg-primary text-primary-foreground rounded-md font-medium hover:bg-primary/90 transition-colors"
+              className="w-full min-h-12 px-4 py-3 bg-primary text-primary-foreground rounded-2xl font-extrabold hover:bg-primary/90 transition-colors"
             >
               Skrá inn og taka þátt
             </button>

@@ -7,12 +7,15 @@ interface CurrentBeerTimerProps {
   currentSince: Date | string;
   colorCoded?: boolean;
   size?: 'sm' | 'md' | 'lg';
+  /** Words before the time, so it doesn't read as the time of day */
+  label?: string;
 }
 
 export function CurrentBeerTimer({
   currentSince,
   colorCoded = false,
-  size = 'md'
+  size = 'md',
+  label
 }: CurrentBeerTimerProps) {
   const [elapsed, setElapsed] = useState(0);
 
@@ -63,6 +66,7 @@ export function CurrentBeerTimer({
   return (
     <div className={`flex items-center gap-2 ${sizeClasses[size]} ${colorClass}`}>
       <Clock size={iconSizes[size]} />
+      {label && <span>{label}</span>}
       <span className="font-mono">
         {minutes}:{seconds.toString().padStart(2, '0')}
       </span>

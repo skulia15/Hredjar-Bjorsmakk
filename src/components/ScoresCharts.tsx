@@ -504,7 +504,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
             <div key={award.title} className="bg-card p-4 rounded-lg border text-center">
               <AwardIcon kind={award.kind} className="h-8 w-8 mx-auto mb-1 text-primary" />
               <div className="text-xs text-muted-foreground uppercase tracking-wide">{award.title}</div>
-              <div className="font-bold mt-1 truncate" title={award.main}>{award.main}</div>
+              <div className="font-bold mt-1 line-clamp-2 break-words" title={award.main}>{award.main}</div>
               <div className="text-xs text-muted-foreground mt-1">{award.sub}</div>
             </div>
           ))}

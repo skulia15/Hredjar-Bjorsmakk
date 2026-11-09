@@ -1,5 +1,7 @@
 'use client'
 
+import { useQueryClient } from '@tanstack/react-query'
+import { getActiveTastingId, useActiveTasting } from '@/hooks/useActiveTasting'
 import { use, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -151,7 +153,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
   const [ratingsDetail, setRatingsDetail] = useState<RatingsDetailData | null>(null)
   const [loading, setLoading] = useState(true)
   const [isClient, setIsClient] = useState(false)
-  const [showAllBeers, setShowAllBeers] = useState(false)
+  // Open by default: the between-beers screen sends people here to see every beer
+  const [showAllBeers, setShowAllBeers] = useState(true)
   const [participantId, setParticipantId] = useState('')
   const [nudgeTimestamp, setNudgeTimestamp] = useState<number | null>(null)
 
@@ -205,6 +208,16 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     }
   }
 
+  // Once it's over this is no longer the tasting in progress: the app header comes back for the final
+  // scores, and the tasting tabs drop "Smakka"
+  const { clearActiveTasting } = useActiveTasting()
+  const queryClient = useQueryClient()
+  useEffect(() => {
+    if (scores?.status !== 'closed') return
+    if (getActiveTastingId() === params.id) clearActiveTasting()
+    queryClient.invalidateQueries({ queryKey: ['tasting-summary', params.id] })
+  }, [scores?.status, params.id, clearActiveTasting, queryClient])
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -231,6 +244,9 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
 
   const podium = scores.beers.slice(0, 3)
   // Display order on the podium: 2nd, 1st, 3rd
+  // What the viewer gave each beer, so "what did I give that one?" is answered on the leaderboard
+  const myScore = (beerId: string) =>
+    participantId ? ratingsDetail?.beers.find(b => b.beerId === beerId)?.ratings[participantId] ?? null : null
   const podiumOrder = [podium[1], podium[0], podium[2]]
   const rest = scores.beers.slice(3)
 
@@ -285,6 +301,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                         <span className={`${place === 1 ? 'text-[length:min(2.25rem,30cqi)]' : 'text-[length:min(1.75rem,28cqi)]'} leading-none font-extrabold tabular-nums`}>{beer.average.toFixed(2)}</span>
                         <span className="text-[length:min(0.75rem,11cqi)] font-semibold">{beer.count} eink.</span>
                       </div>
+                      {/* Always takes its line, so a beer the viewer missed doesn't lift its bar off the baseline */}
+                      <div className="mt-1 min-h-[1.25em] text-[length:min(0.8125rem,12cqi)] font-semibold text-mint">
+                        {myScore(beer.beerId) != null && `Þú: ${myScore(beer.beerId)}`}
+                      </div>
                     </div>
                   </div>
                 )
@@ -314,7 +334,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                       </span>
                       <span className="text-right shrink-0 ml-auto">
                         <span className="block text-lg font-extrabold text-holly">{beer.average.toFixed(2)}</span>
-                        <span className="block text-xs text-muted-foreground">{beer.count} eink.</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {beer.count} eink.
+                          {myScore(beer.beerId) != null && <span className="font-semibold text-ink"> · Þú: {myScore(beer.beerId)}</span>}
+                        </span>
                       </span>
                     </li>
                   ))}
@@ -354,8 +377,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           </div>
         )}
 
-        {/* Personal stats for the viewer once the tasting is over */}
-        {isClient && scores.status === 'closed' && participantId && ratingsDetail && (
+        {/* The viewer's own ratings, during the tasting too ("what did I give that one?") */}
+        {isClient && participantId && ratingsDetail && (
           <PersonalStats
             participantId={participantId}
             participants={ratingsDetail.participants}
@@ -364,8 +387,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
           />
         )}
 
-        {/* Charts and Analytics */}
-        {isClient && analytics && scores.beers.length > 0 && (
+        {/* Charts and awards once it's over, when the projector reveals the awards too */}
+        {isClient && scores.status === 'closed' && analytics && scores.beers.length > 0 && (
           <ScoresCharts scores={scores} analytics={analytics} />
         )}
 

@@ -109,7 +109,7 @@ export default function TastingsPage() {
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                       <span>{tasting.beerCount} bjór{tasting.beerCount !== 1 ? 'ar' : ''}</span>
                       <span>•</span>
-                      <span>{tasting.participantCount} þátttakend{tasting.participantCount !== 1 ? 'ur' : 'i'}</span>
+                      <span>{tasting.participantCount} {tasting.participantCount === 1 ? 'þátttakandi' : 'þátttakendur'}</span>
                       <span>•</span>
                       <span>{new Date(tasting.createdAt).toLocaleDateString('is-IS')}</span>
                     </div>

@@ -185,6 +185,8 @@ export default function RatePage({
 		pending: Array<{ participantId: string; name: string; code: string }>;
 	} | null>(null);
 	const [hasRated, setHasRated] = useState(false);
+	// What the server has, so the button can say "saved" until something changes
+	const [saved, setSaved] = useState<{ score: number; note: string; groupGuess: number | null } | null>(null);
 	const [tagsOpen, setTagsOpen] = useState(false);
 	const [customDraft, setCustomDraft] = useState("");
 	const customTagCount = tags.filter(isCustomTag).length;
@@ -375,15 +377,16 @@ export default function RatePage({
 			setCustomDraft("");
 			// The last beer's rating, note, guess and tags must not ride along on a tap before this beer's load
 			tagsRef.current = [];
-			setTags([]);
+			// Nor the "Einkunn skráð" state: a new beer never shows the last one as already saved
 			setRating(0);
+			setTags([]);
 			setNote("");
 			setGroupGuess(null);
 			setHasRated(false);
-			// A slow load for the last beer must not land on this one
-			let stale = false;
+			setSaved(null);
 
-			// Load this participant's existing rating for this beer
+			// Load this participant's existing rating for this beer; a late answer for the last beer is dropped
+			let stale = false;
 			fetch(`/api/tastings/${params.id}/ratings?beerId=${currentBeer.id}`)
 				.then((res) => (res.ok ? res.json() : null))
 				.then(
@@ -398,6 +401,11 @@ export default function RatePage({
 					) => {
 						if (stale) return;
 						setHasRated(existingRating?.score != null);
+						setSaved(
+							existingRating?.score != null
+								? { score: existingRating.score, note: existingRating.note ?? "", groupGuess: existingRating.groupGuess ?? null }
+								: null,
+						);
 						if (editedRef.current) return;
 						// Reset for a new beer
 						setRating(existingRating?.score ?? 0);
@@ -458,9 +466,9 @@ export default function RatePage({
 				throw new Error(data.error || "Failed to submit rating");
 			}
 
-			setMessage("Einkunn hefur verið skráð!");
+			// The button turning green says it's saved
 			setHasRated(true);
-			setTimeout(() => setMessage(""), 3000);
+			setSaved({ score: rating, note, groupGuess });
 		} catch (error) {
 			setMessage(
 				error instanceof Error ? error.message : "Error submitting rating",
@@ -610,6 +618,13 @@ export default function RatePage({
 	}
 
 	const chip = "px-2.5 py-1 rounded-full bg-cream-dim text-sm font-semibold";
+	// Nothing changed since the last save: show that it's in, rather than a button begging to be tapped
+	const isSaved =
+		hasRated &&
+		!!saved &&
+		saved.score === rating &&
+		saved.note === note &&
+		(!ratingStats?.scoresHidden || saved.groupGuess === groupGuess);
 
 	return (
 		<div className="min-h-screen flex flex-col items-center px-4 pt-4 pb-6">
@@ -678,6 +693,7 @@ export default function RatePage({
 								currentSince={currentBeer.currentSince}
 								colorCoded={false}
 								size="sm"
+								label="Í glasinu"
 							/>
 						</div>
 					)}
@@ -866,8 +882,11 @@ export default function RatePage({
 						</div>
 					)}
 
-					{/* Pinned to the screen bottom while the form scrolls, so sending is always one tap away */}
-					<div className="sticky bottom-0 z-10 -mx-4 px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-b from-transparent to-background to-30% flex flex-col gap-2">
+					{/* Pinned to the screen bottom while the form scrolls, so sending is always one tap away.
+					    Not while the flavor tags are open: it would sit on top of the chips */}
+					<div
+						className={`${tagsOpen ? "" : "sticky"} bottom-0 z-10 -mx-4 px-4 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-b from-transparent to-background to-30% flex flex-col gap-2`}
+					>
 						{message && (
 							<div
 								role="status"
@@ -886,11 +905,20 @@ export default function RatePage({
 								<Lock className="w-5 h-5" strokeWidth={2.6} />
 								Einkunnir birtar, ekki hægt að breyta
 							</div>
+						) : isSaved ? (
+							<div
+								role="status"
+								className="w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-holly text-cream text-lg font-extrabold"
+							>
+								<Check className="w-5 h-5" strokeWidth={2.6} />
+								Einkunn skráð
+								<span className="ml-1 rounded-lg bg-pine-deep px-2 py-0.5 text-gold tabular-nums">{rating}</span>
+							</div>
 						) : (
 						<button
 							type="submit"
 							disabled={submitting || rating === 0}
-							className="wiggle w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-gold text-ink text-lg font-extrabold shadow-[0_6px_18px_rgb(0_0_0/0.35)] disabled:opacity-50"
+							className="wiggle w-full min-h-14 inline-flex items-center justify-center gap-2 rounded-2xl bg-gold text-ink text-lg font-extrabold shadow-[0_6px_18px_rgb(0_0_0/0.35)] disabled:bg-pine-light disabled:text-mint disabled:shadow-none"
 						>
 							{submitting ? (
 								"Skrái..."
@@ -904,7 +932,7 @@ export default function RatePage({
 									{hasRated ? "Uppfæra einkunn" : "Skrá einkunn"}
 									{rating > 0 && (
 										<span className="ml-1 rounded-lg bg-ink px-2 py-0.5 text-gold tabular-nums">
-											{rating.toFixed(1)}
+											{rating}
 										</span>
 									)}
 								</>
