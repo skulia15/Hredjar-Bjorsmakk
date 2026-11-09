@@ -8,7 +8,7 @@ import { useNudge } from '@/hooks/useNudge'
 import { useProjectorControls } from '@/hooks/useProjectorControls'
 import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
-import { buildAwards, closestGuess, extremeRaters, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
+import { buildAwards, closestGuess, extremeRaters, generousAndHarsh, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
 import { ArrowDown, ArrowUp, Beer as BeerIcon, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
@@ -190,7 +190,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   const [pendingRaters, setPendingRaters] = useState<PendingRatersData | null>(null)
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showNudge, setShowNudge] = useState(false)
+  // When the last nudge came in; keys the overlay so a second nudge during the first restarts it
+  const [nudgeAt, setNudgeAt] = useState<number | null>(null)
   const [awardsDismissed, setAwardsDismissed] = useState(false)
   const [finishedReveal, setFinishedReveal] = useState<FinishedBeerReveal | null>(null)
   // The current beer whose hidden scores were just revealed, for the reveal animation
@@ -245,11 +246,17 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   }, [selectedBeerId])
 
   // Projector shows every nudge (component will auto-hide after duration)
-  const handleIncomingNudge = useCallback(() => setShowNudge(true), [])
+  const handleIncomingNudge = useCallback(() => setNudgeAt(Date.now()), [])
 
   useNudge({ tastingId: params.id, participantId: null, onNudge: handleIncomingNudge })
 
+  // A slow poll can outlast the 5s interval; overlapping ones would compare against a stale
+  // previous.current and fire the reveal or fanfare twice, so a tick is skipped while one's running
+  const polling = useRef(false)
+
   const loadAllData = async () => {
+    if (polling.current) return
+    polling.current = true
     try {
       // Load tasting details
       const tastingResult = await fetchTasting<Tasting>(params.id)
@@ -324,6 +331,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     } catch (error) {
       console.error('Error loading projector data:', error)
     } finally {
+      polling.current = false
       setLoading(false)
     }
   }
@@ -335,10 +343,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     const statsWithRatings = analytics.participantStats.filter(p => p.ratingsCount > 0)
     if (statsWithRatings.length === 0) return null
 
-    const mostGenerous = statsWithRatings.reduce((max, p) =>
-      p.averageRating > max.averageRating ? p : max, statsWithRatings[0])
-    const toughestCritic = statsWithRatings.reduce((min, p) =>
-      p.averageRating < min.averageRating ? p : min, statsWithRatings[0])
+    // Names everyone sharing the top or bottom average; neither shows when all averaged the same
+    const extremes = generousAndHarsh(statsWithRatings)
+    const mostGenerous = extremes?.generous ?? null
+    const toughestCritic = extremes?.harsh ?? null
 
     const biggestSpread = analytics.participantRatingSpread?.[0] || null
 
@@ -507,9 +515,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       )}
 
       {/* Nudge Notification Overlay */}
-      {showNudge && (
+      {nudgeAt && (
         <NudgeNotification
-          onComplete={() => setShowNudge(false)}
+          key={nudgeAt}
+          onComplete={() => setNudgeAt(null)}
           duration={3000}
           sound={soundOn}
         />

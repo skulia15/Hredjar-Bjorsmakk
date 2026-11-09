@@ -675,7 +675,7 @@ export default function RatePage({
 								{style}
 							</span>
 						))}
-						{currentBeer.abv && <span className={chip}>{currentBeer.abv}%</span>}
+						{currentBeer.abv != null && <span className={chip}>{currentBeer.abv}%</span>}
 						{currentBeer.containerSize && currentBeer.containerType && (
 							<span className={chip}>
 								{currentBeer.containerSize} ml {currentBeer.containerType}

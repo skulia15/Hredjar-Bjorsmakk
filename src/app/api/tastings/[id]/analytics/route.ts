@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
-import { bestValue, comparePairs, extremeRaters, guessAccuracy, summarizeScores, tasteTwins } from '@/lib/stats';
+import { bestValue, comparePairs, extremeRaters, guessAccuracy, quantile, summarizeScores, tasteTwins } from '@/lib/stats';
+import { isIcelandic } from '@/lib/countries';
+import { tastingBeerPrice } from '@/lib/tastingPrice';
 
 /**
  * GET /api/tastings/[id]/analytics
@@ -222,8 +224,9 @@ export async function GET(
     const abvVsRating = tasting.tastingBeers
       .filter(beer => beer.status === 'finished' && beer.ratings.length > 0)
       .map(beer => {
-        const abv = beer.beer?.abv || beer.customAbv;
-        if (!abv) return null;
+        // ?? not ||: a 0% beer has an ABV, it's just zero
+        const abv = beer.beer?.abv ?? beer.customAbv;
+        if (abv == null) return null;
 
         const ratings = beer.ratings.map(r => r.score);
         const average = ratings.reduce((sum, score) => sum + score, 0) / ratings.length;
@@ -430,18 +433,15 @@ export async function GET(
         const sorted = [...data.ratings].sort((a, b) => a - b);
         const average = data.totalRating / data.ratings.length;
 
-        const q1Index = Math.floor(sorted.length * 0.25);
-        const q2Index = Math.floor(sorted.length * 0.5);
-        const q3Index = Math.floor(sorted.length * 0.75);
 
         return {
           style,
           beersCount: data.count,
           ratingsCount: data.ratings.length,
           min: sorted[0],
-          q1: sorted[q1Index],
-          median: sorted[q2Index],
-          q3: sorted[q3Index],
+          q1: quantile(sorted, 0.25),
+          median: quantile(sorted, 0.5),
+          q3: quantile(sorted, 0.75),
           max: sorted[sorted.length - 1],
           average: Number(average.toFixed(2))
         };
@@ -713,7 +713,7 @@ export async function GET(
 
     // 5. Icelandic Breweries Ranking
     const icelandicBreweries = breweryPerformanceRanking
-      .filter(b => b.country === 'Ísland')
+      .filter(b => isIcelandic(b.country))
       .map((brewery, index) => ({
         ...brewery,
         rank: index + 1
@@ -821,9 +821,9 @@ export async function GET(
     // 2. Local vs International Comparison
     const localVsInternational = (() => {
       const icelandicBeers = tasting.tastingBeers
-        .filter(beer => beer.status === 'finished' && beer.beer?.country === 'Ísland');
+        .filter(beer => beer.status === 'finished' && isIcelandic(beer.beer?.country));
       const internationalBeers = tasting.tastingBeers
-        .filter(beer => beer.status === 'finished' && beer.beer?.country && beer.beer.country !== 'Ísland');
+        .filter(beer => beer.status === 'finished' && beer.beer?.country && !isIcelandic(beer.beer.country));
 
       const icelandicRatings = icelandicBeers.flatMap(beer => beer.ratings.map(r => r.score));
       const internationalRatings = internationalBeers.flatMap(beer => beer.ratings.map(r => r.score));
@@ -835,7 +835,11 @@ export async function GET(
         ? internationalRatings.reduce((sum, r) => sum + r, 0) / internationalRatings.length
         : 0;
 
+      // Nothing to compare when one side had no beers; an empty side's 0.00 average isn't a result
+      const comparable = icelandicRatings.length > 0 && internationalRatings.length > 0;
+
       return {
+        comparable,
         icelandic: {
           beersCount: icelandicBeers.length,
           ratingsCount: icelandicRatings.length,
@@ -846,8 +850,9 @@ export async function GET(
           ratingsCount: internationalRatings.length,
           averageRating: Number(internationalAvg.toFixed(2))
         },
-        difference: Number((icelandicAvg - internationalAvg).toFixed(2)),
-        favoritism: icelandicAvg > internationalAvg + 0.3 ? 'Local' :
+        difference: comparable ? Number((icelandicAvg - internationalAvg).toFixed(2)) : 0,
+        favoritism: !comparable ? 'Neutral' :
+                    icelandicAvg > internationalAvg + 0.3 ? 'Local' :
                     internationalAvg > icelandicAvg + 0.3 ? 'International' : 'Neutral'
       };
     })();
@@ -973,16 +978,15 @@ export async function GET(
         })
     );
 
-    // Best value; prefer the price snapshotted for this tasting, like the price analytics
+    // Best value, at what each beer cost on the night, like the price analytics
     const valuePick = bestValue(
       tasting.tastingBeers
         .filter(beer => beer.status === 'finished' && beer.ratings.length > 0)
         .map(beer => {
-          const price = beer.priceISK != null || beer.pricePerLiter != null ? beer : beer.beer;
           return {
             name: beer.beer?.name || beer.customName || 'Unknown',
             average: summarizeScores(beer.ratings.map(r => r.score)).average,
-            pricePerLiter: price?.pricePerLiter ?? 0
+            pricePerLiter: tastingBeerPrice(beer, tasting.status).pricePerLiter ?? 0
           };
         })
     );

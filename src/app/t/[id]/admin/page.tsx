@@ -133,9 +133,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         )
       )
 
-      // Count successes and failures
-      const successes = results.filter(r => r.status === 'fulfilled').length
-      const failures = results.filter(r => r.status === 'rejected').length
+      // A 4xx/5xx still fulfills the fetch, so only an ok response counts as added
+      const successes = results.filter(r => r.status === 'fulfilled' && r.value.ok).length
+      const failures = results.length - successes
 
       if (failures > 0) {
         setMessage(`Bætti við ${successes} bjórum, ${failures} mistókust`)
@@ -235,19 +235,15 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleRemoveParticipant = async (participantId: string) => {
-    // Ask if they want to keep ratings
-    const keepRatings = confirm(
-      'Viltu HALDA einkunnum þessa þátttakanda?\n\n' +
-      'Smelltu á OK til að HALDA einkunnum (þátttakandi fjarlægður af lista en einkunnir geymdar)\n' +
-      'Smelltu á Hætta við til að EYÐA einkunnum (þátttakandi og allar hans einkunnir verða fjarlægðar)'
+    // Cancel on the first question backs out; it used to mean "delete their ratings", so anyone
+    // pressing it to stop was one OK away from wiping them. Deleting ratings is now its own opt-in
+    if (!confirm('Fjarlægja þennan þátttakanda?\n\nEinkunnir hans verða geymdar. Hann kemst ekki aftur inn í smökkunina.')) return
+
+    const keepRatings = !confirm(
+      'Eyða líka öllum einkunnum hans?\n\n' +
+      'Smelltu á OK til að EYÐA einkunnunum\n' +
+      'Smelltu á Hætta við til að GEYMA þær'
     )
-
-    // Confirm the action
-    const confirmMessage = keepRatings
-      ? 'Fjarlægja þennan þátttakanda af listanum en geyma einkunnir?'
-      : 'Fjarlægja þennan þátttakanda OG eyða öllum hans einkunnum?'
-
-    if (!confirm(confirmMessage)) return
 
     try {
       const url = `/api/tastings/${params.id}/participants/${participantId}${keepRatings ? '?keepRatings=true' : ''}`

@@ -98,8 +98,16 @@ export async function POST(
       }
     });
 
+    // Removed by the leader: they stay out. Leaders and admins run the tasting regardless
+    if (participant && !participant.active && !isLeaderOrAdmin(user)) {
+      return NextResponse.json(
+        { error: 'Leiðtoginn fjarlægði þig úr þessari smökkun', code: 'REMOVED' },
+        { status: 403 }
+      );
+    }
+
     if (participant) {
-      // User already joined (or was removed and is rejoining) - keep their original avatar and update last seen
+      // User already joined - keep their original avatar, update last seen, and bring them back from a break
       participant = await prisma.participant.update({
         where: { id: participant.id },
         data: { lastSeenAt: new Date(), active: true, pausedAt: null }

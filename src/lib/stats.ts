@@ -46,6 +46,20 @@ export function winnersName(ranked: Array<{ name: string; rank: number }>): stri
   return winners.length > 0 ? winners.map(b => b.name).join(' & ') : undefined
 }
 
+/**
+ * Value at quantile q (0 to 1) of numbers sorted ascending, interpolating between neighbours,
+ * so the median of an even count is the mean of the middle two
+ */
+export function quantile(sorted: number[], q: number): number {
+  if (sorted.length === 0) return 0
+  const position = (sorted.length - 1) * q
+  const below = Math.floor(position)
+  const above = Math.ceil(position)
+  return sorted[below] + (sorted[above] - sorted[below]) * (position - below)
+}
+
+export const median = (values: number[]) => quantile([...values].sort((a, b) => a - b), 0.5)
+
 /** Least-squares fit through the points; slope is y change per x unit */
 export function linearFit(points: Array<{ x: number; y: number }>) {
   const n = points.length
@@ -83,15 +97,37 @@ export interface Rater {
   score: number
 }
 
-/** Highest and lowest scorer for one beer; null when nobody rated it */
+/** Everyone on the given value, as one name: "Anna & Jón" when it's shared */
+function namesAt<T extends { userName: string }>(items: T[], value: (item: T) => number, target: number) {
+  return items.filter(item => value(item) === target).map(item => item.userName).join(' & ')
+}
+
+/** Highest and lowest scorer for one beer, naming everyone who shares either; null when nobody rated it */
 export function extremeRaters(ratings: Array<{ userName: string; score: number }>) {
   if (ratings.length === 0) return null
-  const sorted = [...ratings].sort((a, b) => b.score - a.score)
-  const highest = sorted[0]
-  const lowest = sorted[sorted.length - 1]
+  const scores = ratings.map(r => r.score)
+  const highest = Math.max(...scores)
+  const lowest = Math.min(...scores)
   return {
-    highestRater: { userName: highest.userName, score: highest.score },
-    lowestRater: { userName: lowest.userName, score: lowest.score },
+    highestRater: { userName: namesAt(ratings, r => r.score, highest), score: highest },
+    lowestRater: { userName: namesAt(ratings, r => r.score, lowest), score: lowest },
+  }
+}
+
+/**
+ * Most generous and harshest raters by average, naming everyone who shares either.
+ * Null with fewer than two raters, or when everyone averaged the same and nobody stands out
+ */
+export function generousAndHarsh(participantStats: Array<{ userName: string; averageRating: number; ratingsCount: number }>) {
+  const raters = participantStats.filter(p => p.ratingsCount > 0)
+  if (raters.length < 2) return null
+  const averages = raters.map(r => r.averageRating)
+  const highest = Math.max(...averages)
+  const lowest = Math.min(...averages)
+  if (highest === lowest) return null
+  return {
+    generous: { userName: namesAt(raters, r => r.averageRating, highest), averageRating: highest },
+    harsh: { userName: namesAt(raters, r => r.averageRating, lowest), averageRating: lowest },
   }
 }
 
@@ -255,26 +291,19 @@ export function buildAwards({
   ratingSpeed = [],
 }: AwardInputs): Award[] {
   const awards: Award[] = []
-  const raters = participantStats
-    .filter(p => p.ratingsCount > 0)
-    .sort((a, b) => b.averageRating - a.averageRating)
-
-  // Nobody's most generous when everyone averaged the same; a shared top or bottom names them all
-  const highest = raters[0]?.averageRating
-  const lowest = raters[raters.length - 1]?.averageRating
-  if (raters.length > 1 && highest !== lowest) {
-    const namesAt = (average: number) => raters.filter(r => r.averageRating === average).map(r => r.userName).join(' & ')
+  const extremes = generousAndHarsh(participantStats)
+  if (extremes) {
     awards.push({
       kind: 'generous',
       title: 'Örlátasti dómarinn',
-      main: namesAt(highest),
-      sub: `Meðaleinkunn ${highest.toFixed(2)}`,
+      main: extremes.generous.userName,
+      sub: `Meðaleinkunn ${extremes.generous.averageRating.toFixed(2)}`,
     })
     awards.push({
       kind: 'harsh',
       title: 'Strangasti dómarinn',
-      main: namesAt(lowest),
-      sub: `Meðaleinkunn ${lowest.toFixed(2)}`,
+      main: extremes.harsh.userName,
+      sub: `Meðaleinkunn ${extremes.harsh.averageRating.toFixed(2)}`,
     })
   }
 
@@ -328,8 +357,11 @@ export function buildAwards({
   }
 
   // One guesser always wins, so only crown a mind reader when there was competition
-  if (guessAccuracy.length > 1) {
-    const reader = guessAccuracy[0]
+  // Only those who guessed at least half as often as the keenest guesser are in the running,
+  // so one lucky guess can't beat someone who was close all night
+  const mostGuesses = Math.max(0, ...guessAccuracy.map(g => g.guesses))
+  const reader = guessAccuracy.find(g => g.guesses * 2 >= mostGuesses)
+  if (guessAccuracy.length > 1 && reader) {
     awards.push({
       kind: 'mindReader',
       title: 'Hugsanalesarinn',

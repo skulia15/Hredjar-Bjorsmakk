@@ -47,7 +47,7 @@ export async function GET(
         name: tb.beer?.name || tb.customName || 'Unknown',
         brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
         styles: tb.beer?.styles || (tb.customStyle ? [tb.customStyle] : []),
-        abv: tb.beer?.abv || tb.customAbv || null,
+        abv: tb.beer?.abv ?? tb.customAbv ?? null,
         containerSize: tb.beer?.containerSize || null,
         containerType: tb.beer?.containerType || null,
         imageUrl: tb.beer?.imageUrl || null,
