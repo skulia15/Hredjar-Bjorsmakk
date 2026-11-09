@@ -95,6 +95,7 @@ export function PriceAnalytics({ tastingId }: { tastingId: string }) {
   const loadData = async () => {
     try {
       const response = await fetch(`/api/tastings/${tastingId}/price-analytics`)
+      if (!response.ok) return
       const result = await response.json()
       if (result.hasData) {
         setData(result)

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { rankByAverage } from '@/lib/stats'
 
 /**
  * GET /api/tastings/{id}/leaderboard
@@ -45,7 +46,7 @@ export async function GET(
     }
 
     // Calculate averages and build leaderboard
-    const beers = tasting.tastingBeers
+    const ratedBeers = tasting.tastingBeers
       .map(tb => {
         const scores = tb.ratings.map(r => r.score)
         const average = scores.length > 0
@@ -65,10 +66,7 @@ export async function GET(
       })
       .filter(beer => beer.count > 0) // Only include beers with ratings
       .sort((a, b) => b.average - a.average) // Sort by average descending
-      .map((beer, index) => ({
-        ...beer,
-        rank: index + 1
-      }))
+    const beers = rankByAverage(ratedBeers)
 
     return NextResponse.json({
       tastingId: id,

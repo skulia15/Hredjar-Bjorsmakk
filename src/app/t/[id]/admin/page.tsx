@@ -15,7 +15,7 @@ interface Beer {
   id: string
   name: string
   brewery: string
-  style?: string
+  styles?: string[]
   abv?: number
   containerSize?: number
   containerType?: string
@@ -52,7 +52,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     id: string
     name: string
     brewery: string
-    style?: string
+    styles?: string[]
     abv?: number
     country?: string
     containerSize?: number
@@ -178,13 +178,18 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
         body: JSON.stringify({ beerId })
       })
 
-      if (!response.ok) throw new Error('Failed to set current beer')
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || 'Error setting current beer')
+      }
 
       setMessage('Current beer updated!')
       setTimeout(() => setMessage(''), 3000)
       loadTasting()
     } catch (error) {
-      setMessage('Error setting current beer')
+      setMessage(error instanceof Error ? error.message : 'Error setting current beer')
+      // Another tab may have changed what's current
+      loadTasting()
     }
   }
 

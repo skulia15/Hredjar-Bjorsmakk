@@ -36,6 +36,21 @@ describe('POST /api/tastings/[id]/join', () => {
     expect(await prisma.participant.count({ where: { tastingId: tasting.id } })).toBe(1)
   })
 
+  it('a double tap joins once instead of failing the second request', async () => {
+    const { tasting } = await createTastingFixture({ participantNames: [] })
+    signInAs({ clerkId: 'clerk_new', name: 'Sigga' })
+    await callRoute(getJoinStatus, { params: { id: tasting.id } }) // the user row exists before the race, as in the app
+
+    const [first, second] = await Promise.all([
+      callRoute(join, { method: 'POST', params: { id: tasting.id } }),
+      callRoute(join, { method: 'POST', params: { id: tasting.id } }),
+    ])
+
+    expect([first.status, second.status]).toEqual([200, 200])
+    expect(second.json.participantId).toBe(first.json.participantId)
+    expect(await prisma.participant.count({ where: { tastingId: tasting.id } })).toBe(1)
+  })
+
   it('two accounts with the same display name stay separate people', async () => {
     const { tasting } = await createTastingFixture({ participantNames: [] })
 

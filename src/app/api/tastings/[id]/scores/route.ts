@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { rankByAverage } from '@/lib/stats';
 
 // GET /api/tastings/[id]/scores - Get scores page data
 export async function GET(
@@ -57,14 +58,10 @@ export async function GET(
       };
     });
 
-    // Sort by average descending
-    beersWithScores.sort((a, b) => b.average - a.average);
-
-    // Add ranks
-    const beersWithRanks = beersWithScores.map((beer, index) => ({
-      ...beer,
-      rank: index + 1
-    }));
+    // A finished beer nobody rated has no score to rank; it'd show as 0.00 in last place
+    const rated = beersWithScores.filter(beer => beer.count > 0);
+    rated.sort((a, b) => b.average - a.average);
+    const beersWithRanks = rankByAverage(rated);
 
     return NextResponse.json({
       tastingId: tasting.id,

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { lockTasting } from '@/lib/tastingLock';
 import { setCurrentBeerSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireLeader } from '@/lib/auth';
 
@@ -27,36 +28,32 @@ export async function PATCH(
     // Verify user is leader
     await requireLeader();
 
-    // Verify tasting beer exists and is untasted
-    const tastingBeer = await prisma.tastingBeer.findUnique({
-      where: { id: tastingBeerId }
-    });
-
-    if (!tastingBeer || tastingBeer.tastingId !== id) {
-      return NextResponse.json(
-        { error: 'Beer not found' },
-        { status: 404 }
-      );
-    }
-
-    if (tastingBeer.status !== 'untasted') {
-      return NextResponse.json(
-        { error: 'Beer must be untasted to set as current' },
-        { status: 400 }
-      );
-    }
-
-    // Transaction: Update old current beer and set new current beer
+    // Checked under the tasting's lock, so two leaders (or tabs) switching at once can't
+    // both see the same old current beer and leave two beers current
     const result = await prisma.$transaction(async (tx) => {
-      // Find and update old current beer if exists
+      await lockTasting(tx, id);
+
+      const tastingBeer = await tx.tastingBeer.findUnique({
+        where: { id: tastingBeerId }
+      });
+      if (!tastingBeer || tastingBeer.tastingId !== id) {
+        return { error: 'Beer not found', status: 404 } as const;
+      }
+      if (tastingBeer.status !== 'untasted') {
+        return { error: 'Beer must be untasted to set as current', status: 400 } as const;
+      }
+
       const oldCurrent = await tx.tastingBeer.findFirst({
-        where: {
-          tastingId: id,
-          status: 'current'
-        }
+        where: { tastingId: id, status: 'current' },
+        include: { _count: { select: { ratings: true } } }
       });
 
       if (oldCurrent) {
+        // Back to untasted would leak its scores (no longer the hidden beer) and lock out anyone
+        // who hadn't rated it yet, so a beer people have rated has to be finished instead
+        if (oldCurrent._count.ratings > 0) {
+          return { error: 'Ljúktu núverandi bjór fyrst, það er búið að gefa honum einkunn', status: 409 } as const;
+        }
         await tx.tastingBeer.update({
           where: { id: oldCurrent.id },
           data: { status: 'untasted' }
@@ -81,13 +78,17 @@ export async function PATCH(
         }
       });
 
-      return tasting;
+      return { tasting };
     });
+
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
 
     return NextResponse.json({
       tastingId: id,
       currentBeerId: tastingBeerId, // Return as currentBeerId for backwards compatibility
-      version: result.version
+      version: result.tasting.version
     });
 
   } catch (error) {

@@ -27,13 +27,21 @@ export async function PUT(
     const { participant } = await requireParticipant(id);
 
     const tastingBeer = await prisma.tastingBeer.findUnique({
-      where: { id: tastingBeerId }
+      where: { id: tastingBeerId },
+      include: { tasting: { select: { status: true } } }
     });
 
     if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
+      );
+    }
+
+    if (tastingBeer.tasting.status !== 'active') {
+      return NextResponse.json(
+        { error: tastingBeer.tasting.status === 'closed' ? 'Smökkuninni er lokið' : 'Smökkunin er ekki hafin' },
+        { status: 409 }
       );
     }
 

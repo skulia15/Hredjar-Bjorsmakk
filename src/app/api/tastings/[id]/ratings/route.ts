@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { ratingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireParticipant } from '@/lib/auth';
 import { getHiddenTastingBeerId, lockRatingsIfAllRated } from '@/lib/hiddenScores';
+import { lockTasting } from '@/lib/tastingLock';
 
 // GET /api/tastings/[id]/ratings?beerId=... - The signed-in participant's own rating and flavor tags for a beer.
 // score is null when they've only tagged it so far; the whole thing is null when they've done neither
@@ -79,13 +80,21 @@ export async function POST(
 
     // Verify tasting beer belongs to this tasting and is not untasted
     const tastingBeer = await prisma.tastingBeer.findUnique({
-      where: { id: tastingBeerId }
+      where: { id: tastingBeerId },
+      include: { tasting: { select: { status: true } } }
     });
 
     if (!tastingBeer || tastingBeer.tastingId !== id) {
       return NextResponse.json(
         { error: 'Beer not found' },
         { status: 404 }
+      );
+    }
+
+    if (tastingBeer.tasting.status !== 'active') {
+      return NextResponse.json(
+        { error: tastingBeer.tasting.status === 'closed' ? 'Smökkuninni er lokið' : 'Smökkunin er ekki hafin' },
+        { status: 409 }
       );
     }
 
@@ -96,43 +105,51 @@ export async function POST(
       );
     }
 
-    // Once everyone has rated, the scores are out: a first rating still counts, but nobody gets to change theirs
+    // One rating at a time per tasting: otherwise an edit that checked the lock just before the
+    // last rating came in could change a score after it's been revealed
     const key = { tastingBeerId_participantId: { tastingBeerId, participantId: participant.id } };
-    if (await lockRatingsIfAllRated(id, tastingBeerId)) {
-      const existing = await prisma.rating.findUnique({ where: key, select: { id: true } });
-      if (existing) {
-        return NextResponse.json(
-          { error: 'Einkunnir hafa verið birtar og ekki er hægt að breyta þeim' },
-          { status: 409 }
-        );
-      }
-    }
+    const rating = await prisma.$transaction(async (tx) => {
+      await lockTasting(tx, id);
 
-    // Guessing the group average only means something while it's hidden, so later guesses are dropped
-    const guessOpen = (await getHiddenTastingBeerId(id)) === tastingBeerId;
-    const groupGuess = guessOpen ? requestedGuess : undefined;
-
-    // Upsert rating (create or update)
-    const rating = await prisma.rating.upsert({
-      where: key,
-      update: {
-        score,
-        ...(note !== undefined && { note }),
-        ...(groupGuess !== undefined && { groupGuess }),
-        updatedAt: new Date()
-      },
-      create: {
-        tastingId: id,
-        tastingBeerId,
-        participantId: participant.id,
-        score,
-        note: note ?? null,
-        groupGuess: groupGuess ?? null
+      // Once everyone has rated, the scores are out: a first rating still counts, but nobody gets to change theirs
+      if (await lockRatingsIfAllRated(id, tastingBeerId, tx)) {
+        const existing = await tx.rating.findUnique({ where: key, select: { id: true } });
+        if (existing) return null;
       }
+
+      // Guessing the group average only means something while it's hidden, so later guesses are dropped
+      const guessOpen = (await getHiddenTastingBeerId(id, tx)) === tastingBeerId;
+      const groupGuess = guessOpen ? requestedGuess : undefined;
+
+      const saved = await tx.rating.upsert({
+        where: key,
+        update: {
+          score,
+          ...(note !== undefined && { note }),
+          ...(groupGuess !== undefined && { groupGuess }),
+          updatedAt: new Date()
+        },
+        create: {
+          tastingId: id,
+          tastingBeerId,
+          participantId: participant.id,
+          score,
+          note: note ?? null,
+          groupGuess: groupGuess ?? null
+        }
+      });
+
+      // The last rating in locks them all
+      await lockRatingsIfAllRated(id, tastingBeerId, tx);
+      return saved;
     });
 
-    // The last rating in locks them all
-    await lockRatingsIfAllRated(id, tastingBeerId);
+    if (!rating) {
+      return NextResponse.json(
+        { error: 'Einkunnir hafa verið birtar og ekki er hægt að breyta þeim' },
+        { status: 409 }
+      );
+    }
 
     // Rating again means they're back
     if (participant.pausedAt) {

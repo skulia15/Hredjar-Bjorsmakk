@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { updateTastingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, getCurrentUser, isLeaderOrAdmin, requireLeader } from '@/lib/auth';
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
+import { lockTasting } from '@/lib/tastingLock';
 
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
@@ -161,14 +162,25 @@ export async function PATCH(
     // Verify user is leader
     await requireLeader();
 
-    // Update tasting
-    const tasting = await prisma.tasting.update({
-      where: { id },
-      data: {
-        status,
-        hideScoresUntilAllRated,
-        version: { increment: 1 }
+    const tasting = await prisma.$transaction(async (tx) => {
+      await lockTasting(tx, id);
+      // Closing with a beer still on finishes it, or it'd drop out of the results (they only show finished beers)
+      if (status === 'closed') {
+        await tx.tastingBeer.updateMany({
+          where: { tastingId: id, status: 'current' },
+          data: { status: 'finished', finishedAt: new Date() }
+        });
       }
+
+      return tx.tasting.update({
+        where: { id },
+        data: {
+          status,
+          hideScoresUntilAllRated,
+          ...(status === 'closed' && { currentTastingBeerId: null }),
+          version: { increment: 1 }
+        }
+      });
     });
 
     return NextResponse.json({

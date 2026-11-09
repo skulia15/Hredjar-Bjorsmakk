@@ -2,7 +2,7 @@
 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
-import { buildAwards, type GuessAccuracy, linearFit, ratingDomain, type TastePair, type ValuePick } from '@/lib/stats'
+import { buildAwards, soleWinner, type GuessAccuracy, linearFit, ratingDomain, type TastePair, type ValuePick } from '@/lib/stats'
 import { Brain, ChartBar, ChartColumn, ChartPie, CircleCheck, Equal, Factory, Flame, Gauge, Globe, Handshake, Heart, Layers, type LucideIcon, MapPin, MoveHorizontal, MoveRight, Percent, Scale, Smile, Table, Target, ThumbsDown, ThumbsUp, Timer, TrendingDown, TrendingUp, TriangleAlert, Trophy, Users } from 'lucide-react'
 import { AwardIcon } from '@/components/AwardIcon'
 import { RankBars } from '@/components/RankBars'
@@ -483,7 +483,8 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
   const styleRanking = (analytics.stylePerformanceRanking ?? []).filter(s => s.beersCount >= MIN_BEERS_PER_GROUP)
   const breweryRanking = (analytics.breweryPerformanceRanking ?? []).filter(b => b.beersCount >= MIN_BEERS_PER_GROUP)
 
-  const winner = scores.beers[0]
+  // A shared first place has no single winner to have a biggest fan
+  const winner = soleWinner(scores.beers)
   const awards = buildAwards({
     participantStats: analytics.participantStats,
     beerControversy,

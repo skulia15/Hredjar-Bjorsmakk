@@ -50,6 +50,20 @@ describe('first sign-in and ADMIN_EMAILS', () => {
     expect(await prisma.user.count()).toBe(1)
   })
 
+  it('does not hand a user to a new login whose email they still have here', async () => {
+    const original = await createAccount('owner', { isLeader: true })
+    signInAs(original)
+    await getSession()
+
+    // Someone else verifies the same address on a new login while the owner's is still around
+    signInAs({ clerkId: 'clerk_someone_else', name: 'Other', email: 'owner@example.com' })
+    const { json } = await getSession()
+
+    expect(json.userId).not.toBe(original.id)
+    expect(json.isLeader).toBe(false)
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: original.id } })).clerkId).toBe('clerk_owner')
+  })
+
   it('never auto-claims a legacy name-only user, even with a matching name', async () => {
     await prisma.user.create({ data: { name: 'skúli', isAdmin: true, isLeader: true } })
 

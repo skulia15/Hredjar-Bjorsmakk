@@ -192,12 +192,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
         fetch(`/api/tastings/${params.id}/analytics`),
         fetch(`/api/tastings/${params.id}/ratings-detail`)
       ])
-      const scoresData = await scoresResponse.json()
-      const analyticsData = await analyticsResponse.json()
-      const ratingsDetailData = await ratingsDetailResponse.json()
-      setScores(scoresData)
-      setAnalytics(analyticsData)
-      setRatingsDetail(ratingsDetailData)
+      // Keep the last good data when a poll fails, rather than storing the error body and crashing on it
+      if (scoresResponse.ok) setScores(await scoresResponse.json())
+      if (analyticsResponse.ok) setAnalytics(await analyticsResponse.json())
+      if (ratingsDetailResponse.ok) setRatingsDetail(await ratingsDetailResponse.json())
     } catch (error) {
       console.error('Error loading data:', error)
     } finally {

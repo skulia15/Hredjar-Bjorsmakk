@@ -114,7 +114,9 @@ export async function GET(
       denomRating += ratingDiff * ratingDiff
     }
 
-    const correlation = numerator / Math.sqrt(denomPrice * denomRating)
+    // No spread in price or rating (or a single beer) means no correlation to speak of, not 0/0
+    const denom = Math.sqrt(denomPrice * denomRating)
+    const correlation = denom > 0 ? numerator / denom : 0
 
     // Categorize beers into quadrants
     const quadrants = {

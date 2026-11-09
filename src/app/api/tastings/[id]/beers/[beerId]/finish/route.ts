@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { lockTasting } from '@/lib/tastingLock';
 import { authErrorResponse, requireLeader } from '@/lib/auth';
 
 // POST /api/tastings/[id]/beers/[beerId]/finish - Mark beer as finished
@@ -13,37 +14,20 @@ export async function POST(
     // Verify user is leader
     await requireLeader();
 
-    // Verify beer is current
-    const tastingBeer = await prisma.tastingBeer.findUnique({
-      where: { id: beerId }
-    });
-
-    if (!tastingBeer || tastingBeer.tastingId !== id) {
-      return NextResponse.json(
-        { error: 'Beer not found' },
-        { status: 404 }
-      );
-    }
-
-    if (tastingBeer.status !== 'current') {
-      return NextResponse.json(
-        { error: 'Only current beer can be finished' },
-        { status: 400 }
-      );
-    }
-
-    // Get ratings to calculate average
-    const ratings = await prisma.rating.findMany({
-      where: { tastingBeerId: beerId },
-      select: { score: true }
-    });
-
-    const average = ratings.length > 0
-      ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
-      : 0;
-
-    // Transaction: Finish beer and update tasting
+    // Under the tasting's lock, so a beer someone else just switched to can't be wiped as current
     const result = await prisma.$transaction(async (tx) => {
+      await lockTasting(tx, id);
+
+      const tastingBeer = await tx.tastingBeer.findUnique({
+        where: { id: beerId }
+      });
+      if (!tastingBeer || tastingBeer.tastingId !== id) {
+        return { error: 'Beer not found', status: 404 } as const;
+      }
+      if (tastingBeer.status !== 'current') {
+        return { error: 'Only current beer can be finished', status: 400 } as const;
+      }
+
       // Mark beer as finished and record when it was finished
       await tx.tastingBeer.update({
         where: { id: beerId },
@@ -62,15 +46,29 @@ export async function POST(
         }
       });
 
-      return tasting;
+      const ratings = await tx.rating.findMany({
+        where: { tastingBeerId: beerId },
+        select: { score: true }
+      });
+
+      return { tasting, ratings };
     });
+
+    if ('error' in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
+    }
+
+    const { ratings } = result;
+    const average = ratings.length > 0
+      ? ratings.reduce((sum, r) => sum + r.score, 0) / ratings.length
+      : 0;
 
     return NextResponse.json({
       tastingBeerId: beerId,
       status: 'finished',
       average: Number(average.toFixed(2)),
       count: ratings.length,
-      version: result.version
+      version: result.tasting.version
     });
 
   } catch (error) {
