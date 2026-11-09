@@ -8,6 +8,9 @@ import {
   extremeRaters,
   linearFit,
   personalStats,
+  rankByAverage,
+  soleWinner,
+  winnersName,
   ratingDomain,
   summarizeScores,
   tasteTwins,
@@ -197,6 +200,27 @@ describe('buildAwards', () => {
     expect(buildAwards({ participantStats: participantStats.slice(0, 1), beerControversy: [] })).toEqual([])
   })
 
+  it('names everyone sharing the top or bottom, and skips both when all averaged the same', () => {
+    const tied = buildAwards({
+      participantStats: [
+        { userName: 'Anna', averageRating: 8, ratingsCount: 2 },
+        { userName: 'Jón', averageRating: 8, ratingsCount: 2 },
+        { userName: 'Gunna', averageRating: 6, ratingsCount: 2 },
+      ],
+      beerControversy: [],
+    })
+    expect(tied.map(a => [a.kind, a.main])).toEqual([['generous', 'Anna & Jón'], ['harsh', 'Gunna']])
+
+    const allSame = buildAwards({
+      participantStats: [
+        { userName: 'Anna', averageRating: 7, ratingsCount: 2 },
+        { userName: 'Jón', averageRating: 7, ratingsCount: 2 },
+      ],
+      beerControversy: [],
+    })
+    expect(allSame).toEqual([])
+  })
+
   it('skips the controversy award when everyone agreed exactly', () => {
     const awards = buildAwards({ participantStats: [], beerControversy: [{ beerId: 'x', name: 'X', standardDeviation: 0 }] })
     expect(awards).toEqual([])
@@ -277,5 +301,29 @@ describe('personalStats', () => {
 
   it('returns null when the participant rated nothing', () => {
     expect(personalStats({ participantId: 'nobody', participants, beers })).toBeNull()
+  })
+})
+
+describe('rankByAverage / soleWinner / winnersName', () => {
+  const ranked = rankByAverage([
+    { name: 'A', average: 7.5 },
+    { name: 'B', average: 7.5 },
+    { name: 'C', average: 6 },
+    { name: 'D', average: 6 },
+    { name: 'E', average: 5 },
+  ])
+
+  it('shares a place on the same average and skips the places taken', () => {
+    expect(ranked.map(b => b.rank)).toEqual([1, 1, 3, 3, 5])
+  })
+
+  it('has no sole winner on a shared first place, and names everyone in it', () => {
+    expect(soleWinner(ranked)).toBeUndefined()
+    expect(winnersName(ranked)).toBe('A & B')
+    const clear = rankByAverage([{ name: 'A', average: 8 }, { name: 'B', average: 7 }])
+    expect(soleWinner(clear)?.name).toBe('A')
+    expect(winnersName(clear)).toBe('A')
+    expect(soleWinner([])).toBeUndefined()
+    expect(winnersName([])).toBeUndefined()
   })
 })

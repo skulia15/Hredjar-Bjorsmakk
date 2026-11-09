@@ -92,7 +92,8 @@ export async function GET(
 
     // Calculate participation rate per beer
     const beerParticipation = tasting.tastingBeers.map(beer => {
-      const ratingsCount = beer.ratings.length;
+      // Out of the active participants, so a removed one's kept rating can't push it past 100%
+      const ratingsCount = beer.ratings.filter(r => r.participant.active).length;
       const participationRate = totalParticipants > 0
         ? (ratingsCount / totalParticipants) * 100
         : 0;

@@ -1,4 +1,4 @@
-import { auth, currentUser } from '@clerk/nextjs/server';
+import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { Prisma } from '@/generated/prisma/client';
 import type { User } from '@/generated/prisma/client';
@@ -59,10 +59,12 @@ export async function getCurrentUser(): Promise<User | null> {
     imageUrl: clerkUser.hasImage ? clerkUser.imageUrl : null,
   };
 
-  // Same verified email on a new Clerk id: the account moved Clerk instance (dev -> production)
+  // Same verified email on a new Clerk id: the account moved Clerk instance (dev -> production).
+  // Only when the old login is gone from this instance, though: our stored email is never refreshed,
+  // so if it's still there, the address was given up and someone else has verified it since
   if (verifiedEmail) {
     const moved = await prisma.user.findFirst({ where: { email: verifiedEmail, clerkId: { not: null } } });
-    if (moved) {
+    if (moved?.clerkId && (await clerkUserGone(moved.clerkId))) {
       return ensureEnvAdmin(await prisma.user.update({ where: { id: moved.id }, data: profile }));
     }
   }
@@ -77,6 +79,16 @@ export async function getCurrentUser(): Promise<User | null> {
     if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
       return prisma.user.findUnique({ where: { clerkId } });
     }
+    throw error;
+  }
+}
+
+async function clerkUserGone(clerkId: string): Promise<boolean> {
+  try {
+    await (await clerkClient()).users.getUser(clerkId);
+    return false;
+  } catch (error) {
+    if ((error as { status?: number } | null)?.status === 404) return true;
     throw error;
   }
 }

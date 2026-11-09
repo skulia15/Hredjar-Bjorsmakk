@@ -4,6 +4,9 @@ import { PATCH as setCurrent } from '@/app/api/tastings/[id]/current/route'
 import { POST as finishBeer } from '@/app/api/tastings/[id]/beers/[beerId]/finish/route'
 import { POST as rate } from '@/app/api/tastings/[id]/ratings/route'
 import { GET as getScores } from '@/app/api/tastings/[id]/scores/route'
+import { GET as getLeaderboard } from '@/app/api/tastings/[id]/leaderboard/route'
+import { GET as pendingRaters } from '@/app/api/tastings/[id]/current/pending-raters/route'
+import { GET as exportTasting } from '@/app/api/tastings/[id]/export/route'
 import { prisma } from '@/lib/prisma'
 import { callRoute, createTastingFixture, signInAs } from './helpers'
 
@@ -59,6 +62,80 @@ describe('tasting flow', () => {
     expect(statuses.map((b) => b.status)).toEqual(['untasted', 'current', 'untasted'])
   })
 
+  it('refuses to switch away from a beer people have rated, so its scores stay put', async () => {
+    const fixture = await createTastingFixture()
+    const { beers } = fixture
+    await makeCurrent(fixture, beers[0].id)
+    await rateBeer(fixture, 0, beers[0].id, 8)
+
+    const switched = await makeCurrent(fixture, beers[1].id)
+
+    expect(switched.status).toBe(409)
+    const statuses = await prisma.tastingBeer.findMany({ where: { tastingId: fixture.tasting.id }, orderBy: { orderIndex: 'asc' } })
+    expect(statuses.map((b) => b.status)).toEqual(['current', 'untasted', 'untasted'])
+  })
+
+  it('two switches at once leave one beer current', async () => {
+    const fixture = await createTastingFixture()
+    const { beers } = fixture
+    await Promise.all([makeCurrent(fixture, beers[0].id), makeCurrent(fixture, beers[1].id)])
+
+    const current = await prisma.tastingBeer.findMany({ where: { tastingId: fixture.tasting.id, status: 'current' } })
+    const tasting = await prisma.tasting.findUniqueOrThrow({ where: { id: fixture.tasting.id } })
+    expect(current).toHaveLength(1)
+    expect(tasting.currentTastingBeerId).toBe(current[0].id)
+  })
+
+  it('ranks only rated beers, and beers on the same average share a place', async () => {
+    const fixture = await createTastingFixture({ beerCount: 4 })
+    const [a, b, c, unrated] = fixture.beers
+    for (const [beer, score] of [[a, 7.5], [b, 7.5], [c, 6]] as const) {
+      await makeCurrent(fixture, beer.id)
+      await rateBeer(fixture, 0, beer.id, score)
+      await finish(fixture, beer.id)
+    }
+    await makeCurrent(fixture, unrated.id)
+    await finish(fixture, unrated.id)
+
+    for (const route of [getScores, getLeaderboard]) {
+      const { json } = await callRoute(route, { params: { id: fixture.tasting.id } })
+      expect(json.beers.map((beer: { rank: number }) => beer.rank)).toEqual([1, 1, 3])
+      expect(json.beers.map((beer: { beerId: string }) => beer.beerId)).not.toContain(unrated.id)
+    }
+  })
+
+  it('counts only people still in the tasting as having rated the current beer', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await makeCurrent(fixture, beer.id)
+    await rateBeer(fixture, 0, beer.id, 8)
+    await rateBeer(fixture, 1, beer.id, 6)
+    // Removed, ratings kept
+    await prisma.participant.update({ where: { id: fixture.participants[1].id }, data: { active: false } })
+
+    const { json } = await callRoute(pendingRaters, { params: { id: fixture.tasting.id } })
+
+    expect(json).toMatchObject({ ratedCount: 1, totalParticipants: 2, pendingCount: 1 })
+  })
+
+  it('exports CSV as UTF-8 with typed-in text kept from running as a formula', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await makeCurrent(fixture, beer.id)
+    signInAs(fixture.users[0])
+    await callRoute(rate, { method: 'POST', params: { id: fixture.tasting.id }, body: { beerId: beer.id, score: 8, note: '=HYPERLINK("http://x","smelltu")' } })
+    await rateBeer(fixture, 1, beer.id, 7)
+
+    signInAs(fixture.leader)
+    const { response } = await callRoute(exportTasting, { params: { id: fixture.tasting.id }, path: '/?format=csv' })
+    const bytes = Buffer.from(await response.arrayBuffer())
+
+    expect([...bytes.subarray(0, 3)]).toEqual([0xef, 0xbb, 0xbf])
+    const csv = bytes.toString('utf8')
+    expect(csv).toContain(`'=HYPERLINK`)
+    expect(csv).not.toMatch(/(^|,)"?=HYPERLINK/m)
+  })
+
   it('increments the tasting version on each state change', async () => {
     const fixture = await createTastingFixture()
 
@@ -112,5 +189,26 @@ describe('tasting flow', () => {
     })
 
     expect(close.json.status).toBe('closed')
+  })
+
+  it('closing finishes the beer still on, so it stays in the results, and takes no more ratings', async () => {
+    const fixture = await createTastingFixture()
+    const [first, last] = fixture.beers
+    await makeCurrent(fixture, first.id)
+    await rateBeer(fixture, 0, first.id, 7)
+    await finish(fixture, first.id)
+    await makeCurrent(fixture, last.id)
+    await rateBeer(fixture, 0, last.id, 9)
+
+    signInAs(fixture.leader)
+    await callRoute(updateTasting, { method: 'PATCH', params: { id: fixture.tasting.id }, body: { status: 'closed' } })
+
+    const tasting = await prisma.tasting.findUniqueOrThrow({ where: { id: fixture.tasting.id } })
+    expect(tasting.currentTastingBeerId).toBeNull()
+    const scores = await callRoute(getScores, { params: { id: fixture.tasting.id } })
+    expect(scores.json.beers.map((b: { beerId: string }) => b.beerId).sort()).toEqual([first.id, last.id].sort())
+
+    expect((await rateBeer(fixture, 1, last.id, 5)).status).toBe(409)
+    expect((await rateBeer(fixture, 1, first.id, 5)).status).toBe(409)
   })
 })

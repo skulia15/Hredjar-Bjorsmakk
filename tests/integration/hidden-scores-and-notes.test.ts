@@ -76,13 +76,17 @@ describe('hide scores until everyone has rated', () => {
     await rateAs(fixture, 0, { beerId: beer.id, score: 8 })
     await rateAs(fixture, 1, { beerId: beer.id, score: 6 })
 
+    expect((await pending(fixture)).json.scoresHidden).toBe(true)
+    await prisma.tasting.update({ where: { id: fixture.tasting.id }, data: { status: 'closed' } })
+    expect((await pending(fixture)).json.scoresHidden).toBe(false)
+    await prisma.tasting.update({ where: { id: fixture.tasting.id }, data: { status: 'active' } })
+
     // Gunna left: everyone still active has rated
     await prisma.participant.update({ where: { id: fixture.participants[2].id }, data: { active: false } })
     expect((await pending(fixture)).json.scoresHidden).toBe(false)
 
+    // Out is out: her coming back doesn't hide them again
     await prisma.participant.update({ where: { id: fixture.participants[2].id }, data: { active: true } })
-    expect((await pending(fixture)).json.scoresHidden).toBe(true)
-    await prisma.tasting.update({ where: { id: fixture.tasting.id }, data: { status: 'closed' } })
     expect((await pending(fixture)).json.scoresHidden).toBe(false)
   })
 
@@ -107,6 +111,45 @@ describe('hide scores until everyone has rated', () => {
     expect((await rateAs(fixture, 1, { beerId: beer.id, score: 9 })).status).toBe(409)
     const scores = await prisma.rating.findMany({ where: { tastingBeerId: beer.id }, select: { score: true } })
     expect(scores.map(r => r.score).sort()).toEqual([6, 7, 9])
+  })
+
+  it('keeps revealed scores out when someone joins or comes back, and takes no late guess', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await hideScores(fixture)
+    await makeCurrent(fixture, beer.id)
+    await rateAs(fixture, 0, { beerId: beer.id, score: 8 })
+    await rateAs(fixture, 1, { beerId: beer.id, score: 6 })
+    await prisma.participant.update({ where: { id: fixture.participants[2].id }, data: { pausedAt: new Date() } })
+    expect((await pending(fixture)).json).toMatchObject({ scoresHidden: false, ratingsLocked: true })
+
+    // Gunna comes back after the average has been on the projector
+    await prisma.participant.update({ where: { id: fixture.participants[2].id }, data: { pausedAt: null } })
+    expect((await pending(fixture)).json.scoresHidden).toBe(false)
+    expect((await tastingJson(fixture)).beers[0]).toMatchObject({ scoresHidden: false, averageRating: 7 })
+
+    expect((await rateAs(fixture, 2, { beerId: beer.id, score: 5, groupGuess: 7 })).status).toBe(200)
+    const late = await prisma.rating.findFirstOrThrow({ where: { tastingBeerId: beer.id, participantId: fixture.participants[2].id } })
+    expect(late.groupGuess).toBeNull()
+  })
+
+  it('takes no edit that races the last rating in', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await makeCurrent(fixture, beer.id)
+    await rateAs(fixture, 0, { beerId: beer.id, score: 8 })
+    await rateAs(fixture, 1, { beerId: beer.id, score: 6 })
+
+    // Anna's edit and Gunna's last rating land together: either the edit got in first, or it's refused
+    const [edit] = await Promise.all([
+      rateAs(fixture, 0, { beerId: beer.id, score: 2 }),
+      rateAs(fixture, 2, { beerId: beer.id, score: 7 }),
+    ])
+    const anna = await prisma.rating.findFirstOrThrow({ where: { tastingBeerId: beer.id, participantId: fixture.participants[0].id } })
+    const locked = await prisma.tastingBeer.findUniqueOrThrow({ where: { id: beer.id } })
+    expect(locked.ratingsLockedAt).not.toBeNull()
+    if (edit.status === 200) expect(anna.updatedAt.getTime()).toBeLessThanOrEqual(locked.ratingsLockedAt!.getTime())
+    else expect(anna.score).toBe(8)
   })
 
   it('still takes a first rating after the lock, and locks when the last one left pauses', async () => {

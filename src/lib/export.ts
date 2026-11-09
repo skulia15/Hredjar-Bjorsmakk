@@ -2,6 +2,7 @@ import ExcelJS from 'exceljs';
 import { prisma } from './prisma';
 import { format as formatDate } from 'date-fns';
 import { flavorTagLabel } from './flavorTags';
+import { rankByAverage } from './stats';
 
 export type ExportFormat = 'csv' | 'xlsx';
 
@@ -116,35 +117,36 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
     return {
       name: tb.beer?.name || tb.customName || 'Unknown',
       brewery: tb.beer?.brewery || tb.customBrewery || 'Unknown',
-      average,
+      // Rounded like everywhere else, so the same shown average shares a place
+      average: Number(average.toFixed(2)),
       count: ratings.length,
       status: tb.status,
       orderIndex: tb.orderIndex
     };
   });
 
-  // Sort by average descending
-  beerSummaries.sort((a, b) => b.average - a.average);
+  // Rated beers ranked, sharing a place on the same average; beers nobody rated go last, unranked
+  const rated = rankByAverage(beerSummaries.filter(b => b.count > 0).sort((a, b) => b.average - a.average));
+  const unrated = beerSummaries.filter(b => b.count === 0).map(b => ({ ...b, rank: null }));
 
-  // Add summary data with ranks
-  beerSummaries.forEach((beer, index) => {
+  [...rated, ...unrated].forEach((beer) => {
     const row = summarySheet.addRow({
-      rank: index + 1,
+      rank: beer.rank ?? '',
       beerName: beer.name,
       brewery: beer.brewery,
-      average: beer.average.toFixed(2),
+      average: beer.count > 0 ? beer.average : '',
       count: beer.count,
       status: beer.status,
       order: beer.orderIndex + 1,
     });
 
-    // Highlight top 3
-    if (index < 3 && beer.count > 0) {
+    // Highlight the podium
+    if (beer.rank !== null && beer.rank <= 3) {
       const colors = ['FFD4AF37', 'FFC0C0C0', 'FFCD7F32']; // Gold, Silver, Bronze
       row.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: colors[index] }
+        fgColor: { argb: colors[beer.rank - 1] }
       };
     }
   });
@@ -167,8 +169,18 @@ export async function generateTastingExport(tastingId: string, formatType: Expor
 
   // Generate file based on format
   if (formatType === 'csv') {
-    // For CSV, export only the ratings sheet
-    return Buffer.from(await workbook.csv.writeBuffer());
+    // For CSV, export only the ratings sheet. Names and notes are typed by participants, and Excel
+    // runs a CSV cell starting with = + - @ as a formula, so those get a leading quote to stay text
+    ratingsSheet.eachRow((row, rowNumber) => {
+      if (rowNumber === 1) return;
+      row.eachCell((cell) => {
+        if (typeof cell.value === 'string' && /^[=+\-@\t\r]/.test(cell.value)) {
+          cell.value = `'${cell.value}`;
+        }
+      });
+    });
+    // A BOM so Excel reads it as UTF-8 and ð, þ and æ come through
+    return Buffer.concat([Buffer.from('\uFEFF', 'utf8'), Buffer.from(await workbook.csv.writeBuffer())]);
   } else {
     // For XLSX, export the full workbook
     return Buffer.from(await workbook.xlsx.writeBuffer());

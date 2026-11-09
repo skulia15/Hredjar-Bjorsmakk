@@ -32,7 +32,7 @@ interface Beer {
 	id: string;
 	name: string;
 	brewery: string;
-	style?: string;
+	styles?: string[];
 	abv?: number;
 	containerSize?: number;
 	containerType?: string;
@@ -373,8 +373,15 @@ export default function RatePage({
 			setTagsOpen(false);
 			// A half-typed tag belongs to the last beer
 			setCustomDraft("");
-			// The last beer's tags must not ride along on a tap before this beer's load
+			// The last beer's rating, note, guess and tags must not ride along on a tap before this beer's load
 			tagsRef.current = [];
+			setTags([]);
+			setRating(0);
+			setNote("");
+			setGroupGuess(null);
+			setHasRated(false);
+			// A slow load for the last beer must not land on this one
+			let stale = false;
 
 			// Load this participant's existing rating for this beer
 			fetch(`/api/tastings/${params.id}/ratings?beerId=${currentBeer.id}`)
@@ -389,6 +396,7 @@ export default function RatePage({
 							groupGuess: number | null;
 						} | null,
 					) => {
+						if (stale) return;
 						setHasRated(existingRating?.score != null);
 						if (editedRef.current) return;
 						// Reset for a new beer
@@ -400,6 +408,9 @@ export default function RatePage({
 					},
 				)
 				.catch((err) => console.error("Error loading existing rating:", err));
+			return () => {
+				stale = true;
+			};
 		}
 	}, [currentBeer?.id, participantId, loadRatingStats, params.id]);
 
@@ -644,7 +655,11 @@ export default function RatePage({
 								{getCountryFlag(currentBeer.country)} {currentBeer.country}
 							</span>
 						)}
-						{currentBeer.style && <span className={chip}>{currentBeer.style}</span>}
+						{currentBeer.styles?.map((style) => (
+							<span key={style} className={chip}>
+								{style}
+							</span>
+						))}
 						{currentBeer.abv && <span className={chip}>{currentBeer.abv}%</span>}
 						{currentBeer.containerSize && currentBeer.containerType && (
 							<span className={chip}>

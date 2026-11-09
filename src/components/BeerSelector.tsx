@@ -9,7 +9,7 @@ interface Beer {
   id: string
   name: string
   brewery: string
-  style?: string
+  styles?: string[]
   abv?: number
   country?: string
   containerSize?: number
@@ -43,7 +43,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
     return beers.filter(beer =>
       beer.name.toLowerCase().includes(term) ||
       beer.brewery.toLowerCase().includes(term) ||
-      beer.style?.toLowerCase().includes(term)
+      beer.styles?.some(style => style.toLowerCase().includes(term))
     )
   }, [beers, searchTerm])
 
@@ -185,11 +185,11 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                             </div>
                             <div className="text-xs text-muted-foreground truncate">{beer.brewery}</div>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              {beer.style && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">
-                                  {beer.style}
+                              {beer.styles?.map(style => (
+                                <span key={style} className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-muted text-muted-foreground">
+                                  {style}
                                 </span>
-                              )}
+                              ))}
                               {beer.abv && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-600">
                                   {beer.abv}%

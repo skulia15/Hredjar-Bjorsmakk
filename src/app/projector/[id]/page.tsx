@@ -8,7 +8,7 @@ import { useNudge } from '@/hooks/useNudge'
 import { useProjectorControls } from '@/hooks/useProjectorControls'
 import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
-import { buildAwards, closestGuess, extremeRaters, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
+import { buildAwards, closestGuess, extremeRaters, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
 import { ArrowDown, ArrowUp, Beer as BeerIcon, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
@@ -265,7 +265,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       setTasting(tastingData)
 
       // Load scores (top beers)
+      // A failed poll keeps the last good scores rather than storing the error body; skipping the rest
+      // leaves previous.current alone, so a finished-beer reveal still fires on the next good poll
       const scoresResponse = await fetch(`/api/tastings/${params.id}/scores`)
+      if (!scoresResponse.ok) return
       const scoresData: ScoresData = await scoresResponse.json()
       setScores(scoresData)
 
@@ -391,7 +394,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     ? buildAwards({
         participantStats: analytics.participantStats,
         beerControversy: analytics.beerControversy ?? [],
-        winner: scores?.beers[0],
+        // A shared first place has no single winner to have a biggest fan
+        winner: scores ? soleWinner(scores.beers) : undefined,
         tasteTwins: analytics.tasteTwins,
         guessAccuracy: analytics.guessAccuracy,
         bestValue: analytics.bestValue,
@@ -486,7 +490,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-4 2xl:gap-6 px-3 pt-3 pb-3 lg:px-4 2xl:px-8 2xl:pt-5 2xl:pb-6">
       {/* Awards reveal once the tasting is closed */}
       {showingAwards && (
-        <AwardsReveal awards={awards} winnerName={scores?.beers[0]?.name} onClose={closeAwards} />
+        <AwardsReveal awards={awards} winnerName={scores ? winnersName(scores.beers) : undefined} onClose={closeAwards} />
       )}
       {awards.length > 0 && awardsDismissed && (
         <button

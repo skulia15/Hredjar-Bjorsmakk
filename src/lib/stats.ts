@@ -23,6 +23,29 @@ export function summarizeScores(scores: number[]) {
   }
 }
 
+/**
+ * Competition ranks ("1, 1, 3") for a list already sorted by average, highest first,
+ * so two beers on the same average share a place instead of getting gold and silver
+ */
+export function rankByAverage<T extends { average: number }>(sorted: T[]): Array<T & { rank: number }> {
+  let rank = 0
+  return sorted.map((item, index) => {
+    if (index === 0 || item.average !== sorted[index - 1].average) rank = index + 1
+    return { ...item, rank }
+  })
+}
+
+/** The beer in first place, or undefined when first place is shared or nobody's ranked */
+export function soleWinner<T extends { rank: number }>(ranked: T[]): T | undefined {
+  return ranked[0] && ranked[1]?.rank !== 1 ? ranked[0] : undefined
+}
+
+/** Everyone in first place as one name, "A & B" when it's shared */
+export function winnersName(ranked: Array<{ name: string; rank: number }>): string | undefined {
+  const winners = ranked.filter(b => b.rank === 1)
+  return winners.length > 0 ? winners.map(b => b.name).join(' & ') : undefined
+}
+
 /** Least-squares fit through the points; slope is y change per x unit */
 export function linearFit(points: Array<{ x: number; y: number }>) {
   const n = points.length
@@ -236,20 +259,22 @@ export function buildAwards({
     .filter(p => p.ratingsCount > 0)
     .sort((a, b) => b.averageRating - a.averageRating)
 
-  if (raters.length > 1) {
-    const generous = raters[0]
-    const harsh = raters[raters.length - 1]
+  // Nobody's most generous when everyone averaged the same; a shared top or bottom names them all
+  const highest = raters[0]?.averageRating
+  const lowest = raters[raters.length - 1]?.averageRating
+  if (raters.length > 1 && highest !== lowest) {
+    const namesAt = (average: number) => raters.filter(r => r.averageRating === average).map(r => r.userName).join(' & ')
     awards.push({
       kind: 'generous',
       title: 'Örlátasti dómarinn',
-      main: generous.userName,
-      sub: `Meðaleinkunn ${generous.averageRating.toFixed(2)}`,
+      main: namesAt(highest),
+      sub: `Meðaleinkunn ${highest.toFixed(2)}`,
     })
     awards.push({
       kind: 'harsh',
       title: 'Strangasti dómarinn',
-      main: harsh.userName,
-      sub: `Meðaleinkunn ${harsh.averageRating.toFixed(2)}`,
+      main: namesAt(lowest),
+      sub: `Meðaleinkunn ${lowest.toFixed(2)}`,
     })
   }
 

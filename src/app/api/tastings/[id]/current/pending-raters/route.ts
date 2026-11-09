@@ -51,10 +51,12 @@ export async function GET(
       )
     }
 
-    // Get all ratings for current beer
+    // Ratings for the current beer from people still in the tasting; a removed participant's kept
+    // rating isn't one of the totalParticipants, and counting it showed "6 / 5"
     const ratings = await prisma.rating.findMany({
       where: {
-        tastingBeerId: tasting.currentTastingBeerId
+        tastingBeerId: tasting.currentTastingBeerId,
+        participant: { active: true }
       },
       include: {
         participant: {

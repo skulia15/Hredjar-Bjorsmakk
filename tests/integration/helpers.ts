@@ -13,6 +13,9 @@ interface FakeClerkUser {
 
 export const clerkSession: { user: FakeClerkUser | null } = { user: null }
 
+// Clerk ids that exist in the fake Clerk instance: everyone a test has signed in as
+export const clerkInstanceUserIds = new Set<string>()
+
 export function signOut() {
   clerkSession.user = null
 }
@@ -25,6 +28,7 @@ export function signInAs(
   { emailVerified = true }: { emailVerified?: boolean } = {}
 ) {
   if (!who.clerkId) throw new Error('signInAs needs a user with a clerkId')
+  clerkInstanceUserIds.add(who.clerkId)
   clerkSession.user = {
     id: who.clerkId,
     fullName: who.name ?? null,

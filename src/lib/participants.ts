@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { generateUniqueParticipantCode } from '@/lib/auth';
 import { AVATARS, pickAvatar, resolveAvatar } from '@/lib/avatars';
+import { lockTasting } from '@/lib/tastingLock';
 
 export class AvatarTakenError extends Error {
   constructor(public readonly avatar: string) {
@@ -31,7 +32,11 @@ export async function createParticipant(tastingId: string, userId: string, chose
 
   return prisma.$transaction(async (tx) => {
     // One join at a time per tasting, so two people can't grab the same free picture
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${tastingId}))`;
+    await lockTasting(tx, tastingId);
+    // A double tap sends two joins; the second waits on the lock and gets the first one's
+    // participation rather than failing on the one-per-user unique
+    const existing = await tx.participant.findUnique({ where: { tastingId_userId: { tastingId, userId } } });
+    if (existing) return existing;
     const others = await tx.participant.findMany({ where: { tastingId }, select: { id: true, avatar: true } });
     // Participants from before avatars were stored show their seeded pick, so that one is taken too
     const taken = others.map((p) => resolveAvatar(p.avatar, p.id).key);
