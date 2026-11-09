@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Beer as BeerIcon } from 'lucide-react'
 import { FoamCard } from '@/components/FoamCard'
+import { usePolling } from '@/hooks/usePolling'
 
 // Gold, silver, bronze
 const RANK_BADGE: Record<number, string> = { 1: 'bg-gold', 2: 'bg-[#D9D3C4]', 3: 'bg-[#E08A5B]' }
@@ -59,12 +60,12 @@ export function LeaderboardWaiting({
   useEffect(() => {
     loadLeaderboard()
     loadTasting()
-    const interval = setInterval(() => {
-      loadLeaderboard()
-      loadTasting()
-    }, refreshInterval)
-    return () => clearInterval(interval)
-  }, [tastingId, refreshInterval])
+  }, [tastingId])
+
+  usePolling(() => {
+    loadLeaderboard()
+    loadTasting()
+  }, refreshInterval)
 
   const loadLeaderboard = async () => {
     try {

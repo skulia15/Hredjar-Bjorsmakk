@@ -10,6 +10,7 @@ import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 import { SlideToConfirm } from '@/components/SlideToConfirm'
 import { fetchTasting } from '@/lib/fetchTasting'
 import { useActiveTasting } from '@/hooks/useActiveTasting'
+import { usePolling } from '@/hooks/usePolling'
 
 interface Beer {
   id: string
@@ -70,9 +71,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     loadTasting()
-    const interval = setInterval(loadTasting, 5000)
-    return () => clearInterval(interval)
   }, [params.id])
+
+  usePolling(() => loadTasting(), 5000)
 
   // Load beer catalog
   useEffect(() => {

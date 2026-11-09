@@ -12,6 +12,8 @@ import { StatCard } from '@/components/StatCard'
 import { FoamCard } from '@/components/FoamCard'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import { RankMedal } from '@/components/RankMedal'
+import { usePolling } from '@/hooks/usePolling'
+import { ShareResultsButton } from '@/components/ShareResultsButton'
 import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
@@ -156,10 +158,10 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
   useEffect(() => {
     setIsClient(true)
     loadData()
-    // Refresh scores every 5 seconds during active tasting
-    const interval = setInterval(loadData, 5000)
-    return () => clearInterval(interval)
   }, [params.id])
+
+  // Refresh scores every 5 seconds during active tasting
+  usePolling(() => loadData(), 5000)
 
   // Get participant ID from localStorage
   useEffect(() => {
@@ -343,6 +345,14 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
                 </button>
               </div>
             )}
+
+            <div className="flex justify-center">
+              <ShareResultsButton
+                tastingId={params.id}
+                title={scores.title}
+                resultsKey={`${scores.status}:${scores.beers.map(b => `${b.beerId}=${b.average}`).join(',')}`}
+              />
+            </div>
           </div>
         )}
 
