@@ -131,9 +131,10 @@ async function fetchBeerDetails(page: any, productUrl: string, productNumber: st
       }
 
       // Extract country
-      const countryMatch = detailsText.match(/Land[:\s]+([A-ZÁ-Ý][a-zá-ý]+)/i) ||
+      // \p{L}: á-ý ranges skip þ/Þ (U+00FE/U+00DE), truncating "Svíþjóð" to "Sví"
+      const countryMatch = detailsText.match(/Land[:\s]+(\p{L}[\p{L}-]*)/iu) ||
                           detailsText.match(/Country[:\s]+([A-Z][a-z]+)/i) ||
-                          detailsText.match(/Upprunaland[:\s]+([A-ZÁ-Ý][a-zá-ý]+)/i)
+                          detailsText.match(/Upprunaland[:\s]+(\p{L}[\p{L}-]*)/iu)
       if (countryMatch) {
         result.country = countryMatch[1].trim()
       }
