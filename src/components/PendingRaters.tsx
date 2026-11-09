@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Coffee, EyeOff, Hourglass, PartyPopper, Pause, Play, Star } from 'lucide-react'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
+import { usePolling } from '@/hooks/usePolling'
 
 interface RatedParticipant {
   participantId: string
@@ -51,9 +52,9 @@ export function PendingRaters({
 
   useEffect(() => {
     loadData()
-    const interval = setInterval(loadData, refreshInterval)
-    return () => clearInterval(interval)
-  }, [tastingId, currentBeerId, refreshInterval])
+  }, [tastingId, currentBeerId])
+
+  usePolling(() => loadData(), refreshInterval)
 
   const loadData = async () => {
     try {

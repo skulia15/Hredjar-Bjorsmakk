@@ -16,6 +16,7 @@ import { SlideToConfirm } from "@/components/SlideToConfirm";
 import { StarRating } from "@/components/StarRating";
 import { FlavorTagIcon } from "@/components/FlavorTagIcon";
 import { beerImageSrc } from "@/lib/beerImage";
+import { usePolling } from "@/hooks/usePolling";
 import {
 	CUSTOM_TAG_MAX_LENGTH,
 	CUSTOM_TAGS_PER_RATING,
@@ -296,14 +297,13 @@ export default function RatePage({
 			router.push(`/t/${params.id}`);
 			return;
 		}
-
-		// Poll for updates every 3 seconds (without loading spinner)
-		const interval = setInterval(() => {
-			loadTasting(false);
-			loadRatingStats();
-		}, 3000);
-		return () => clearInterval(interval);
 	}, [params.id, loadTasting, loadRatingStats, router]);
+
+	// Poll for updates every 3 seconds (without loading spinner)
+	usePolling(() => {
+		loadTasting(false);
+		loadRatingStats();
+	}, 3000);
 
 	// Redirect to scores page when tasting is closed
 	useEffect(() => {

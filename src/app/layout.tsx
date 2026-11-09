@@ -15,13 +15,20 @@ export const metadata: Metadata = {
   icons: {
     icon: '/icon.svg',
     shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    // iOS ignores SVG touch icons
+    apple: '/icons/apple-touch-icon.png',
+  },
+  appleWebApp: {
+    capable: true,
+    title: 'Bjórsmakk',
+    statusBarStyle: 'black',
   },
 }
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#123A2C',
   // No maximumScale/userScalable: pinch-zoom must stay available for people who need larger text
 }
 
