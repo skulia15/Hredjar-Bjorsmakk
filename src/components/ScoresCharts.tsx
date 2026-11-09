@@ -2,6 +2,7 @@
 
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, ScatterChart, Scatter, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ZAxis, LabelList, ReferenceLine } from 'recharts'
 import { useChartTheme } from '@/hooks/useChartTheme'
+import { isIcelandic } from '@/lib/countries'
 import { buildAwards, soleWinner, type GuessAccuracy, linearFit, ratingDomain, type TastePair, type ValuePick } from '@/lib/stats'
 import { Brain, ChartBar, ChartColumn, ChartPie, CircleCheck, Equal, Factory, Flame, Gauge, Globe, Handshake, Heart, Layers, type LucideIcon, MapPin, MoveHorizontal, MoveRight, Percent, Scale, Smile, Table, Target, ThumbsDown, ThumbsUp, Timer, TrendingDown, TrendingUp, TriangleAlert, Trophy, Users } from 'lucide-react'
 import { AwardIcon } from '@/components/AwardIcon'
@@ -1405,7 +1406,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               label: <>{b.country && getCountryFlag(b.country)} {b.brewery}</>,
               value: b.averageRating,
               // Icelandic breweries blue, others green (legend below)
-              barClass: b.country === 'Ísland' ? 'bg-blue-500' : 'bg-green-500',
+              barClass: isIcelandic(b.country) ? 'bg-blue-500' : 'bg-green-500',
               detail: `${b.beersCount} bjórar · ${b.ratingsCount} einkunnir · ${b.minRating.toFixed(1)}–${b.maxRating.toFixed(1)}`,
             }))}
           />
@@ -1710,7 +1711,8 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
       )}
 
       {/* Local vs International Comparison */}
-      {VISIBLE_SECTIONS.localVsInternational && analytics.localVsInternational && (analytics.localVsInternational.icelandic.beersCount > 0 || analytics.localVsInternational.international.beersCount > 0) && (
+      {/* Only a comparison when both sides were rated; an all-Icelandic night has nothing to compare against */}
+      {VISIBLE_SECTIONS.localVsInternational && analytics.localVsInternational && analytics.localVsInternational.icelandic.ratingsCount > 0 && analytics.localVsInternational.international.ratingsCount > 0 && (
         <StatCard icon={Globe} title={<>Íslenskir vs. Erlendir bjórar</>} description={<>Eru þátttakendur hlutdrægir gagnvart íslenskum bjórum?</>}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Icelandic Beers */}
@@ -1766,7 +1768,7 @@ export function ScoresCharts({ scores, analytics }: ScoresChartsProps) {
               <div
                 key={country.country}
                 className={`p-4 rounded-lg border-2 ${
-                  country.country === 'Ísland'
+                  isIcelandic(country.country)
                     ? 'bg-blue-50 dark:bg-blue-950 border-blue-300 dark:border-blue-700'
                     : 'bg-muted/30 border-muted'
                 }`}

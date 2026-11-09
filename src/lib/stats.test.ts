@@ -6,6 +6,9 @@ import {
   comparePairs,
   guessAccuracy,
   extremeRaters,
+  generousAndHarsh,
+  median,
+  quantile,
   linearFit,
   personalStats,
   rankByAverage,
@@ -90,6 +93,17 @@ describe('extremeRaters', () => {
 
   it('returns null for no ratings', () => {
     expect(extremeRaters([])).toBeNull()
+  })
+
+  it('names everyone sharing the top or bottom score', () => {
+    expect(extremeRaters([
+      { userName: 'Anna', score: 9 },
+      { userName: 'Jón', score: 6 },
+      { userName: 'Gunna', score: 9 },
+    ])).toEqual({
+      highestRater: { userName: 'Anna & Gunna', score: 9 },
+      lowestRater: { userName: 'Jón', score: 6 },
+    })
   })
 })
 
@@ -221,6 +235,19 @@ describe('buildAwards', () => {
     expect(allSame).toEqual([])
   })
 
+  it('gives the mind reader award to someone who kept guessing, not one lucky guess', () => {
+    const awards = buildAwards({
+      participantStats: [],
+      beerControversy: [],
+      guessAccuracy: [
+        { participantId: 'a', userName: 'Heppinn', meanError: 0.1, guesses: 1 },
+        { participantId: 'b', userName: 'Stöðugur', meanError: 0.2, guesses: 8 },
+        { participantId: 'c', userName: 'Hálfur', meanError: 0.5, guesses: 4 },
+      ],
+    })
+    expect(awards).toEqual([expect.objectContaining({ kind: 'mindReader', main: 'Stöðugur' })])
+  })
+
   it('skips the controversy award when everyone agreed exactly', () => {
     const awards = buildAwards({ participantStats: [], beerControversy: [{ beerId: 'x', name: 'X', standardDeviation: 0 }] })
     expect(awards).toEqual([])
@@ -325,5 +352,41 @@ describe('rankByAverage / soleWinner / winnersName', () => {
     expect(winnersName(clear)).toBe('A')
     expect(soleWinner([])).toBeUndefined()
     expect(winnersName([])).toBeUndefined()
+  })
+})
+
+describe('generousAndHarsh', () => {
+  it('needs two raters who differ', () => {
+    expect(generousAndHarsh([{ userName: 'Anna', averageRating: 8, ratingsCount: 2 }])).toBeNull()
+    expect(generousAndHarsh([
+      { userName: 'Anna', averageRating: 7, ratingsCount: 2 },
+      { userName: 'Jón', averageRating: 7, ratingsCount: 2 },
+    ])).toBeNull()
+  })
+
+  it('leaves out people who rated nothing', () => {
+    expect(generousAndHarsh([
+      { userName: 'Anna', averageRating: 8, ratingsCount: 2 },
+      { userName: 'Jón', averageRating: 6, ratingsCount: 2 },
+      { userName: 'Óvirkur', averageRating: 0, ratingsCount: 0 },
+    ])).toEqual({
+      generous: { userName: 'Anna', averageRating: 8 },
+      harsh: { userName: 'Jón', averageRating: 6 },
+    })
+  })
+})
+
+describe('quantile / median', () => {
+  it('takes the mean of the middle two on an even count', () => {
+    expect(median([4, 1, 3, 2])).toBe(2.5)
+    expect(median([5, 1, 3])).toBe(3)
+    expect(median([])).toBe(0)
+  })
+
+  it('interpolates quartiles instead of jumping to the max', () => {
+    const sorted = [1, 2, 3, 4]
+    expect(quantile(sorted, 0.25)).toBe(1.75)
+    expect(quantile(sorted, 0.75)).toBe(3.25)
+    expect(quantile(sorted, 1)).toBe(4)
   })
 })

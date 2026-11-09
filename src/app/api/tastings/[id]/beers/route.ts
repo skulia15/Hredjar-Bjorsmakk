@@ -50,7 +50,7 @@ export async function POST(
           name,
           brewery,
           styles: style ? [style] : [],
-          abv: abv || null,
+          abv: abv ?? null,
           productNumber: productNumber || null,
           imageUrl
         }

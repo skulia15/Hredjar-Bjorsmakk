@@ -4,6 +4,7 @@ import { updateTastingSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, getCurrentUser, isLeaderOrAdmin, requireLeader } from '@/lib/auth';
 import { getHiddenTastingBeerId } from '@/lib/hiddenScores';
 import { lockTasting } from '@/lib/tastingLock';
+import { freezeTastingPrices, tastingBeerPrice } from '@/lib/tastingPrice';
 
 // GET /api/tastings/[id] - Get tasting details
 export async function GET(
@@ -81,11 +82,11 @@ export async function GET(
       const name = tastingBeer.beer?.name || tastingBeer.customName || 'Unknown';
       const brewery = tastingBeer.beer?.brewery || tastingBeer.customBrewery || 'Unknown';
       const styles = tastingBeer.beer?.styles || (tastingBeer.customStyle ? [tastingBeer.customStyle] : []);
-      const abv = tastingBeer.beer?.abv || tastingBeer.customAbv || null;
+      const abv = tastingBeer.beer?.abv ?? tastingBeer.customAbv ?? null;
       const country = tastingBeer.beer?.country || null;
       const containerSize = tastingBeer.beer?.containerSize || null;
       const containerType = tastingBeer.beer?.containerType || null;
-      const priceISK = tastingBeer.priceISK ?? tastingBeer.beer?.priceISK ?? null;
+      const { priceISK } = tastingBeerPrice(tastingBeer, tasting.status);
       const imageUrl = tastingBeer.beer?.imageUrl || null;
       const scoresHidden = tastingBeer.id === hiddenTastingBeerId;
 
@@ -166,6 +167,7 @@ export async function PATCH(
       await lockTasting(tx, id);
       // Closing with a beer still on finishes it, or it'd drop out of the results (they only show finished beers)
       if (status === 'closed') {
+        await freezeTastingPrices(tx, id);
         await tx.tastingBeer.updateMany({
           where: { tastingId: id, status: 'current' },
           data: { status: 'finished', finishedAt: new Date() }

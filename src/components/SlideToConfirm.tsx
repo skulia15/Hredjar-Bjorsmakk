@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react'
 import { Check, ChevronRight } from 'lucide-react'
 
 interface SlideToConfirmProps {
-  onConfirm: () => void
+  // While a returned promise is pending the slider stays confirmed, so it can't be sent twice
+  onConfirm: () => void | Promise<unknown>
   text?: string
   confirmText?: string
   className?: string
@@ -28,8 +29,11 @@ export function SlideToConfirm({
 
   const threshold = 0.85 // 85% of the width to confirm
 
+  // Confirmed and the action hasn't finished yet; the reset waits for it
+  const [isPending, setIsPending] = useState(false)
+
   useEffect(() => {
-    if (isConfirmed) {
+    if (isConfirmed && !isPending) {
       // Reset after confirmation animation
       const timer = setTimeout(() => {
         setPosition(0)
@@ -37,7 +41,7 @@ export function SlideToConfirm({
       }, 300)
       return () => clearTimeout(timer)
     }
-  }, [isConfirmed])
+  }, [isConfirmed, isPending])
 
   const handleStart = (clientX: number) => {
     if (disabled || isConfirmed) return
@@ -69,7 +73,12 @@ export function SlideToConfirm({
     if (position >= maxPosition * threshold) {
       setIsConfirmed(true)
       setPosition(maxPosition) // Snap to end
-      onConfirm()
+      const result = onConfirm()
+      if (result instanceof Promise) {
+        setIsPending(true)
+        const done = () => setIsPending(false)
+        result.then(done, done)
+      }
     } else {
       // Reset to start
       setPosition(0)

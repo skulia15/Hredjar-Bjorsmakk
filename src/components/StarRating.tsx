@@ -121,6 +121,9 @@ export function StarRating({
       onChange(newValue);
     }
 
+    // The tap is handled: stop the browser's emulated click, which would land on a half-star div
+    // and turn a tap on the left half into x.5, or a long press on the right half back into a full star
+    e.preventDefault();
     setIsLongPress(false);
   };
 
@@ -174,7 +177,8 @@ export function StarRating({
                 return;
               }
 
-              const newValue = parseFloat(inputValue);
+              // Scores go in half steps, so 7.3 becomes 7.5 rather than a rating the server turns down
+              const newValue = Math.round(parseFloat(inputValue) * 2) / 2;
               if (!isNaN(newValue) && newValue >= 1 && newValue <= max) {
                 onChange(newValue);
               }

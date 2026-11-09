@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { median } from '@/lib/stats'
+import { tastingBeerPrice } from '@/lib/tastingPrice'
 
 export async function GET(
   request: NextRequest,
@@ -7,6 +9,11 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+
+    const tasting = await prisma.tasting.findUnique({ where: { id }, select: { status: true } })
+    if (!tasting) {
+      return NextResponse.json({ error: 'Tasting not found' }, { status: 404 })
+    }
 
     // Get all rated beers with their ratings and price info
     const tastingBeers = await prisma.tastingBeer.findMany({
@@ -35,17 +42,9 @@ export async function GET(
     })
 
     // Filter beers that have both ratings and price data
-    // Use the price snapshotted for this tasting; fall back to the catalog only when nothing was
-    // snapshotted, so a later catalog sync can't fill in a missing price/L with this year's price
+    // What each beer cost on the night (see tastingBeerPrice)
     const beersWithData = tastingBeers
-      .map(tb => {
-        const price = tb.priceISK != null || tb.pricePerLiter != null ? tb : tb.beer
-        return {
-          ...tb,
-          priceISK: price?.priceISK ?? null,
-          pricePerLiter: price?.pricePerLiter ?? null
-        }
-      })
+      .map(tb => ({ ...tb, ...tastingBeerPrice(tb, tasting.status) }))
       .filter(tb => tb.beer && tb.pricePerLiter && tb.ratings.length > 0)
       .map(tb => {
         const ratings = tb.ratings.map(r => r.score)
@@ -75,7 +74,8 @@ export async function GET(
     const prices = beersWithData.map(b => b.pricePerLiter)
     const ratings = beersWithData.map(b => b.averageRating)
 
-    const medianPrice = prices.sort((a, b) => a - b)[Math.floor(prices.length / 2)]
+    // The mean of the middle two on an even count, not the upper one
+    const medianPrice = median(prices)
     const avgPrice = prices.reduce((sum, p) => sum + p, 0) / prices.length
     const avgRating = ratings.reduce((sum, r) => sum + r, 0) / ratings.length
 
@@ -135,7 +135,8 @@ export async function GET(
     }
 
     // Top 25% rated beers price analysis
-    const top25Threshold = ratings.sort((a, b) => b - a)[Math.floor(ratings.length * 0.25)]
+    // The best quarter, at least one beer: with 4 beers that's the top one, not the top two
+    const top25Threshold = [...ratings].sort((a, b) => b - a)[Math.max(0, Math.ceil(ratings.length * 0.25) - 1)]
     const top25Beers = beersWithValue.filter(b => b.averageRating >= top25Threshold)
     const top25AvgPrice = top25Beers.reduce((sum, b) => sum + b.pricePerLiter, 0) / top25Beers.length
     const premiumGap = ((top25AvgPrice - avgPrice) / avgPrice) * 100

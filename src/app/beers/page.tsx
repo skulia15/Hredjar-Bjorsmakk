@@ -401,7 +401,7 @@ export default function BeersPage() {
                             {style}
                           </span>
                         ))}
-                        {beer.abv && (
+                        {beer.abv != null && (
                           <span className="px-2 py-1 bg-orange-500/10 text-orange-600 text-xs rounded">
                             {beer.abv}% ABV
                           </span>
@@ -533,7 +533,7 @@ export default function BeersPage() {
                       {style}
                     </span>
                   ))}
-                  {beer.abv && (
+                  {beer.abv != null && (
                     <span className="px-2 py-1 bg-orange-500/10 text-orange-600 text-xs rounded">
                       {beer.abv}% ABV
                     </span>

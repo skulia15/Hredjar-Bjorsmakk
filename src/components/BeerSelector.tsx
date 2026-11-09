@@ -190,7 +190,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                                   {style}
                                 </span>
                               ))}
-                              {beer.abv && (
+                              {beer.abv != null && (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-orange-500/10 text-orange-600">
                                   {beer.abv}%
                                 </span>
