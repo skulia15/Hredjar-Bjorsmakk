@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { lockTasting } from '@/lib/tastingLock';
+import { makeBeerCurrent } from '@/lib/currentBeer';
 import { setCurrentBeerSchema, validateInput } from '@/lib/validation';
 import { authErrorResponse, requireLeader } from '@/lib/auth';
 
@@ -32,63 +33,17 @@ export async function PATCH(
     // both see the same old current beer and leave two beers current
     const result = await prisma.$transaction(async (tx) => {
       await lockTasting(tx, id);
-
-      const tastingBeer = await tx.tastingBeer.findUnique({
-        where: { id: tastingBeerId }
-      });
-      if (!tastingBeer || tastingBeer.tastingId !== id) {
-        return { error: 'Beer not found', status: 404 } as const;
-      }
-      if (tastingBeer.status !== 'untasted') {
-        return { error: 'Beer must be untasted to set as current', status: 400 } as const;
-      }
-
-      const oldCurrent = await tx.tastingBeer.findFirst({
-        where: { tastingId: id, status: 'current' },
-        include: { _count: { select: { ratings: true } } }
-      });
-
-      if (oldCurrent) {
-        // Back to untasted would leak its scores (no longer the hidden beer) and lock out anyone
-        // who hadn't rated it yet, so a beer people have rated has to be finished instead
-        if (oldCurrent._count.ratings > 0) {
-          return { error: 'Ljúktu núverandi bjór fyrst, það er búið að gefa honum einkunn', status: 409 } as const;
-        }
-        await tx.tastingBeer.update({
-          where: { id: oldCurrent.id },
-          data: { status: 'untasted' }
-        });
-      }
-
-      // Set new current beer and record when it became current
-      await tx.tastingBeer.update({
-        where: { id: tastingBeerId },
-        data: {
-          status: 'current',
-          currentSince: new Date()
-        }
-      });
-
-      // Update tasting with new current beer and increment version
-      const tasting = await tx.tasting.update({
-        where: { id },
-        data: {
-          currentTastingBeerId: tastingBeerId,
-          version: { increment: 1 }
-        }
-      });
-
-      return { tasting };
+      return makeBeerCurrent(tx, id, tastingBeerId);
     });
 
-    if ('error' in result) {
+    if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
     return NextResponse.json({
       tastingId: id,
       currentBeerId: tastingBeerId, // Return as currentBeerId for backwards compatibility
-      version: result.tasting.version
+      version: result.version
     });
 
   } catch (error) {
