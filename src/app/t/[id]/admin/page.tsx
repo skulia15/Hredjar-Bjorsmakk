@@ -4,7 +4,7 @@ import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Beer as BeerIcon, ChevronDown, EyeOff, Hourglass, Trash2 } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
-import { BeerSelector } from '@/components/BeerSelector'
+import { BeerSelector, type CustomBeerData } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard'
 import { SlideToConfirm } from '@/components/SlideToConfirm'
@@ -75,9 +75,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
   usePolling(() => loadTasting(), 5000)
 
-  // Load beer catalog
+  // Load beer catalog - only beers Vínbúðin still lists can be added
   useEffect(() => {
-    fetch('/api/beers')
+    fetch('/api/beers?listed=1')
       .then(res => res.json())
       .then(data => setCatalogBeers(data.beers || []))
       .catch(err => console.error('Error loading beer catalog:', err))
@@ -99,25 +99,33 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
-  const handleSelectBeer = async (beerId: string) => {
+  // makeCurrent adds and pours in one step, so the leader can pick beers as the night goes
+  const addBeer = async (body: { beerId: string } | CustomBeerData, { makeCurrent }: { makeCurrent: boolean }) => {
     setMessage('')
     try {
       const response = await fetch(`/api/tastings/${params.id}/beers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ beerId })
+        body: JSON.stringify({ ...body, makeCurrent })
       })
 
-      if (!response.ok) throw new Error('Failed to add beer')
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        throw new Error(data?.error || 'Villa við að bæta við bjór')
+      }
 
-      setMessage('Beer added successfully!')
+      setMessage(makeCurrent ? 'Bjór bætt við og settur sem núverandi!' : 'Bjór bætt við!')
       setTimeout(() => setMessage(''), 3000)
-      loadTasting()
     } catch (error) {
-      setMessage('Error adding beer')
-      setTimeout(() => setMessage(''), 3000)
+      setMessage(error instanceof Error ? error.message : 'Villa við að bæta við bjór')
+      setTimeout(() => setMessage(''), 5000)
+    } finally {
+      // Another tab may have changed what's current
+      loadTasting()
     }
   }
+
+  const handleSelectBeer = (beerId: string, options: { makeCurrent: boolean }) => addBeer({ beerId }, options)
 
   const handleSelectMultipleBeers = async (beerIds: string[]) => {
     setMessage(`Bæti við ${beerIds.length} bjórum...`)
@@ -151,25 +159,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
-  const handleCreateCustom = async (data: { name: string; brewery: string; style?: string; abv?: number; productNumber?: string }) => {
-    setMessage('')
-    try {
-      const response = await fetch(`/api/tastings/${params.id}/beers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      })
-
-      if (!response.ok) throw new Error('Failed to add beer')
-
-      setMessage('Custom beer added successfully!')
-      setTimeout(() => setMessage(''), 3000)
-      loadTasting()
-    } catch (error) {
-      setMessage('Error adding custom beer')
-      setTimeout(() => setMessage(''), 3000)
-    }
-  }
+  const handleCreateCustom = (data: CustomBeerData, options: { makeCurrent: boolean }) => addBeer(data, options)
 
   const handleSetCurrent = async (beerId: string) => {
     try {
@@ -268,13 +258,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
   }
 
   const handleStartTasting = async () => {
-    // Check if there are any beers
-    if (!tasting || !tasting.beers || tasting.beers.length === 0) {
-      setMessage('Please add at least one beer before starting')
-      setTimeout(() => setMessage(''), 5000)
-      return
-    }
-
+    // Beers can be picked on the fly once it's going, so starting with none is fine
     try {
       // Start the tasting without automatically selecting a beer
       const response = await fetch(`/api/tastings/${params.id}`, {
@@ -285,7 +269,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
       if (!response.ok) throw new Error('Failed to start tasting')
 
-      setMessage('Smökkun hafin! Veldu núverandi bjór til að byrja.')
+      setMessage('Smökkun hafin! Leitaðu að bjór og settu hann sem núverandi.')
       setTimeout(() => setMessage(''), 5000)
       loadTasting()
     } catch (error) {
@@ -556,6 +540,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
                 onSelectBeer={handleSelectBeer}
                 onSelectMultipleBeers={handleSelectMultipleBeers}
                 onCreateCustom={handleCreateCustom}
+                canMakeCurrent={tasting.status === 'active' && !currentBeer}
               />
 
               {/* Finished Beers */}
@@ -595,18 +580,11 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
               {/* Tasting Controls */}
               <div className="bg-card p-4 rounded-lg border space-y-3">
                 <h3 className="font-semibold">Smökkunarstjórnun</h3>
-                {tasting.status === 'draft' && (!tasting.beers || tasting.beers.length === 0) && (
-                  <p className="text-sm text-muted-foreground">
-                    Bæta við að minnsta kosti einum bjór til að hefja smökkunina
-                  </p>
-                )}
                 <div className="flex gap-2 flex-wrap">
                   {tasting.status === 'draft' && (
                     <button
                       onClick={handleStartTasting}
-                      disabled={!tasting.beers || tasting.beers.length === 0}
-                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                      title={!tasting.beers || tasting.beers.length === 0 ? 'Bættu við bjórum fyrst' : 'Hefja smökkun'}
+                      className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                     >
                       Hefja smökkun
                     </button>

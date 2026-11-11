@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Search, Plus, ArrowLeft, Check } from 'lucide-react'
+import { Search, Plus, ArrowLeft, Check, Play } from 'lucide-react'
 import { BeerPlaceholder } from './BeerPlaceholder'
 import { beerImageSrc } from '@/lib/beerImage'
 
@@ -18,14 +18,24 @@ interface Beer {
   imageUrl?: string
 }
 
-interface BeerSelectorProps {
-  beers: Beer[]
-  onSelectBeer: (beerId: string) => void
-  onSelectMultipleBeers?: (beerIds: string[]) => void
-  onCreateCustom: (data: { name: string; brewery: string; style?: string; abv?: number; productNumber?: string }) => void
+export interface CustomBeerData {
+  name: string
+  brewery: string
+  style?: string
+  abv?: number
+  productNumber?: string
 }
 
-export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCreateCustom }: BeerSelectorProps) {
+interface BeerSelectorProps {
+  beers: Beer[]
+  onSelectBeer: (beerId: string, options: { makeCurrent: boolean }) => void
+  onSelectMultipleBeers?: (beerIds: string[]) => void
+  onCreateCustom: (data: CustomBeerData, options: { makeCurrent: boolean }) => void
+  // Shows "add and make current" so a leader can pick the next beer on the fly mid-tasting
+  canMakeCurrent?: boolean
+}
+
+export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCreateCustom, canMakeCurrent = false }: BeerSelectorProps) {
   const [mode, setMode] = useState<'catalog' | 'custom'>('catalog')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBeerIds, setSelectedBeerIds] = useState<Set<string>>(new Set())
@@ -61,14 +71,17 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
     })
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  // Only one beer can be current, so "add and make current" needs exactly one picked
+  const makeCurrentEnabled = canMakeCurrent && (mode === 'custom' ? !!customName && !!customBrewery : selectedBeerIds.size === 1)
+
+  const submit = (makeCurrent: boolean) => {
     if (mode === 'catalog') {
       if (selectedBeerIds.size > 0) {
+        if (makeCurrent && selectedBeerIds.size !== 1) return
         if (onSelectMultipleBeers && selectedBeerIds.size > 1) {
           onSelectMultipleBeers(Array.from(selectedBeerIds))
         } else if (selectedBeerIds.size === 1) {
-          onSelectBeer(Array.from(selectedBeerIds)[0])
+          onSelectBeer(Array.from(selectedBeerIds)[0], { makeCurrent })
         }
         // Reset
         setSelectedBeerIds(new Set())
@@ -82,7 +95,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
           style: customStyle || undefined,
           abv: customAbv ? parseFloat(customAbv) : undefined,
           productNumber: customProductNumber || undefined
-        })
+        }, { makeCurrent })
         // Reset
         setCustomName('')
         setCustomBrewery('')
@@ -92,6 +105,25 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
       }
     }
   }
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    submit(false)
+  }
+
+  const makeCurrentButton = canMakeCurrent && (
+    <button
+      type="button"
+      onClick={() => submit(true)}
+      disabled={!makeCurrentEnabled}
+      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+    >
+      <Play className="h-4 w-4" />
+      {mode === 'catalog' && selectedBeerIds.size > 1
+        ? 'Veldu einn bjór til að setja sem núverandi'
+        : 'Bæta við og setja sem núverandi'}
+    </button>
+  )
 
   return (
     <div className="bg-card border rounded-lg overflow-hidden">
@@ -259,6 +291,8 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               </div>
             )}
 
+            {makeCurrentButton}
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -266,7 +300,7 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
               className="w-full px-4 py-2.5 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
               {selectedBeerIds.size > 0
-                ? `Bæta við ${selectedBeerIds.size} bjór${selectedBeerIds.size !== 1 ? 'um' : ''}`
+                ? `Bæta við ${selectedBeerIds.size} bjór${selectedBeerIds.size !== 1 ? 'um' : ''}${canMakeCurrent ? ' í röðina' : ''}`
                 : `Veldu bjóra til að bæta við (${filteredBeers.length} tiltæk${filteredBeers.length !== 1 ? 'ir' : 'ur'})`
               }
             </button>
@@ -353,6 +387,8 @@ export function BeerSelector({ beers, onSelectBeer, onSelectMultipleBeers, onCre
                 </p>
               </div>
             </div>
+
+            {makeCurrentButton}
 
             <button
               type="submit"

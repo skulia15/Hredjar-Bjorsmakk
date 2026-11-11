@@ -70,6 +70,7 @@ model Beer {
   vinbudinUrl   String?  // Direct link to product page
   priceISK      Float?   // Price in Icelandic Króna
   pricePerLiter Float?   // Price per liter in ISK
+  listedOnVinbudin Boolean @default(false)  // In Vínbúðin's list at the last sync; only these can be added to a tasting
 
   // Metadata
   createdAt     DateTime @default(now())
