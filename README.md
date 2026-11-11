@@ -149,6 +149,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 ADMIN_EMAILS=you@example.com
+
+# Push nudges, optional (npx web-push generate-vapid-keys)
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+VAPID_SUBJECT=mailto:you@example.com
 ```
 
 See [`.env.example`](.env.example) for complete configuration.
@@ -268,6 +273,8 @@ Rating
 **Polling** — stateless, so it works across Vercel's serverless instances (an in-memory SSE broadcast only reaches clients connected to the same instance).
 - Pages poll their data endpoints every 3–5s (`GET /api/tastings/{id}`, `/scores`, `/current/pending-raters`, …)
 - Nudges are persisted on `Tasting.nudgedAt` / `Tasting.nudgedParticipantIds`; `useNudge` polls `GET /api/tastings/{id}/nudge` every 2s and fires when `nudgedAt` changes
+- Polling stops when a phone locks, so a nudge is also sent as a Web Push notification (`public/sw.js`) to every device of the pending participants that opted in on the rate page. Subscriptions are per user (`PushSubscription`), so one opt-in covers every tasting. On iPhone this only works from the home-screen app (iOS 16.4+); Safari shows the "Add to Home Screen" steps instead
+- The rate page keeps the screen awake (Wake Lock) while there's a beer left to rate, so it doesn't auto-lock mid-beer
 
 ### Consistency Target
 - All clients sync within **≤5 seconds**; nudges within **≤2 seconds**
