@@ -3,10 +3,12 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
 
 /**
- * - unsupported: this browser can't do web push (or the server has no keys); nothing to offer
+ * - unsupported: this browser can't do web push, the server has no keys, or it's the projector's
+ *   iframe; nothing to offer
  * - needs-install: iPhone/iPad Safari, where push only works once the app is on the home screen
  * - denied: notifications blocked in the browser's settings
- * - off / on: whether this device gets nudges as notifications
+ * - off: not allowed yet, so worth asking
+ * - on: this device gets nudges as notifications
  */
 export type PushNudgeState = 'checking' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
 
@@ -24,6 +26,8 @@ function isStandalone(): boolean {
 type Support = 'supported' | 'needs-install' | 'unsupported'
 
 function getSupport(): Support {
+  // Inside the projector's iframe: that screen isn't anyone's phone
+  if (window.self !== window.top) return 'unsupported'
   if (VAPID_PUBLIC_KEY && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window) {
     return 'supported'
   }
@@ -49,9 +53,23 @@ function saveSubscription(subscription: PushSubscription) {
   })
 }
 
+/** Needs notification permission already granted; then no user gesture is required */
+async function subscribe(registration: ServiceWorkerRegistration, publicKey: string) {
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(publicKey),
+  })
+  const response = await saveSubscription(subscription)
+  if (!response.ok) {
+    await subscription.unsubscribe()
+    throw new Error(`Saving subscription failed: ${response.status}`)
+  }
+}
+
 /**
- * Nudges as push notifications, so they reach a locked phone. Opt-in per device; the
- * subscription belongs to the signed-in user, so it covers every tasting they join.
+ * Nudges as push notifications, so they reach a locked phone. The subscription belongs to the
+ * signed-in user, so it covers every tasting they join. Once notifications are allowed there's
+ * nothing to ask: a missing subscription is made again without bothering anyone.
  */
 export function usePushNudges() {
   const support = useSyncExternalStore(neverChanges, getSupport, () => null)
@@ -59,25 +77,32 @@ export function usePushNudges() {
   const [busy, setBusy] = useState(false)
 
   useEffect(() => {
-    if (support !== 'supported') return
+    if (support !== 'supported' || !VAPID_PUBLIC_KEY) return
+    const publicKey = VAPID_PUBLIC_KEY
 
     let cancelled = false
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => registration.pushManager.getSubscription())
-      .then(subscription => {
-        if (cancelled) return
-        if (subscription) {
-          setState('on')
+    ;(async () => {
+      try {
+        const registration = await navigator.serviceWorker.register('/sw.js')
+        const existing = await registration.pushManager.getSubscription()
+        if (existing) {
           // Re-link on every visit: covers a device that changed accounts or a lost server row
-          void saveSubscription(subscription).catch(() => {})
-        } else {
-          setState(Notification.permission === 'denied' ? 'denied' : 'off')
+          void saveSubscription(existing).catch(() => {})
+          if (!cancelled) setState('on')
+          return
         }
-      })
-      .catch(error => {
+        if (Notification.permission === 'granted') {
+          // Allowed before, but the subscription is gone (cleared site data, expired): renew it quietly
+          await subscribe(await navigator.serviceWorker.ready, publicKey)
+          if (!cancelled) setState('on')
+          return
+        }
+        if (!cancelled) setState(Notification.permission === 'denied' ? 'denied' : 'off')
+      } catch (error) {
         console.error('[Push] Service worker setup failed:', error)
         if (!cancelled) setState('unsupported')
-      })
+      }
+    })()
     return () => {
       cancelled = true
     }
@@ -93,16 +118,7 @@ export function usePushNudges() {
         setState(permission === 'denied' ? 'denied' : 'off')
         return
       }
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      })
-      const response = await saveSubscription(subscription)
-      if (!response.ok) {
-        await subscription.unsubscribe()
-        throw new Error(`Saving subscription failed: ${response.status}`)
-      }
+      await subscribe(await navigator.serviceWorker.ready, VAPID_PUBLIC_KEY)
       setState('on')
     } catch (error) {
       console.error('[Push] Enabling failed:', error)
@@ -111,29 +127,8 @@ export function usePushNudges() {
     }
   }, [])
 
-  const disable = useCallback(async () => {
-    setBusy(true)
-    try {
-      const registration = await navigator.serviceWorker.ready
-      const subscription = await registration.pushManager.getSubscription()
-      if (subscription) {
-        await fetch('/api/push/subscriptions', {
-          method: 'DELETE',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ endpoint: subscription.endpoint }),
-        })
-        await subscription.unsubscribe()
-      }
-      setState('off')
-    } catch (error) {
-      console.error('[Push] Disabling failed:', error)
-    } finally {
-      setBusy(false)
-    }
-  }, [])
-
   const state: PushNudgeState = support === null ? 'checking'
     : support === 'supported' ? subscriptionState
     : support
-  return { state, busy, enable, disable }
+  return { state, busy, enable }
 }
