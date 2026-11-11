@@ -67,9 +67,15 @@ export default function RootLayout({
       }}
     >
     <html lang="is">
-      <body className={`${bricolage.variable} font-sans min-h-screen flex flex-col`} suppressHydrationWarning>
+      <body className={`${bricolage.variable} font-sans min-h-dvh flex flex-col`} suppressHydrationWarning>
         <Providers>
           <AppHeader />
+          {/*
+            iOS 26 Safari fades whatever sits under the status bar unless a solid fixed element touches the top edge,
+            and the phone header scrolls away. This strip gives Safari a solid colour to sample; it is header-coloured and
+            only as tall as the header's top padding, so it's invisible until you scroll.
+          */}
+          <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 z-50 h-1 bg-background sm:hidden" />
           <main className="flex-1">
             {children}
           </main>

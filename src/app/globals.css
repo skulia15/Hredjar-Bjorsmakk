@@ -181,3 +181,9 @@
   .santa-mug-bubble { display: none; }
   .xmas-snowflake { display: none; }
 }
+
+/* A page that fills the space under the header (the home page) gets main as a flex column to grow into */
+main:has(> [data-fill-main]) {
+  display: flex;
+  flex-direction: column;
+}

@@ -22,6 +22,8 @@ const config = {
       },
     },
     extend: {
+      // Phones in landscape or with the browser bars showing: tighten layouts that must fit one screen
+      screens: { short: { raw: '(max-height: 800px)' }, tiny: { raw: '(max-height: 700px)' } },
       textColor: {
         primary: {
           DEFAULT: "hsl(var(--primary-ink))",
