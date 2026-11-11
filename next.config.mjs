@@ -27,6 +27,14 @@ const nextConfig = {
           },
         ],
       },
+      {
+        // Browsers must always fetch the latest service worker, or a fix to it never lands
+        source: '/sw.js',
+        headers: [
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+        ],
+      },
     ]
   },
 };

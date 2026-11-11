@@ -10,6 +10,8 @@ import { FoamCard } from "@/components/FoamCard";
 import { LeaderboardWaiting } from "@/components/LeaderboardWaiting";
 import { NudgeNotification } from "@/components/NudgeNotification";
 import { useNudge } from "@/hooks/useNudge";
+import { useWakeLock } from "@/hooks/useWakeLock";
+import { PushNudgeToggle } from "@/components/PushNudgeToggle";
 import { useActiveTasting } from "@/hooks/useActiveTasting";
 import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
@@ -322,6 +324,10 @@ export default function RatePage({
 	// The beer check keeps the last beer's lock from carrying over before the next poll
 	const ratingLocked =
 		hasRated && !!ratingStats?.ratingsLocked && ratingStats.beerId === currentBeer?.id;
+
+	// Keep the screen on while there's a beer left to rate, so a nudge isn't missed to auto-lock.
+	// Not in the projector's iframe, which keeps its own screen awake
+	useWakeLock(!isEmbedded && tasting?.status === "active" && !!currentBeer && !hasRated);
 
 	// Flavor tags save on every tap, apart from the rating: tagging never submits a score.
 	// Saves go one at a time so a slow request can't land after a newer one
@@ -970,6 +976,8 @@ export default function RatePage({
 						)}
 					</div>
 				)}
+
+				{!isEmbedded && <PushNudgeToggle />}
 
 				{/* Leader Controls */}
 				{!isEmbedded && tasting.currentUserIsLeader && currentBeer && (

@@ -22,8 +22,23 @@ model User {
   createdAt      DateTime      @default(now())
 
   participations Participant[]
+  pushSubscriptions PushSubscription[]
 
   @@index([name])
+}
+
+// A device that gets nudges as push notifications, even with the screen locked.
+// Per user, not per participant, so one opt-in covers every tasting on that device
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique  // Push service URL; identifies the device's subscription
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // Per-tasting participation

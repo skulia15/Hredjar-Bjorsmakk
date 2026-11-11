@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authErrorResponse, requireParticipantOrLeader } from '@/lib/auth'
+import { pushToParticipants } from '@/lib/push'
 
 /**
  * GET /api/tastings/{id}/nudge
@@ -59,6 +60,10 @@ export async function POST(
       where: { id },
       select: {
         currentTastingBeerId: true,
+        tastingBeers: {
+          where: { status: 'current' },
+          select: { id: true, customName: true, beer: { select: { name: true } } }
+        },
         participants: {
           where: {
             active: true,  // Only include active participants
@@ -110,6 +115,17 @@ export async function POST(
         nudgedAt: new Date(),
         nudgedParticipantIds: pendingParticipantIds
       }
+    })
+
+    // Reaches phones that are locked or have the app closed; open screens get it via polling too.
+    // Awaited, not fire-and-forget: a serverless function can be frozen right after it responds
+    const currentBeer = tasting.tastingBeers.find(b => b.id === tasting.currentTastingBeerId)
+    const beerName = currentBeer?.beer?.name ?? currentBeer?.customName
+    await pushToParticipants(pendingParticipantIds, {
+      title: 'Drífa sig! 🍺',
+      body: beerName ? `Þú átt eftir að gefa ${beerName} einkunn` : 'Þú átt eftir að gefa einkunn',
+      url: `/t/${id}/rate`,
+      tag: `nudge-${id}`
     })
 
     return NextResponse.json({

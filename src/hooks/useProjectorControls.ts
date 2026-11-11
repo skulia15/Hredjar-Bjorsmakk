@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { setSoundEnabled } from '@/lib/sounds'
+import { useWakeLock } from './useWakeLock'
 
 const SOUND_KEY = 'projector_sound'
 const TAGS_KEY = 'projector_tags'
@@ -37,21 +38,7 @@ export function useProjectorControls() {
     return () => document.removeEventListener('fullscreenchange', onChange)
   }, [])
 
-  useEffect(() => {
-    if (!('wakeLock' in navigator)) return
-    let lock: WakeLockSentinel | null = null
-    const acquire = () => {
-      if (document.visibilityState !== 'visible') return
-      navigator.wakeLock.request('screen').then(l => { lock = l }).catch(() => {})
-    }
-    // The browser releases the lock whenever the tab is hidden
-    acquire()
-    document.addEventListener('visibilitychange', acquire)
-    return () => {
-      document.removeEventListener('visibilitychange', acquire)
-      void lock?.release()
-    }
-  }, [])
+  useWakeLock()
 
   const toggleFullscreen = useCallback(() => {
     if (document.fullscreenElement) void document.exitFullscreen()
