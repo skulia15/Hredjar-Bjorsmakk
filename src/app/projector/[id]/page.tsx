@@ -459,40 +459,46 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     engagementStats?.fastestRater && {
       icon: Rocket,
       label: 'Hraðastur',
+      accent: '#F2A93B',
       name: engagementStats.fastestRater.userName,
       detail: `⌀ ${engagementStats.fastestRater.averageMinutes} mín`,
     },
     engagementStats?.slowestRater && {
       icon: Snail,
       label: 'Hægastur',
+      accent: '#CFE0D3',
       name: engagementStats.slowestRater.userName,
       detail: `⌀ ${engagementStats.slowestRater.averageMinutes} mín`,
     },
     engagementStats?.mostGenerous && {
       icon: Gift,
       label: 'Rausnarlegastur',
+      accent: '#E2575E',
       name: engagementStats.mostGenerous.userName,
       detail: `⌀ ${engagementStats.mostGenerous.averageRating.toFixed(2)}`,
     },
     engagementStats?.toughestCritic && {
       icon: Search,
       label: 'Strangastur',
+      accent: '#8EC5A8',
       name: engagementStats.toughestCritic.userName,
       detail: `⌀ ${engagementStats.toughestCritic.averageRating.toFixed(2)}`,
     },
     engagementStats?.mostDeviant && {
       icon: Target,
       label: 'Útlaginn',
+      accent: '#F6E3BC',
       name: engagementStats.mostDeviant.userName,
       detail: `${engagementStats.mostDeviant.deviation > 0 ? '+' : ''}${engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali`,
     },
     totalRatingsGiven > 0 && {
       icon: Star,
       label: 'Einkunnir alls',
+      accent: '#F2A93B',
       name: String(totalRatingsGiven),
       detail: null,
     },
-  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; name: string; detail: string | null }>
+  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; accent: string; name: string; detail: string | null }>
 
   return (
     <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-4 2xl:gap-6 px-3 pt-3 pb-3 lg:px-4 2xl:px-8 2xl:pt-5 2xl:pb-6">
@@ -814,15 +820,28 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       {statTiles.length > 0 && !expanded && (
         <footer aria-label="Tölfræði" className="grid grid-cols-2 lg:grid-cols-6 gap-4 relative animate-in fade-in duration-700">
           {statTiles.map((tile) => (
-            <div key={tile.label} className="flex items-center gap-3.5 px-5 py-4 rounded-[20px] bg-pine-deep min-w-0">
-              <span className="w-12 h-12 shrink-0 rounded-[14px] bg-pine-light flex items-center justify-center">
-                <tile.icon className="h-6 w-6 text-gold" />
+            // Medal tile: each award wears its own accent on the top edge, ring and label
+            <div
+              key={tile.label}
+              className="flex flex-col items-center justify-center text-center gap-1.5 px-4 pt-4 pb-3.5 rounded-[20px] bg-pine-deep border-t-4 border-t-[var(--acc)] min-w-0"
+              style={{ '--acc': tile.accent } as React.CSSProperties}
+            >
+              <span className="w-12 h-12 2xl:w-14 2xl:h-14 shrink-0 mb-1 rounded-full border-2 border-[var(--acc)] bg-[color-mix(in_srgb,var(--acc)_14%,transparent)] text-[var(--acc)] flex items-center justify-center">
+                <tile.icon className="h-6 w-6" />
               </span>
-              <span className="flex flex-col min-w-0">
-                <span className="text-base text-mint">{tile.label}</span>
-                <span className="text-2xl font-extrabold truncate">{tile.name}</span>
-                {tile.detail && <span className="text-sm text-mint truncate">{tile.detail}</span>}
-              </span>
+              {tile.detail ? (
+                <>
+                  <span className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--acc)] max-w-full truncate">{tile.label}</span>
+                  <span className="text-2xl font-extrabold max-w-full truncate">{tile.name}</span>
+                  <span className="text-sm text-mint tabular-nums max-w-full truncate">{tile.detail}</span>
+                </>
+              ) : (
+                // A plain count: the number leads, the label sits under it
+                <>
+                  <span className="text-4xl font-extrabold tabular-nums">{tile.name}</span>
+                  <span className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--acc)] max-w-full truncate">{tile.label}</span>
+                </>
+              )}
             </div>
           ))}
         </footer>
