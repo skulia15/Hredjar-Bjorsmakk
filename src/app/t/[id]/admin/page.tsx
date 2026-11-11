@@ -75,9 +75,9 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
 
   usePolling(() => loadTasting(), 5000)
 
-  // Load beer catalog
+  // Load beer catalog - only beers Vínbúðin still lists can be added
   useEffect(() => {
-    fetch('/api/beers')
+    fetch('/api/beers?listed=1')
       .then(res => res.json())
       .then(data => setCatalogBeers(data.beers || []))
       .catch(err => console.error('Error loading beer catalog:', err))

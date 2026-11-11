@@ -14,6 +14,7 @@ export const dynamic = 'force-dynamic'
  * - style: Filter by style (optional)
  * - country: Filter by country (optional)
  * - limit: Number of results (optional; the whole catalog when left out)
+ * - listed: "1" to only return beers Vínbúðin listed at the last sync (optional)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +22,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const style = searchParams.get('style')
     const country = searchParams.get('country')
+    const listedOnly = searchParams.get('listed') === '1'
     // The admin picker and catalog page want every beer; a bad or missing limit means no limit
     const requestedLimit = Number.parseInt(searchParams.get('limit') ?? '', 10)
     const limit = requestedLimit > 0 ? requestedLimit : undefined
@@ -40,6 +42,10 @@ export async function GET(request: NextRequest) {
 
     if (country) {
       where.country = { contains: country, mode: 'insensitive' }
+    }
+
+    if (listedOnly) {
+      where.listedOnVinbudin = true
     }
 
     const beers = await prisma.beer.findMany({
@@ -63,7 +69,8 @@ export async function GET(request: NextRequest) {
         productNumber: true,
         vinbudinUrl: true,
         priceISK: true,
-        pricePerLiter: true
+        pricePerLiter: true,
+        listedOnVinbudin: true
       }
     })
 

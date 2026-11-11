@@ -4,7 +4,7 @@
  * - Updates price, price per liter, product URL and image on existing beers
  * - Fills in missing metadata (brewery, size, container, ABV, country, styles) without overwriting curated values
  * - Adds beers that are missing
- * - Never removes beers
+ * - Never removes beers; marks those missing from the list as not listed (hidden from the tasting beer picker)
  * Run with: DATABASE_URL="your-db-url" npx tsx scripts/sync-all-beers-with-vinbudin.ts [--dry-run]
  */
 
@@ -131,6 +131,8 @@ async function syncBeers(vinbudinBeers: VinbudinBeer[], dryRun: boolean) {
   let unchanged = 0
   const errors: string[] = []
   const deferred: { id: string; data: Record<string, unknown>; label: string }[] = []
+  // Rows Vínbúðin lists; matched by id since a name-fallback match may carry a stale product number
+  const listedIds = new Set<string>()
 
   for (const vinBeer of vinbudinBeers) {
     const label = `${vinBeer.name} (${vinBeer.brewery}) - ${vinBeer.containerSize}ml ${vinBeer.containerType} #${vinBeer.productNumber}`
@@ -146,12 +148,14 @@ async function syncBeers(vinbudinBeers: VinbudinBeer[], dryRun: boolean) {
           b.containerType === vinBeer.containerType
       )
 
+    if (existing) listedIds.add(existing.id)
+
     try {
       if (!existing) {
         const styles = await fetchStyles(vinBeer.productNumber)
         console.log(`➕ ADD: ${label}, ${vinBeer.priceISK} kr${styles.length ? `, ${styles.join(' / ')}` : ''}`)
         if (!dryRun) {
-          await prisma.beer.create({ data: { ...vinBeer, styles } })
+          await prisma.beer.create({ data: { ...vinBeer, styles, listedOnVinbudin: true } })
         }
         added++
         continue
@@ -171,6 +175,7 @@ async function syncBeers(vinbudinBeers: VinbudinBeer[], dryRun: boolean) {
       set('pricePerLiter', existing.pricePerLiter, vinBeer.pricePerLiter)
       set('productNumber', existing.productNumber, vinBeer.productNumber)
       set('vinbudinUrl', existing.vinbudinUrl, vinBeer.vinbudinUrl)
+      set('listedOnVinbudin', existing.listedOnVinbudin, true)
       if (!existing.imageUrl) set('imageUrl', existing.imageUrl, vinBeer.imageUrl)
 
       // Vínbúðin is authoritative on packaging (older scrapes stored wrong sizes)
@@ -219,14 +224,21 @@ async function syncBeers(vinbudinBeers: VinbudinBeer[], dryRun: boolean) {
     }
   }
 
-  const syncedIds = new Set(vinbudinBeers.map((b) => b.productNumber))
-  const notOnVinbudin = existingBeers.filter((b) => !syncedIds.has(normalizeProductNumber(b.productNumber)))
+  const notOnVinbudin = existingBeers.filter((b) => !listedIds.has(b.id))
+  const delisted = notOnVinbudin.filter((b) => b.listedOnVinbudin)
+  delisted.forEach((b) => console.log(`🚫 DELIST: ${b.name} (${b.brewery}) #${b.productNumber ?? '∅'}`))
+  if (!dryRun && delisted.length > 0) {
+    await prisma.beer.updateMany({
+      where: { id: { in: delisted.map((b) => b.id) } },
+      data: { listedOnVinbudin: false },
+    })
+  }
 
   console.log(`\n📊 Summary:`)
   console.log(`   Added: ${added}`)
   console.log(`   Updated: ${updated}`)
   console.log(`   Unchanged: ${unchanged}`)
-  console.log(`   Kept (not in Vínbúðin Christmas list): ${notOnVinbudin.length}`)
+  console.log(`   Not listed (hidden from tasting picker): ${notOnVinbudin.length} (${delisted.length} newly delisted)`)
   if (errors.length > 0) {
     console.log(`   Errors: ${errors.length}`)
     errors.forEach((e) => console.log(`     - ${e}`))
@@ -241,6 +253,8 @@ async function main() {
     console.log('🔍 Fetching Christmas beers from Vínbúðin...')
     const vinbudinBeers = await fetchChristmasBeers()
     console.log(`✅ Found ${vinbudinBeers.length} beers\n`)
+    // An empty result is an outage or API change, not every beer leaving the shelves
+    if (vinbudinBeers.length === 0) throw new Error('Vínbúðin returned no beers - refusing to delist the whole catalog')
 
     await syncBeers(vinbudinBeers, dryRun)
     console.log('\n✨ Done!')
