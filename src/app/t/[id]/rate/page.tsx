@@ -11,7 +11,7 @@ import { LeaderboardWaiting } from "@/components/LeaderboardWaiting";
 import { NudgeNotification } from "@/components/NudgeNotification";
 import { useNudge } from "@/hooks/useNudge";
 import { useWakeLock } from "@/hooks/useWakeLock";
-import { PushNudgeToggle } from "@/components/PushNudgeToggle";
+import { NotificationPrompt } from "@/components/NotificationPrompt";
 import { useActiveTasting } from "@/hooks/useActiveTasting";
 import { fetchTasting } from "@/lib/fetchTasting";
 import { SlideToConfirm } from "@/components/SlideToConfirm";
@@ -153,7 +153,18 @@ const getCountryFlag = (country: string): string => {
 	return flagMap[country] || "🌍";
 };
 
-export default function RatePage({
+// The prompt sits outside the page's many screens (waiting, rating, leaderboard), so moving
+// between beers doesn't bring a dismissed one back
+export default function RatePage(props: { params: Promise<{ id: string }> }) {
+	return (
+		<>
+			<RatePageContent {...props} />
+			<NotificationPrompt />
+		</>
+	);
+}
+
+function RatePageContent({
 	params: paramsPromise,
 }: {
 	params: Promise<{ id: string }>;
@@ -976,8 +987,6 @@ export default function RatePage({
 						)}
 					</div>
 				)}
-
-				{!isEmbedded && <PushNudgeToggle />}
 
 				{/* Leader Controls */}
 				{!isEmbedded && tasting.currentUserIsLeader && currentBeer && (
