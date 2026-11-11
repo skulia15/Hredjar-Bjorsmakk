@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 
 export interface TickerNote {
@@ -9,43 +9,76 @@ export interface TickerNote {
   note: string
 }
 
-const ROTATE_MS = 7000
+const PAGE_MS = 8000
 
 /**
- * One rating note at a time, rotating through the newest few. A single bubble keeps the
- * current-beer card from overflowing on a 1080p projector, however many notes come in.
+ * Rating notes, stacked so a few read at once from across the room. Shows as many as fit whole
+ * in the height it's given; when there are more, it pages through them all, newest first.
  */
-export function NoteTicker({ notes }: { notes: TickerNote[] }) {
-  const [index, setIndex] = useState(0)
+export function NoteStack({ notes }: { notes: TickerNote[] }) {
+  const listRef = useRef<HTMLUListElement>(null)
+  const [start, setStart] = useState(0)
+  // How many whole notes fit, measured from the list itself
+  const [perPage, setPerPage] = useState(notes.length)
 
+  const count = notes.length
+  const first = count > 0 ? start % count : 0
+  // From the current page on, wrapping round, so the last page is topped up with the first notes
+  const ordered = [...notes.slice(first), ...notes.slice(0, first)]
+
+  // Hide the notes that would be cut off, and remember how many fit for paging
+  useLayoutEffect(() => {
+    const list = listRef.current
+    if (!list) return
+    const measure = () => {
+      const items = [...list.children] as HTMLElement[]
+      items.forEach(item => { item.style.display = '' })
+      let fitting = 0
+      for (const item of items) {
+        if (item.offsetTop + item.offsetHeight > list.clientHeight + 1) break
+        fitting++
+      }
+      // Always show one, clamped, rather than none
+      const shown = Math.max(1, fitting)
+      items.forEach((item, i) => { item.style.display = i < shown ? '' : 'none' })
+      setPerPage(previous => (previous === shown ? previous : shown))
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(list)
+    return () => observer.disconnect()
+  })
+
+  // Page through the rest when they don't all fit
   useEffect(() => {
-    if (notes.length < 2) return
-    const timer = setInterval(() => setIndex(i => i + 1), ROTATE_MS)
+    if (count <= perPage) return
+    const timer = setInterval(() => setStart(s => s + perPage), PAGE_MS)
     return () => clearInterval(timer)
-  }, [notes.length])
+  }, [count, perPage])
 
-  if (notes.length === 0) return null
-  const current = notes[index % notes.length]
+  if (count === 0) return null
+  const paging = count > perPage
 
   return (
-    <figure
-      // Remount per note so each one fades in
-      key={current.key}
-      className="w-full flex items-center gap-3.5 rounded-2xl rounded-bl-sm bg-cream px-4 py-3 text-left text-ink animate-in fade-in slide-in-from-bottom-2 duration-700"
-    >
-      <ParticipantAvatar
-        avatar={current.avatar}
-        seed={current.key}
-        className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm"
-      />
-      <div className="min-w-0 flex-1">
-        <blockquote className="text-xl 2xl:text-2xl leading-snug line-clamp-3">„{current.note}“</blockquote>
-        {notes.length > 1 && (
-          <figcaption className="mt-1 text-right text-base tabular-nums text-ink-soft" aria-hidden>
-            {(index % notes.length) + 1}/{notes.length}
-          </figcaption>
-        )}
-      </div>
-    </figure>
+    <div className="flex-1 min-h-0 flex flex-col gap-2">
+      {/* relative: the notes' offsetTop is measured from the list, not the page grid */}
+      <ul ref={listRef} className="relative flex-1 min-h-0 overflow-hidden flex flex-col gap-3">
+        {ordered.map(note => (
+          <li
+            // By author and page: a new page fades in, but a new note arriving doesn't replay the others
+            key={`${note.key}-${paging ? first : 0}`}
+            className="shrink-0 flex items-start gap-3.5 rounded-2xl rounded-bl-sm bg-cream px-4 py-3 text-ink animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
+            <ParticipantAvatar avatar={note.avatar} seed={note.key} className="w-11 h-11 2xl:w-12 2xl:h-12 shrink-0 shadow-sm" />
+            <blockquote className="min-w-0 flex-1 text-xl 2xl:text-[1.65rem] font-semibold leading-snug line-clamp-3">„{note.note}“</blockquote>
+          </li>
+        ))}
+      </ul>
+      {paging && (
+        <span className="shrink-0 text-right text-base font-semibold text-mint tabular-nums">
+          {first + 1}–{Math.min(first + perPage, count)} af {count}
+        </span>
+      )}
+    </div>
   )
 }

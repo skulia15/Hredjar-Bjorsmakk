@@ -27,7 +27,8 @@ export function ProgressStrip({ beers, currentBeerId }: { beers: ProgressBeer[];
               i < finished
                 ? 'bg-cranberry'
                 : i === finished && currentBeerId
-                  ? 'bg-gold animate-pulse'
+                  // A slow glow, not Tailwind's 2s pulse, which blinked too hard for a strip on screen all night
+                  ? 'bg-gold progress-glow'
                   : 'bg-pine-line'
             }`}
           />

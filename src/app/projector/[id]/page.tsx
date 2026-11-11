@@ -1,8 +1,7 @@
 'use client'
 
 import { use, useState, useEffect, useCallback, useRef } from 'react'
-import Image from 'next/image'
-import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { useProjectorControls } from '@/hooks/useProjectorControls'
@@ -10,8 +9,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, generousAndHarsh, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { ArrowDown, ArrowUp, Beer as BeerIcon, Coffee, Crown, EyeOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
-import { BeerPlaceholder } from '@/components/BeerPlaceholder'
+import { Beer as BeerIcon, Coffee, Crown, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
@@ -19,15 +17,12 @@ import { JoinQrCode } from '@/components/JoinQrCode'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { AnimatedLeaderboard } from '@/components/projector/AnimatedLeaderboard'
 import { BeerFinishedReveal, type FinishedBeerReveal } from '@/components/projector/BeerFinishedReveal'
-import { CountUp } from '@/components/projector/CountUp'
 import { LobbyParticipants, type LobbyParticipant } from '@/components/projector/LobbyParticipants'
-import { NoteTicker } from '@/components/projector/NoteTicker'
+import { NoteStack } from '@/components/projector/NoteTicker'
+import { CurrentBeerPanel } from '@/components/projector/CurrentBeerPanel'
 import { ProgressStrip } from '@/components/projector/ProgressStrip'
 import { ScoreRevealPanel } from '@/components/projector/ScoreRevealPanel'
-import { ScoreBars } from '@/components/projector/ScoreBars'
 import { SelectedBeerPanel, type SelectedBeerRating } from '@/components/projector/SelectedBeerPanel'
-import { TagCloud } from '@/components/projector/TagCloud'
-import { beerImageSrc } from '@/lib/beerImage'
 
 interface Beer {
   id: string
@@ -415,12 +410,12 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // Calculate current beer stats
   const currentBeerRatings = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { score: number } => r.score !== null)
-  // Ratings come newest first: the ticker rotates through the five newest notes, the
-  // full-width reveal lays out the six newest
+  // Ratings come newest first: the right column pages through all of them, the full-width
+  // reveal lays out the six newest
   const allNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
     .map(r => ({ key: r.participantId, avatar: r.avatar, note: r.note.trim() }))
-  const beerNotes = allNotes.slice(0, 5)
+  const beerNotes = allNotes
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
     : null
@@ -501,6 +496,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   ].filter(Boolean) as Array<{ icon: typeof Star; label: string; accent: string; name: string; detail: string | null }>
 
   return (
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-4 2xl:gap-6 px-3 pt-3 pb-3 lg:px-4 2xl:px-8 2xl:pt-5 2xl:pb-6">
       {/* Awards reveal once the tasting is closed */}
       {showingAwards && (
@@ -599,24 +595,59 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           as="section"
           aria-label="Núverandi bjór"
           size="lg"
-          className={`flex flex-col items-center gap-2 overflow-y-auto ${
+          // relative: the outgoing panel is pinned in place here while it crossfades out
+          className={`relative flex flex-col items-center gap-2 overflow-y-auto ${
             expanded ? 'px-12 pt-5 pb-8 gap-5 2xl:gap-7 text-left' : 'px-6 pt-4 pb-4 text-center'
           }`}
         >
-          {expanded ? (
-            <ScoreRevealPanel
-              // Remount per beer and on the reveal, so the average counts up and the bars grow in
-              key={`reveal-${currentBeer.id}-${justRevealed ? 'revealed' : 'done'}`}
-              beer={currentBeer}
-              scores={currentBeerRatings.map(r => r.score)}
-              average={liveAverage}
-              bestGuess={bestGuess}
-              tags={pendingRaters.tags}
-              raters={pendingRaters.ratedCount}
-              notes={allNotes.slice(0, 6)}
-              justRevealed={justRevealed}
-              showTags={tagsOn}
-            />
+          {currentBeer && (expanded || !selectedScore) ? (
+            // Everyone rated: a crossfade while the side columns fold. The outgoing card is pinned
+            // where it was (popLayout) and fades as the reveal rises in over it, so the card is
+            // never blank; the reveal's slight delay keeps most of its reflow out of sight.
+            // Reverses the same way when the next beer comes on
+            <AnimatePresence mode="popLayout" initial={false}>
+              {expanded ? (
+                <motion.div
+                  key={`reveal-${currentBeer.id}`}
+                  className="w-full flex-1 min-h-0 flex flex-col gap-5 2xl:gap-7"
+                  initial={{ opacity: 0, y: 28 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.15, duration: 0.6, ease: 'easeOut' } }}
+                  exit={{ opacity: 0, transition: { duration: 0.35 } }}
+                >
+                  <ScoreRevealPanel
+                    // Remount per beer and on the reveal, so the average counts up and the bars grow in
+                    key={`reveal-${currentBeer.id}-${justRevealed ? 'revealed' : 'done'}`}
+                    beer={currentBeer}
+                    scores={currentBeerRatings.map(r => r.score)}
+                    average={liveAverage}
+                    bestGuess={bestGuess}
+                    tags={pendingRaters.tags}
+                    raters={pendingRaters.ratedCount}
+                    notes={allNotes.slice(0, 6)}
+                    justRevealed={justRevealed}
+                    showTags={tagsOn}
+                  />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key={`live-${currentBeer.id}`}
+                  className="w-full flex-1 min-h-0 flex flex-col"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1, transition: { delay: 0.15, duration: 0.45 } }}
+                  exit={{ opacity: 0, scale: 0.97, transition: { duration: 0.45 } }}
+                >
+                  <CurrentBeerPanel
+                    beer={currentBeer}
+                    scoresHidden={!!pendingRaters?.scoresHidden}
+                    ratedCount={pendingRaters?.ratedCount ?? 0}
+                    scores={currentBeerRatings.map(r => r.score)}
+                    average={liveAverage}
+                    tags={pendingRaters?.tags ?? []}
+                    showTags={tagsOn}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
           ) : selectedScore ? (
             <SelectedBeerPanel
               key={selectedScore.beerId}
@@ -629,96 +660,6 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               backLabel={currentBeer ? 'Núverandi bjór' : 'Til baka'}
               onBack={() => setSelectedBeerId(null)}
             />
-          ) : currentBeer ? (
-            <>
-              <div className="text-xl font-extrabold tracking-[0.18em] uppercase text-cranberry">Núverandi bjór</div>
-              {/* Image beside the name, not above it: the card needs the height for the bars and tags */}
-              <div key={currentBeer.id} className="flex items-center justify-center gap-6 text-left animate-in fade-in zoom-in-95 duration-500">
-                <div className="beer-bob w-24 h-24 2xl:w-32 2xl:h-32 shrink-0 rounded-full bg-gold-soft flex items-center justify-center overflow-hidden">
-                  {currentBeer.imageUrl ? (
-                    <Image
-                      src={beerImageSrc(currentBeer.imageUrl)}
-                      alt={currentBeer.name}
-                      width={160}
-                      height={160}
-                      className="object-contain max-h-[80%] w-auto"
-                    />
-                  ) : (
-                    <BeerPlaceholder className="h-3/4 w-auto text-[#7A3B12]" />
-                  )}
-                </div>
-                <div className="min-w-0 flex flex-col gap-1.5">
-                <h2 className="text-4xl 2xl:text-5xl leading-none">{currentBeer.name}</h2>
-                <p className="text-xl 2xl:text-2xl text-muted-foreground">
-                  {currentBeer.brewery}
-                  {currentBeer.containerSize && currentBeer.containerType && ` · ${currentBeer.containerSize} ml ${currentBeer.containerType}`}
-                </p>
-                {currentBeer.currentSince && currentBeer.status !== 'finished' && (
-                  <div className="text-lg">
-                    <CurrentBeerTimer currentSince={currentBeer.currentSince} colorCoded={false} size="md" />
-                  </div>
-                )}
-                </div>
-              </div>
-
-
-              <div className="mt-auto w-full grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-10 items-end text-left">
-                <div className={`flex flex-col gap-1 ${pendingRaters?.scoresHidden ? 'col-span-2' : ''}`}>
-                  {pendingRaters?.scoresHidden ? (
-                    // No score bars while hidden, so spread across the whole card
-                    <span className="flex items-center gap-5 text-muted-foreground">
-                      <EyeOff className="h-12 w-12 shrink-0" />
-                      <span className="flex-1 text-2xl font-semibold leading-tight">Einkunnir birtast þegar allir hafa gefið einkunn</span>
-                      <span className="text-5xl font-extrabold text-ink tabular-nums whitespace-nowrap">
-                        {pendingRaters.ratedCount} / {pendingRaters.totalParticipants}
-                      </span>
-                    </span>
-                  ) : liveAverage !== null ? (
-                    <div key={`average-${currentBeer.id}`} className="flex flex-col gap-1">
-                      <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
-                      {/* Sized to the narrow column beside the score bars; "8.00" must never wrap */}
-                      <span className="text-[length:min(6rem,5.5vw)] whitespace-nowrap leading-[0.9] font-extrabold text-cranberry tabular-nums">
-                        <CountUp value={liveAverage} durationMs={600} />
-                      </span>
-                      <span className="flex flex-col gap-1 mt-3 text-lg font-semibold text-muted-foreground">
-                        <span>{currentBeerRatings.length} einkunn{currentBeerRatings.length !== 1 ? 'ir' : ''}</span>
-                        {highestScore !== null && lowestScore !== null && (
-                          <span className="flex gap-4 whitespace-nowrap tabular-nums">
-                            <span className="inline-flex items-center gap-1" title="Hæsta einkunn">
-                              <ArrowUp className="h-5 w-5 text-holly" aria-label="Hæsta" />
-                              {highestScore.toFixed(1)}
-                            </span>
-                            <span className="inline-flex items-center gap-1" title="Lægsta einkunn">
-                              <ArrowDown className="h-5 w-5 text-cranberry" aria-label="Lægsta" />
-                              {lowestScore.toFixed(1)}
-                            </span>
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="text-xl font-semibold text-muted-foreground">Meðaleinkunn</span>
-                      <span className="text-3xl font-semibold text-muted-foreground">Engar einkunnir ennþá</span>
-                    </>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  {/* Score Distribution; remounts on reveal so the bars grow in */}
-                  {currentBeerRatings.length > 0 && (
-                    <ScoreBars key={`bars-${currentBeer.id}`} scores={currentBeerRatings.map(r => r.score)} />
-                  )}
-                </div>
-              </div>
-              {/* Flavor tags across the full card width, the column beside the bars fit one pill a row.
-                  Shown even while scores are hidden, they don't give the score away */}
-              {tagsOn && pendingRaters && pendingRaters.tags.length > 0 && (
-                <div className="w-full mt-2" aria-label="Bragðlýsingar">
-                  <TagCloud tags={pendingRaters.tags} raters={pendingRaters.ratedCount} limit={6} />
-                </div>
-              )}
-            </>
           ) : notStarted ? (
             // Before the first beer the screen is a lobby: big scan-to-join code. Once the
             // tasting is under way the code stays off the screen
@@ -752,7 +693,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
           ) : (
             <>
               <div className="flex items-baseline gap-2.5">
-                <span className="text-8xl leading-[0.9] font-extrabold text-gold tabular-nums">{pendingRaters.ratedCount}</span>
+                <span className="text-7xl leading-[0.9] font-extrabold text-gold tabular-nums">{pendingRaters.ratedCount}</span>
                 <span className="text-3xl font-semibold text-mint">/ {pendingRaters.totalParticipants} búin</span>
               </div>
               <div className="h-5 rounded-full bg-pine-deep overflow-hidden shrink-0">
@@ -787,15 +728,15 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                   </div>
                 )
               ) : pendingRaters.pendingCount > 0 ? (
-                <div className="flex-1 min-h-0 flex flex-col gap-3">
+                <div className={`min-h-0 flex flex-col gap-3 ${beerNotes.length > 0 ? 'shrink' : 'flex-1'}`}>
                   <span className="text-xl font-semibold text-mint">Bíður eftir {pendingRaters.pendingCount}</span>
-                  <div className="flex flex-wrap content-start gap-2.5 overflow-y-auto">
+                  <div className="flex flex-wrap content-start gap-2 overflow-y-auto">
                     {pendingRaters.pending.map((participant) => (
                       <span
                         key={participant.participantId}
-                        className="inline-flex items-center gap-3 pl-2 pr-5 py-2 rounded-full bg-cream text-ink text-2xl font-semibold"
+                        className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full bg-cream text-ink text-xl 2xl:text-2xl font-semibold"
                       >
-                        <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
+                        <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-10 h-10 2xl:w-12 2xl:h-12 shrink-0 shadow-sm" />
                         {participant.name}
                       </span>
                     ))}
@@ -803,11 +744,11 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                 </div>
               ) : null}
 
-              {/* Notes people wrote, one at a time; this column has the room the beer card lacks */}
+              {/* Notes people wrote, newest first and stacked; this column has the room the beer card lacks */}
               {beerNotes.length > 0 && (
-                <div className="mt-auto flex flex-col gap-2 shrink-0">
+                <div className="flex-1 min-h-0 flex flex-col gap-3">
                   <span className="text-xl font-semibold text-mint">Athugasemdir</span>
-                  <NoteTicker notes={beerNotes} />
+                  <NoteStack notes={beerNotes} />
                 </div>
               )}
             </>
@@ -817,16 +758,26 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
 
       {/* Tasting-wide stats, kept up between beers */}
       {/* Folds away with the side columns while the current beer fills the screen */}
-      {statTiles.length > 0 && !expanded && (
-        <footer aria-label="Tölfræði" className="grid grid-cols-2 lg:grid-cols-6 gap-4 relative animate-in fade-in duration-700">
+      {statTiles.length > 0 && (
+        <div
+          aria-hidden={expanded || undefined}
+          className={`grid transition-[grid-template-rows,opacity] duration-700 ease-in-out ${expanded ? 'grid-rows-[0fr] opacity-0 -mt-4 2xl:-mt-6' : 'grid-rows-[1fr] opacity-100'}`}
+        >
+        {/* As many columns as there are stats: early in the night four tiles left a third of the strip empty */}
+        <footer
+          aria-label="Tölfræði"
+          className="min-h-0 overflow-hidden grid grid-cols-2 lg:grid-cols-[repeat(var(--stat-count),minmax(0,1fr))] gap-4 relative"
+          style={{ '--stat-count': statTiles.length } as React.CSSProperties}
+        >
           {statTiles.map((tile) => (
             // Medal tile: each award wears its own accent on the top edge, ring and label
             <div
               key={tile.label}
-              className="flex flex-col items-center justify-center text-center gap-1.5 px-4 pt-4 pb-3.5 rounded-[20px] bg-pine-deep border-t-4 border-t-[var(--acc)] min-w-0"
+              // Tighter on a short projector, where the beer card needs the height more than the medals do
+              className="flex flex-col items-center justify-center text-center gap-1.5 px-4 pt-4 pb-3.5 [@media(max-height:1000px)]:gap-0.5 [@media(max-height:1000px)]:pt-2.5 [@media(max-height:1000px)]:pb-2 rounded-[20px] bg-pine-deep border-t-4 border-t-[var(--acc)] min-w-0"
               style={{ '--acc': tile.accent } as React.CSSProperties}
             >
-              <span className="w-12 h-12 2xl:w-14 2xl:h-14 shrink-0 mb-1 rounded-full border-2 border-[var(--acc)] bg-[color-mix(in_srgb,var(--acc)_14%,transparent)] text-[var(--acc)] flex items-center justify-center">
+              <span className="w-12 h-12 2xl:w-14 2xl:h-14 [@media(max-height:1000px)]:w-9 [@media(max-height:1000px)]:h-9 [@media(max-height:1000px)]:mb-0 shrink-0 mb-1 rounded-full border-2 border-[var(--acc)] bg-[color-mix(in_srgb,var(--acc)_14%,transparent)] text-[var(--acc)] flex items-center justify-center">
                 <tile.icon className="h-6 w-6" />
               </span>
               {tile.detail ? (
@@ -845,7 +796,9 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
             </div>
           ))}
         </footer>
+        </div>
       )}
     </div>
+    </MotionConfig>
   )
 }

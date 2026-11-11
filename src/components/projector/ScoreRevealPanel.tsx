@@ -16,6 +16,7 @@ interface ScoreRevealPanelProps {
     imageUrl?: string | null
     containerSize?: number
     containerType?: string
+    priceISK?: number
   }
   scores: number[]
   average: number
@@ -62,9 +63,18 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
               </span>
             )}
             <h2 className="text-5xl 2xl:text-7xl leading-none line-clamp-2">{beer.name}</h2>
-            <p className="text-2xl 2xl:text-3xl text-muted-foreground truncate">
-              {beer.brewery}
-              {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+            <p className="flex items-center gap-4 min-w-0 text-2xl 2xl:text-3xl text-muted-foreground">
+              <span className="truncate">
+                {beer.brewery}
+                {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+              </span>
+              {beer.priceISK != null && (
+                // Same per-can price as before the reveal, so it doesn't vanish when the card expands
+                <span className="shrink-0 inline-flex items-baseline gap-1.5 rounded-full bg-holly px-4 py-0.5 text-cream">
+                  <span className="font-extrabold tabular-nums">{Math.round(beer.priceISK).toLocaleString('is-IS')} kr</span>
+                  {beer.containerType && <span className="text-base 2xl:text-lg font-semibold">/ {beer.containerType.toLowerCase()}</span>}
+                </span>
+              )}
             </p>
           </div>
         </div>

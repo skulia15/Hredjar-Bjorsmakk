@@ -6,7 +6,8 @@ import { Clock } from 'lucide-react';
 interface CurrentBeerTimerProps {
   currentSince: Date | string;
   colorCoded?: boolean;
-  size?: 'sm' | 'md' | 'lg';
+  /** xl is for the projector, read from across the room */
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   /** Words before the time, so it doesn't read as the time of day */
   label?: string;
 }
@@ -39,7 +40,8 @@ export function CurrentBeerTimer({
   const seconds = elapsed % 60;
 
   // Color coding based on time
-  let colorClass = 'text-muted-foreground';
+  // xl sits on its own dark badge on the projector, so it takes that badge's text colour
+  let colorClass = size === 'xl' ? '' : 'text-muted-foreground';
   if (colorCoded) {
     if (minutes < 5) {
       colorClass = 'text-green-600';
@@ -54,13 +56,15 @@ export function CurrentBeerTimer({
   const sizeClasses = {
     sm: 'text-xs',
     md: 'text-sm',
-    lg: 'text-base'
+    lg: 'text-base',
+    xl: 'text-2xl 2xl:text-3xl font-extrabold'
   };
 
   const iconSizes = {
     sm: 12,
     md: 16,
-    lg: 20
+    lg: 20,
+    xl: 26
   };
 
   return (

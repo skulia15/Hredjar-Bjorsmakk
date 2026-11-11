@@ -173,10 +173,18 @@
   animation: santa-bubble-rise 2.6s ease-in infinite;
 }
 
+/* The projector progress strip's current beer: a slow, shallow glow rather than a blink */
+@keyframes progress-glow {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+.progress-glow { animation: progress-glow 4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .xmas-snowflake,
   .santa-mug-hat,
   .santa-mug-bubble,
+  .progress-glow,
   .beer-bob { animation: none; }
   .santa-mug-bubble { display: none; }
   .xmas-snowflake { display: none; }
