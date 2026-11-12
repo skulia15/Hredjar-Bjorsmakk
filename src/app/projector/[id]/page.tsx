@@ -9,7 +9,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, generousAndHarsh, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
-import { Beer as BeerIcon, Coffee, Crown, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
+import { Beer as BeerIcon, Coffee, Crown, MessageSquareOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
@@ -87,6 +87,8 @@ interface PendingRatersData {
   ratedCount: number
   pendingCount: number
   scoresHidden: boolean
+  notesHidden?: boolean
+  hiddenNoteCount?: number
   tags: BeerTagCount[]
   rated: RatedParticipant[]
   pending: PendingParticipant[]
@@ -745,12 +747,18 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               ) : null}
 
               {/* Notes people wrote, newest first and stacked; this column has the room the beer card lacks */}
-              {beerNotes.length > 0 && (
+              {beerNotes.length > 0 ? (
                 <div className="flex-1 min-h-0 flex flex-col gap-3">
                   <span className="text-xl font-semibold text-mint">Athugasemdir</span>
                   <NoteStack notes={beerNotes} />
                 </div>
-              )}
+              ) : pendingRaters.notesHidden && (pendingRaters.hiddenNoteCount ?? 0) > 0 ? (
+                // The tasting holds notes back until everyone has rated: say they're coming, without any of them
+                <p className="flex items-start gap-2.5 text-xl text-mint">
+                  <MessageSquareOff className="h-6 w-6 shrink-0 mt-0.5" aria-hidden />
+                  {pendingRaters.hiddenNoteCount} athugasemd{pendingRaters.hiddenNoteCount === 1 ? '' : 'ir'} birt{pendingRaters.hiddenNoteCount === 1 ? 'ist' : 'ast'} þegar allir hafa gefið einkunn
+                </p>
+              ) : null}
             </>
           )}
         </FoamCard>

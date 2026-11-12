@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { MessageSquareOff } from 'lucide-react'
 import { AVATARS } from '@/lib/avatars'
 import { AvatarPicker } from '@/components/AvatarPicker'
 
@@ -9,6 +10,8 @@ export default function CreateTastingPage() {
   const router = useRouter()
   const [title, setTitle] = useState('')
   const [selectedAvatar, setSelectedAvatar] = useState<string>(AVATARS[0]?.key ?? '')
+  // Off: notes show on the projector as they come in. Can be changed later from the tasting's admin page
+  const [hideNotes, setHideNotes] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -21,7 +24,7 @@ export default function CreateTastingPage() {
       const response = await fetch('/api/tastings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, avatar: selectedAvatar })
+        body: JSON.stringify({ title, avatar: selectedAvatar, hideNotesUntilAllRated: hideNotes })
       })
 
       if (!response.ok) {
@@ -73,6 +76,25 @@ export default function CreateTastingPage() {
               className="w-full px-3 py-2 border rounded-md bg-background focus:outline-none focus:ring-2 focus:ring-primary"
             />
           </div>
+
+          <label className="flex items-start gap-3 p-4 rounded-lg border cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideNotes}
+              onChange={(e) => setHideNotes(e.target.checked)}
+              disabled={loading}
+              className="mt-1 h-4 w-4"
+            />
+            <span>
+              <span className="text-sm font-medium flex items-center gap-1.5">
+                <MessageSquareOff className="h-4 w-4" />
+                Fela athugasemdir þar til allir hafa gefið einkunn
+              </span>
+              <span className="block text-xs text-muted-foreground mt-0.5">
+                Annars birtast athugasemdir á skjávarpanum jafnóðum og þær koma inn. Má breyta síðar
+              </span>
+            </span>
+          </label>
 
           <AvatarPicker
             selectedAvatar={selectedAvatar}

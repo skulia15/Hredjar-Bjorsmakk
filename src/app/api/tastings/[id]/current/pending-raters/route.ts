@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getHiddenTastingBeerId, lockRatingsIfAllRated } from '@/lib/hiddenScores'
+import { getHiddenNotesTastingBeerId, getHiddenTastingBeerId, lockRatingsIfAllRated } from '@/lib/hiddenScores'
 import { countTags } from '@/lib/flavorTags'
 
 /**
@@ -75,6 +75,7 @@ export async function GET(
     })
 
     const scoresHidden = (await getHiddenTastingBeerId(id)) === tasting.currentTastingBeerId
+    const notesHidden = (await getHiddenNotesTastingBeerId(id)) === tasting.currentTastingBeerId
     // Polled by every client, so a lock from someone pausing or leaving is caught here too
     const ratingsLocked = await lockRatingsIfAllRated(id, tasting.currentTastingBeerId)
     const flavorTags = await prisma.flavorTags.findMany({
@@ -95,8 +96,8 @@ export async function GET(
       paused: rating.participant.pausedAt !== null,
       score: scoresHidden ? null : rating.score,
       groupGuess: scoresHidden ? null : rating.groupGuess,
-      // A note usually gives the verdict away, so it waits for the scores like the guess does
-      note: scoresHidden ? null : rating.note,
+      // A note can give the verdict away, so the tasting chooses whether it waits until everyone has rated
+      note: notesHidden ? null : rating.note,
       submittedAt: rating.updatedAt.toISOString()
     }))
 
@@ -119,6 +120,9 @@ export async function GET(
       pendingCount: pending.length,
       paused,
       scoresHidden,
+      notesHidden,
+      // How many notes are waiting, so the projector can say so without giving any away
+      hiddenNoteCount: notesHidden ? ratings.filter(r => r.note?.trim()).length : 0,
       ratingsLocked,
       // Tags say little about the score, so they show even while scores are hidden
       tags: countTags(flavorTags),

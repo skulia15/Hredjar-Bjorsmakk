@@ -112,6 +112,7 @@ model Tasting {
   nudgedAt           DateTime?  // Last nudge; clients poll and fire when it changes
   nudgedParticipantIds String[] @default([])  // Pending participants at time of last nudge
   hideScoresUntilAllRated Boolean @default(false)  // Current beer's scores stay hidden until every active participant has rated
+  hideNotesUntilAllRated  Boolean @default(false)  // Same for its rating notes on the projector; off shows them as they come in
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 

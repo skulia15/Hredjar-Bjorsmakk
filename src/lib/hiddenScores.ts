@@ -10,11 +10,29 @@ type Db = Prisma.TransactionClient
  * (leaders included) until every active, unpaused participant has rated it, so nobody anchors on the group.
  */
 export async function getHiddenTastingBeerId(tastingId: string, db: Db = prisma): Promise<string | null> {
+  return hiddenUntilAllRated(tastingId, 'hideScoresUntilAllRated', db)
+}
+
+/**
+ * The tasting beer whose rating notes are hidden right now, or null. Its own setting
+ * (hideNotesUntilAllRated), so a tasting can hide scores but show notes as they come in, or the
+ * other way round; hidden, they come out at the same moment hidden scores would.
+ */
+export async function getHiddenNotesTastingBeerId(tastingId: string, db: Db = prisma): Promise<string | null> {
+  return hiddenUntilAllRated(tastingId, 'hideNotesUntilAllRated', db)
+}
+
+// The current beer, while the given setting is on and someone active hasn't rated it yet
+async function hiddenUntilAllRated(
+  tastingId: string,
+  setting: 'hideScoresUntilAllRated' | 'hideNotesUntilAllRated',
+  db: Db
+): Promise<string | null> {
   const tasting = await db.tasting.findUnique({
     where: { id: tastingId },
-    select: { status: true, hideScoresUntilAllRated: true, currentTastingBeerId: true },
+    select: { status: true, hideScoresUntilAllRated: true, hideNotesUntilAllRated: true, currentTastingBeerId: true },
   })
-  if (!tasting?.hideScoresUntilAllRated || tasting.status === 'closed' || !tasting.currentTastingBeerId) return null
+  if (!tasting?.[setting] || tasting.status === 'closed' || !tasting.currentTastingBeerId) return null
 
   const currentTastingBeerId = tasting.currentTastingBeerId
   // Once its scores are out they stay out, even if someone joins or comes back after

@@ -42,14 +42,16 @@ export const flavorTagsSchema = z.object({
 // Tasting operations
 export const createTastingSchema = z.object({
   title: z.string().min(1, 'Title is required').max(100),
-  avatar: z.string().min(1).optional()
+  avatar: z.string().min(1).optional(),
+  hideNotesUntilAllRated: z.boolean().optional()
 });
 
 export const updateTastingSchema = z.object({
   status: z.enum(['draft', 'active', 'closed']).optional(),
-  hideScoresUntilAllRated: z.boolean().optional()
-}).refine((data) => data.status !== undefined || data.hideScoresUntilAllRated !== undefined, {
-  message: "At least one field (status or hideScoresUntilAllRated) must be provided"
+  hideScoresUntilAllRated: z.boolean().optional(),
+  hideNotesUntilAllRated: z.boolean().optional()
+}).refine((data) => data.status !== undefined || data.hideScoresUntilAllRated !== undefined || data.hideNotesUntilAllRated !== undefined, {
+  message: "At least one field (status, hideScoresUntilAllRated or hideNotesUntilAllRated) must be provided"
 });
 
 // Beer operations

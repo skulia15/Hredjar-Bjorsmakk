@@ -276,6 +276,57 @@ describe('flavor tags and notes', () => {
     expect(detail.tags).toEqual([{ tag: 'hoppy', count: 2 }, { tag: 'bitter', count: 1 }])
     expect(detail.notes).toEqual([{ participantId: fixture.participants[0].id, userName: 'anna', avatar: null, note: 'Beiskur!' }])
   })
+
+  it('shows notes on the current beer as they come in by default, even while scores are hidden', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    await hideScores(fixture)
+    expect((await tastingJson(fixture)).hideNotesUntilAllRated).toBe(false)
+    await makeCurrent(fixture, beer.id)
+    await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: 'Beiskur!' })
+
+    const live = await pending(fixture)
+    expect(live.json.scoresHidden).toBe(true)
+    expect(live.json.notesHidden).toBe(false)
+    expect(live.json.rated[0]).toMatchObject({ score: null, note: 'Beiskur!' })
+  })
+
+  it('holds notes back until everyone has rated when the tasting hides them, counting what waits', async () => {
+    const fixture = await createTastingFixture()
+    const beer = fixture.beers[0]
+    signInAs(fixture.leader)
+    const set = await callRoute(updateTasting, { method: 'PATCH', params: { id: fixture.tasting.id }, body: { hideNotesUntilAllRated: true } })
+    expect(set.json.hideNotesUntilAllRated).toBe(true)
+    await makeCurrent(fixture, beer.id)
+    await rateAs(fixture, 0, { beerId: beer.id, score: 8, note: 'Beiskur!' })
+    await rateAs(fixture, 1, { beerId: beer.id, score: 6 })
+
+    const live = await pending(fixture)
+    // Scores aren't hidden here: the two settings are independent
+    expect(live.json.scoresHidden).toBe(false)
+    expect(live.json.notesHidden).toBe(true)
+    expect(live.json.hiddenNoteCount).toBe(1)
+    expect(live.json.rated.map((r: { note: string | null }) => r.note)).toEqual([null, null])
+
+    // The last rating brings the notes out
+    for (let i = 2; i < fixture.participants.length; i++) await rateAs(fixture, i, { beerId: beer.id, score: 7 })
+    const done = await pending(fixture)
+    expect(done.json.notesHidden).toBe(false)
+    expect(done.json.hiddenNoteCount).toBe(0)
+    expect(done.json.rated.map((r: { note: string | null }) => r.note)).toContain('Beiskur!')
+  })
+
+  it('lets only leaders change whether notes are hidden', async () => {
+    const fixture = await createTastingFixture()
+    signInAs(fixture.users[0])
+    const denied = await callRoute(updateTasting, {
+      method: 'PATCH',
+      params: { id: fixture.tasting.id },
+      body: { hideNotesUntilAllRated: true },
+    })
+    expect(denied.status).toBe(403)
+    expect((await tastingJson(fixture)).hideNotesUntilAllRated).toBe(false)
+  })
 })
 
 describe('guess the group average', () => {

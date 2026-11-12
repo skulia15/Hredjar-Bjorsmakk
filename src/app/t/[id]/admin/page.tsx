@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Beer as BeerIcon, ChevronDown, EyeOff, Hourglass, Trash2 } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, EyeOff, Hourglass, MessageSquareOff, Trash2 } from 'lucide-react'
 import { PendingRaters } from '@/components/PendingRaters'
 import { BeerSelector, type CustomBeerData } from '@/components/BeerSelector'
 import { CurrentBeerTimer } from '@/components/CurrentBeerTimer'
@@ -37,6 +37,7 @@ interface Tasting {
   beers?: Beer[]
   participantCount: number
   hideScoresUntilAllRated: boolean
+  hideNotesUntilAllRated: boolean
 }
 
 export default function AdminPage({ params: paramsPromise }: { params: Promise<{ id: string }> }) {
@@ -298,12 +299,12 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
     }
   }
 
-  const handleToggleHideScores = async (hideScoresUntilAllRated: boolean) => {
+  const handleToggleSetting = async (setting: { hideScoresUntilAllRated: boolean } | { hideNotesUntilAllRated: boolean }) => {
     try {
       const response = await fetch(`/api/tastings/${params.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hideScoresUntilAllRated })
+        body: JSON.stringify(setting)
       })
 
       if (!response.ok) throw new Error('Failed to update setting')
@@ -420,7 +421,7 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
           <input
             type="checkbox"
             checked={tasting.hideScoresUntilAllRated}
-            onChange={(e) => handleToggleHideScores(e.target.checked)}
+            onChange={(e) => handleToggleSetting({ hideScoresUntilAllRated: e.target.checked })}
             className="mt-1 h-4 w-4"
           />
           <span>
@@ -430,6 +431,24 @@ export default function AdminPage({ params: paramsPromise }: { params: Promise<{
             </span>
             <span className="block text-xs text-muted-foreground mt-0.5">
               Enginn sér einkunnir núverandi bjórs, ekki heldur leiðtogar, fyrr en allir hafa skráð sína
+            </span>
+          </span>
+        </label>
+
+        <label className="flex items-start gap-3 bg-card p-4 rounded-lg border cursor-pointer">
+          <input
+            type="checkbox"
+            checked={tasting.hideNotesUntilAllRated}
+            onChange={(e) => handleToggleSetting({ hideNotesUntilAllRated: e.target.checked })}
+            className="mt-1 h-4 w-4"
+          />
+          <span>
+            <span className="text-sm font-medium flex items-center gap-1.5">
+              <MessageSquareOff className="h-4 w-4" />
+              Fela athugasemdir þar til allir hafa gefið einkunn
+            </span>
+            <span className="block text-xs text-muted-foreground mt-0.5">
+              Annars birtast athugasemdir á skjávarpanum jafnóðum og þær koma inn
             </span>
           </span>
         </label>

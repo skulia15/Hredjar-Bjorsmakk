@@ -51,12 +51,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, avatar } = validation.data;
+    const { title, avatar, hideNotesUntilAllRated } = validation.data;
 
     // Create tasting
     const tasting = await prisma.tasting.create({
       data: {
         title,
+        hideNotesUntilAllRated,
         createdBy: user.id,
         status: 'draft',
         version: 1

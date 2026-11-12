@@ -119,6 +119,7 @@ export async function GET(
       currentBeerId: tasting.currentTastingBeerId, // Map to old field name for backwards compatibility
       version: tasting.version,
       hideScoresUntilAllRated: tasting.hideScoresUntilAllRated,
+      hideNotesUntilAllRated: tasting.hideNotesUntilAllRated,
       createdAt: tasting.createdAt,
       updatedAt: tasting.updatedAt,
       participantCount: tasting._count.participants,
@@ -158,7 +159,7 @@ export async function PATCH(
       );
     }
 
-    const { status, hideScoresUntilAllRated } = validation.data;
+    const { status, hideScoresUntilAllRated, hideNotesUntilAllRated } = validation.data;
 
     // Verify user is leader
     await requireLeader();
@@ -179,6 +180,7 @@ export async function PATCH(
         data: {
           status,
           hideScoresUntilAllRated,
+          hideNotesUntilAllRated,
           ...(status === 'closed' && { currentTastingBeerId: null }),
           version: { increment: 1 }
         }
@@ -189,6 +191,7 @@ export async function PATCH(
       id: tasting.id,
       status: tasting.status,
       hideScoresUntilAllRated: tasting.hideScoresUntilAllRated,
+      hideNotesUntilAllRated: tasting.hideNotesUntilAllRated,
       version: tasting.version
     });
 
