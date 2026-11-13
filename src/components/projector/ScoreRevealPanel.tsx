@@ -9,12 +9,14 @@ import { TagCloud } from '@/components/projector/TagCloud'
 import type { TickerNote } from '@/components/projector/NoteTicker'
 import { BeerAwardsStrip } from '@/components/projector/BeerAwardsStrip'
 import { beerImageSrc } from '@/lib/beerImage'
+import { formatAbv } from '@/lib/utils'
 import type { BeerAward } from '@/lib/beerAwards'
 
 interface ScoreRevealPanelProps {
   beer: {
     name: string
     brewery: string
+    abv?: number | null
     imageUrl?: string | null
     containerSize?: number
     containerType?: string
@@ -71,6 +73,7 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
               <span className="truncate">
                 {beer.brewery}
                 {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+            {formatAbv(beer.abv) && ` · ${formatAbv(beer.abv)}`}
               </span>
               {beer.priceISK != null && (
                 // Same per-can price as before the reveal, so it doesn't vanish when the card expands
@@ -132,8 +135,7 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
             {shownNotes.length > 0 && (
               <div className={`flex flex-col gap-3 animate-in fade-in duration-700 ${showTagCloud ? '' : '2xl:col-span-2'}`}>
                 <span className="text-2xl font-semibold text-muted-foreground">Athugasemdir</span>
-                {/* Anonymous on purpose, like the ticker: guessing who wrote what is half the fun.
-                    One a row beside the bars, so fewer of them fit there */}
+                {/* Named, like the right column. One a row beside the bars, so fewer of them fit there */}
                 <ul
                   className={`grid gap-3 grid-cols-1 ${showTagCloud ? '2xl:grid-cols-2 max-2xl:[&>li:nth-child(n+3)]:hidden' : '2xl:grid-cols-3 max-2xl:[&>li:nth-child(n+5)]:hidden'}`}
                 >
@@ -145,9 +147,12 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
                       <ParticipantAvatar
                         avatar={note.avatar}
                         seed={note.key}
-                        className="w-12 h-12 2xl:w-14 2xl:h-14 shrink-0 shadow-sm"
+                        className="w-16 h-16 2xl:w-20 2xl:h-20 shrink-0 shadow-sm"
                       />
-                      <span className="min-w-0 flex-1 line-clamp-2 2xl:line-clamp-3">„{note.note}“</span>
+                      <span className="min-w-0 flex-1 flex flex-col">
+                        <span className="text-base 2xl:text-lg font-extrabold uppercase tracking-[0.06em] text-cranberry truncate">{note.name}</span>
+                        <span className="line-clamp-2 2xl:line-clamp-3">„{note.note}“</span>
+                      </span>
                     </li>
                   ))}
                 </ul>

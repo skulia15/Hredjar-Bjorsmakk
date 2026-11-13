@@ -30,13 +30,13 @@ export function BeerAwardsStrip({ awards }: { awards: BeerAward[] }) {
             style={{ borderTopColor: accent, animationDelay: `${900 + i * 120}ms` }}
           >
             <span className="relative shrink-0">
-              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-11 h-11 2xl:w-14 2xl:h-14 shadow-sm" />
+              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-14 h-14 2xl:w-[4.5rem] 2xl:h-[4.5rem] shadow-sm" />
               <span
-                className="absolute -bottom-1 -right-1 w-6 h-6 2xl:w-7 2xl:h-7 rounded-full text-cream flex items-center justify-center ring-2 ring-cream"
+                className="absolute -bottom-1 -right-1 w-7 h-7 2xl:w-8 2xl:h-8 rounded-full text-cream flex items-center justify-center ring-2 ring-cream"
                 style={{ backgroundColor: accent }}
                 aria-hidden
               >
-                <Icon className="h-3.5 w-3.5 2xl:h-4 2xl:w-4" />
+                <Icon className="h-4 w-4 2xl:h-[1.1rem] 2xl:w-[1.1rem]" />
               </span>
             </span>
             <span className="min-w-0 flex flex-col">

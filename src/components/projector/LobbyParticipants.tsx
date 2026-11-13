@@ -18,15 +18,15 @@ export function LobbyParticipants({ participants }: { participants: LobbyPartici
       <p className="text-2xl font-extrabold">
         {participants.length} {participants.length === 1 ? 'mættur' : 'mættir'}
       </p>
-      <div className="flex flex-wrap justify-center gap-5 max-w-4xl">
+      <div className="flex flex-wrap justify-center gap-6 max-w-6xl">
         {participants.map((p, index) => (
           <div
             key={p.id}
-            className="flex flex-col items-center gap-2 w-28 animate-in zoom-in-50 fade-in fill-mode-both duration-500"
+            className="flex flex-col items-center gap-2 w-36 2xl:w-44 animate-in zoom-in-50 fade-in fill-mode-both duration-500"
             style={{ animationDelay: `${Math.min(index, 12) * 60}ms` }}
           >
-            <ParticipantAvatar avatar={p.avatar} seed={p.id} className="h-24 w-24 2xl:h-28 2xl:w-28 shrink-0 shadow-md" />
-            <span className="text-lg font-semibold truncate max-w-full">{p.name}</span>
+            <ParticipantAvatar avatar={p.avatar} seed={p.id} className="h-32 w-32 2xl:h-40 2xl:w-40 shrink-0 shadow-md" />
+            <span className="text-xl 2xl:text-2xl font-semibold truncate max-w-full">{p.name}</span>
           </div>
         ))}
       </div>

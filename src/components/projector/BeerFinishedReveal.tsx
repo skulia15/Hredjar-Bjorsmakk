@@ -11,11 +11,13 @@ import type { BeerAward } from '@/lib/beerAwards'
 import { BeerAwardsStrip } from '@/components/projector/BeerAwardsStrip'
 import { playDrumroll, playFanfare } from '@/lib/sounds'
 import { beerImageSrc } from '@/lib/beerImage'
+import { formatAbv } from '@/lib/utils'
 
 export interface FinishedBeerReveal {
   beerId: string
   name: string
   brewery: string
+  abv?: number | null
   imageUrl?: string | null
   average: number
   count: number
@@ -79,7 +81,10 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
 
         <div>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight">{reveal.name}</h1>
-          <p className="text-2xl text-muted-foreground mt-1">{reveal.brewery}</p>
+          <p className="text-2xl text-muted-foreground mt-1">
+            {reveal.brewery}
+            {formatAbv(reveal.abv) && ` · ${formatAbv(reveal.abv)}`}
+          </p>
         </div>
 
         <div className="h-36 flex items-center justify-center">

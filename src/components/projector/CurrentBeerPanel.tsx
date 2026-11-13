@@ -7,12 +7,14 @@ import { CountUp } from '@/components/projector/CountUp'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
 import { beerImageSrc } from '@/lib/beerImage'
+import { formatAbv } from '@/lib/utils'
 
 interface CurrentBeerPanelProps {
   beer: {
     id: string
     name: string
     brewery: string
+    abv?: number | null
     imageUrl?: string | null
     containerSize?: number
     containerType?: string
@@ -70,6 +72,7 @@ export function CurrentBeerPanel({ beer, scoresHidden, ratedCount, scores, avera
           <p className="text-xl 2xl:text-2xl [@media(max-height:1000px)]:text-lg text-muted-foreground truncate">
             {beer.brewery}
             {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+            {formatAbv(beer.abv) && ` · ${formatAbv(beer.abv)}`}
           </p>
           <div className="flex flex-wrap items-center gap-3">
             {beer.priceISK != null && (

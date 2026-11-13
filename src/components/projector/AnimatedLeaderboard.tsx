@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from 'react'
 import Image from 'next/image'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { beerImageSrc } from '@/lib/beerImage'
+import { formatAbv } from '@/lib/utils'
 
 export interface LeaderboardBeer {
   beerId: string
@@ -13,6 +14,7 @@ export interface LeaderboardBeer {
   count: number
   rank: number
   imageUrl?: string | null
+  abv?: number | null
 }
 
 // 'new' = just finished; a number = places moved, positive is up
@@ -123,7 +125,7 @@ export function AnimatedLeaderboard({ beers, limit = 6, selectedBeerId, onSelect
           <span className="flex-1 min-w-0 flex flex-col">
             <span className="text-xl 2xl:text-2xl font-extrabold leading-tight truncate">{beer.name}</span>
             <span className="flex items-center gap-2 min-w-0">
-              <span className="text-sm 2xl:text-base opacity-80 truncate">{beer.brewery} · {beer.count} eink.</span>
+              <span className="text-sm 2xl:text-base opacity-80 truncate">{beer.brewery}{formatAbv(beer.abv) && ` · ${formatAbv(beer.abv)}`} · {beer.count} eink.</span>
               <MovementBadge movement={snapshot.movement[beer.beerId]} />
             </span>
           </span>

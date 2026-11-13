@@ -5,6 +5,7 @@ import type { BeerTagCount } from '@/components/TastingNotes'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
 import { beerImageSrc } from '@/lib/beerImage'
+import { formatAbv } from '@/lib/utils'
 
 export interface SelectedBeerRating {
   participantId: string
@@ -17,6 +18,7 @@ interface SelectedBeerPanelProps {
   beer: {
     name: string
     brewery: string
+    abv?: number | null
     imageUrl?: string | null
     containerSize?: number
     containerType?: string
@@ -64,6 +66,7 @@ export function SelectedBeerPanel({ beer, rank, average, ratings, tags, showTags
           <p className="text-xl 2xl:text-2xl text-muted-foreground truncate">
             {beer.brewery}
             {beer.containerSize && beer.containerType && ` · ${beer.containerSize} ml ${beer.containerType}`}
+            {formatAbv(beer.abv) && ` · ${formatAbv(beer.abv)}`}
           </p>
         </div>
         <div className="shrink-0 flex flex-col items-end">

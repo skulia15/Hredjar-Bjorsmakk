@@ -37,6 +37,7 @@ interface Beer {
   ratingCount?: number
   currentSince?: Date | string | null
   imageUrl?: string | null
+  abv?: number | null
 }
 
 interface Tasting {
@@ -57,6 +58,7 @@ interface BeerScore {
   count: number
   rank: number
   imageUrl?: string | null
+  abv?: number | null
 }
 
 interface ScoresData {
@@ -179,6 +181,7 @@ async function loadFinishedReveal(tastingId: string, beer: Beer, scores: ScoresD
     beerId: beer.id,
     name: beer.name,
     brewery: beer.brewery,
+    abv: beer.abv,
     imageUrl: beer.imageUrl,
     average: score.average,
     count: score.count,
@@ -432,7 +435,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // reveal lays out the six newest
   const allNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
-    .map(r => ({ key: r.participantId, avatar: r.avatar, note: r.note.trim() }))
+    .map(r => ({ key: r.participantId, name: r.name, avatar: r.avatar, note: r.note.trim() }))
   const beerNotes = allNotes
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
@@ -755,7 +758,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                         key={participant.participantId}
                         className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full bg-cream text-ink text-xl 2xl:text-2xl font-semibold"
                       >
-                        <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-10 h-10 2xl:w-12 2xl:h-12 shrink-0 shadow-sm" />
+                        <ParticipantAvatar avatar={participant.avatar} seed={participant.participantId} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
                         {participant.name}
                       </span>
                     ))}

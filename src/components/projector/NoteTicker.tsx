@@ -5,6 +5,7 @@ import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 
 export interface TickerNote {
   key: string
+  name: string
   avatar?: string | null
   note: string
 }
@@ -69,8 +70,11 @@ export function NoteStack({ notes }: { notes: TickerNote[] }) {
             key={`${note.key}-${paging ? first : 0}`}
             className="shrink-0 flex items-start gap-3.5 rounded-2xl rounded-bl-sm bg-cream px-4 py-3 text-ink animate-in fade-in slide-in-from-bottom-2 duration-500"
           >
-            <ParticipantAvatar avatar={note.avatar} seed={note.key} className="w-11 h-11 2xl:w-12 2xl:h-12 shrink-0 shadow-sm" />
-            <blockquote className="min-w-0 flex-1 text-xl 2xl:text-[1.65rem] font-semibold leading-snug line-clamp-3">„{note.note}“</blockquote>
+            <ParticipantAvatar avatar={note.avatar} seed={note.key} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
+            <span className="min-w-0 flex-1 flex flex-col">
+              <span className="text-base 2xl:text-lg font-extrabold uppercase tracking-[0.06em] text-cranberry truncate">{note.name}</span>
+              <blockquote className="text-xl 2xl:text-[1.65rem] font-semibold leading-snug line-clamp-3">„{note.note}“</blockquote>
+            </span>
           </li>
         ))}
       </ul>
