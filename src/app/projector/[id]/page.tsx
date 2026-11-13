@@ -477,6 +477,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       label: 'Hraðastur',
       accent: '#F2A93B',
       name: engagementStats.fastestRater.userName,
+      participantId: engagementStats.fastestRater.participantId,
       detail: `⌀ ${engagementStats.fastestRater.averageMinutes} mín`,
     },
     engagementStats?.slowestRater && {
@@ -484,6 +485,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       label: 'Hægastur',
       accent: '#CFE0D3',
       name: engagementStats.slowestRater.userName,
+      participantId: engagementStats.slowestRater.participantId,
       detail: `⌀ ${engagementStats.slowestRater.averageMinutes} mín`,
     },
     engagementStats?.mostGenerous && {
@@ -491,6 +493,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       label: 'Rausnarlegastur',
       accent: '#E2575E',
       name: engagementStats.mostGenerous.userName,
+      participantId: engagementStats.mostGenerous.participantId,
       detail: `⌀ ${engagementStats.mostGenerous.averageRating.toFixed(2)}`,
     },
     engagementStats?.toughestCritic && {
@@ -498,6 +501,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       label: 'Strangastur',
       accent: '#8EC5A8',
       name: engagementStats.toughestCritic.userName,
+      participantId: engagementStats.toughestCritic.participantId,
       detail: `⌀ ${engagementStats.toughestCritic.averageRating.toFixed(2)}`,
     },
     engagementStats?.mostDeviant && {
@@ -505,6 +509,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       label: 'Útlaginn',
       accent: '#F6E3BC',
       name: engagementStats.mostDeviant.userName,
+      participantId: engagementStats.mostDeviant.participantId,
       detail: `${engagementStats.mostDeviant.deviation > 0 ? '+' : ''}${engagementStats.mostDeviant.deviation.toFixed(2)} frá meðaltali`,
     },
     totalRatingsGiven > 0 && {
@@ -514,14 +519,16 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
       name: String(totalRatingsGiven),
       detail: null,
     },
-  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; accent: string; name: string; detail: string | null }>
+  ].filter(Boolean) as Array<{ icon: typeof Star; label: string; accent: string; name: string; participantId?: string; detail: string | null }>
+  // Each participant's avatar, for the faces on the stat tiles and the end-of-night awards
+  const avatarById = Object.fromEntries(tasting.participants.map(p => [p.id, p.avatar]))
 
   return (
     <MotionConfig reducedMotion="user">
     <div className="min-h-screen lg:h-screen w-screen overflow-x-hidden lg:overflow-hidden relative flex flex-col gap-4 2xl:gap-6 px-3 pt-3 pb-3 lg:px-4 2xl:px-8 2xl:pt-5 2xl:pb-6">
       {/* Awards reveal once the tasting is closed */}
       {showingAwards && (
-        <AwardsReveal awards={awards} winnerName={scores ? winnersName(scores.beers) : undefined} onClose={closeAwards} />
+        <AwardsReveal awards={awards} winnerName={scores ? winnersName(scores.beers) : undefined} avatars={avatarById} onClose={closeAwards} />
       )}
       {awards.length > 0 && awardsDismissed && (
         <button
@@ -805,9 +812,23 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
               className="flex flex-col items-center justify-center text-center gap-1.5 px-4 pt-4 pb-3.5 [@media(max-height:1000px)]:gap-0.5 [@media(max-height:1000px)]:pt-2.5 [@media(max-height:1000px)]:pb-2 rounded-[20px] bg-pine-deep border-t-4 border-t-[var(--acc)] min-w-0"
               style={{ '--acc': tile.accent } as React.CSSProperties}
             >
-              <span className="w-12 h-12 2xl:w-14 2xl:h-14 [@media(max-height:1000px)]:w-9 [@media(max-height:1000px)]:h-9 [@media(max-height:1000px)]:mb-0 shrink-0 mb-1 rounded-full border-2 border-[var(--acc)] bg-[color-mix(in_srgb,var(--acc)_14%,transparent)] text-[var(--acc)] flex items-center justify-center">
-                <tile.icon className="h-6 w-6" />
-              </span>
+              {tile.participantId ? (
+                // The winner's face, ringed in the award's accent, with its icon as a badge
+                <span className="relative shrink-0 mb-1 [@media(max-height:1000px)]:mb-0">
+                  <ParticipantAvatar
+                    avatar={avatarById[tile.participantId]}
+                    seed={tile.participantId}
+                    className="w-16 h-16 2xl:w-20 2xl:h-20 [@media(max-height:1000px)]:w-12 [@media(max-height:1000px)]:h-12 ring-[3px] ring-[var(--acc)] shadow-md"
+                  />
+                  <span className="absolute -bottom-1 -right-2 w-8 h-8 [@media(max-height:1000px)]:w-6 [@media(max-height:1000px)]:h-6 rounded-full bg-[var(--acc)] text-pine-deep flex items-center justify-center ring-2 ring-pine-deep">
+                    <tile.icon className="h-4 w-4 [@media(max-height:1000px)]:h-3.5 [@media(max-height:1000px)]:w-3.5" />
+                  </span>
+                </span>
+              ) : (
+                <span className="w-12 h-12 2xl:w-14 2xl:h-14 [@media(max-height:1000px)]:w-9 [@media(max-height:1000px)]:h-9 [@media(max-height:1000px)]:mb-0 shrink-0 mb-1 rounded-full border-2 border-[var(--acc)] bg-[color-mix(in_srgb,var(--acc)_14%,transparent)] text-[var(--acc)] flex items-center justify-center">
+                  <tile.icon className="h-6 w-6" />
+                </span>
+              )}
               {tile.detail ? (
                 <>
                   <span className="text-sm font-extrabold uppercase tracking-[0.18em] text-[var(--acc)] max-w-full truncate">{tile.label}</span>

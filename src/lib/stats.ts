@@ -95,6 +95,8 @@ export interface RatingEntry {
 export interface Rater {
   userName: string
   score: number
+  /** The first of any tie, for the avatar */
+  participantId?: string
 }
 
 /** Everyone on the given value, as one name: "Anna & Jón" when it's shared */
@@ -103,14 +105,14 @@ function namesAt<T extends { userName: string }>(items: T[], value: (item: T) =>
 }
 
 /** Highest and lowest scorer for one beer, naming everyone who shares either; null when nobody rated it */
-export function extremeRaters(ratings: Array<{ userName: string; score: number }>) {
+export function extremeRaters(ratings: Array<{ participantId?: string; userName: string; score: number }>) {
   if (ratings.length === 0) return null
   const scores = ratings.map(r => r.score)
   const highest = Math.max(...scores)
   const lowest = Math.min(...scores)
   return {
-    highestRater: { userName: namesAt(ratings, r => r.score, highest), score: highest },
-    lowestRater: { userName: namesAt(ratings, r => r.score, lowest), score: lowest },
+    highestRater: { userName: namesAt(ratings, r => r.score, highest), score: highest, participantId: ratings.find(r => r.score === highest)?.participantId },
+    lowestRater: { userName: namesAt(ratings, r => r.score, lowest), score: lowest, participantId: ratings.find(r => r.score === lowest)?.participantId },
   }
 }
 
@@ -118,7 +120,7 @@ export function extremeRaters(ratings: Array<{ userName: string; score: number }
  * Most generous and harshest raters by average, naming everyone who shares either.
  * Null with fewer than two raters, or when everyone averaged the same and nobody stands out
  */
-export function generousAndHarsh(participantStats: Array<{ userName: string; averageRating: number; ratingsCount: number }>) {
+export function generousAndHarsh(participantStats: Array<{ participantId?: string; userName: string; averageRating: number; ratingsCount: number }>) {
   const raters = participantStats.filter(p => p.ratingsCount > 0)
   if (raters.length < 2) return null
   const averages = raters.map(r => r.averageRating)
@@ -126,8 +128,9 @@ export function generousAndHarsh(participantStats: Array<{ userName: string; ave
   const lowest = Math.min(...averages)
   if (highest === lowest) return null
   return {
-    generous: { userName: namesAt(raters, r => r.averageRating, highest), averageRating: highest },
-    harsh: { userName: namesAt(raters, r => r.averageRating, lowest), averageRating: lowest },
+    // The first of any tie, for the avatar
+    generous: { userName: namesAt(raters, r => r.averageRating, highest), averageRating: highest, participantId: raters.find(r => r.averageRating === highest)?.participantId },
+    harsh: { userName: namesAt(raters, r => r.averageRating, lowest), averageRating: lowest, participantId: raters.find(r => r.averageRating === lowest)?.participantId },
   }
 }
 
@@ -261,10 +264,12 @@ export interface Award {
   title: string
   main: string
   sub: string
+  /** Who won it, for their avatars; left out for a beer's award */
+  participantIds?: string[]
 }
 
 interface AwardInputs {
-  participantStats: Array<{ userName: string; averageRating: number; ratingsCount: number }>
+  participantStats: Array<{ participantId?: string; userName: string; averageRating: number; ratingsCount: number }>
   beerControversy: Array<{
     beerId: string
     name: string
@@ -277,7 +282,11 @@ interface AwardInputs {
   guessAccuracy?: GuessAccuracy[]
   bestValue?: ValuePick | null
   // Sorted fastest first, as the analytics API returns it
-  ratingSpeed?: Array<{ userName: string; averageMinutes: number }>
+  ratingSpeed?: Array<{ participantId?: string; userName: string; averageMinutes: number }>
+}
+
+function ids(id: string | undefined): string[] | undefined {
+  return id ? [id] : undefined
 }
 
 /** Headline awards; each only included when there's enough data for it to mean something */
@@ -298,12 +307,14 @@ export function buildAwards({
       title: 'Örlátasti dómarinn',
       main: extremes.generous.userName,
       sub: `Meðaleinkunn ${extremes.generous.averageRating.toFixed(2)}`,
+      participantIds: ids(extremes.generous.participantId),
     })
     awards.push({
       kind: 'harsh',
       title: 'Strangasti dómarinn',
       main: extremes.harsh.userName,
       sub: `Meðaleinkunn ${extremes.harsh.averageRating.toFixed(2)}`,
+      participantIds: ids(extremes.harsh.participantId),
     })
   }
 
@@ -314,12 +325,14 @@ export function buildAwards({
       title: 'Bragðtvíburar',
       main: `${closest.aName} & ${closest.bName}`,
       sub: `Aðeins ${closest.meanDifference.toFixed(1)} stig á milli að meðaltali`,
+      participantIds: [closest.a, closest.b],
     })
     awards.push({
       kind: 'opposites',
       title: 'Algjörar andstæður',
       main: `${furthest.aName} & ${furthest.bName}`,
       sub: `${furthest.meanDifference.toFixed(1)} stig á milli að meðaltali`,
+      participantIds: [furthest.a, furthest.b],
     })
   }
 
@@ -353,6 +366,7 @@ export function buildAwards({
       title: 'Stærsti aðdáandi sigurvegarans',
       main: winnerFan.userName,
       sub: `${winnerFan.score} fyrir ${winner.name}`,
+      participantIds: ids(winnerFan.participantId),
     })
   }
 
@@ -367,6 +381,7 @@ export function buildAwards({
       title: 'Hugsanalesarinn',
       main: reader.userName,
       sub: `Aðeins ${reader.meanError.toFixed(2)} frá meðaltalinu að jafnaði`,
+      participantIds: [reader.participantId],
     })
   }
 
@@ -386,6 +401,7 @@ export function buildAwards({
       title: 'Hraðasti dómarinn',
       main: fastest.userName,
       sub: `${fastest.averageMinutes} mín að meðaltali`,
+      participantIds: ids(fastest.participantId),
     })
   }
 

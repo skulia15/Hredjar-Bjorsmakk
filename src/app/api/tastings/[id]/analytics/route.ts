@@ -213,6 +213,7 @@ export async function GET(
           controversy: standardDeviation > 2 ? 'High' : standardDeviation > 1 ? 'Medium' : 'Low',
           // Who pulled the beer furthest in each direction
           ...extremeRaters(beer.ratings.map(r => ({
+            participantId: r.participantId,
             userName: r.participant.user?.name || `Notandi ${r.participant.code}`,
             score: r.score
           })))
