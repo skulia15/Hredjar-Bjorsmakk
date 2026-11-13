@@ -30,7 +30,7 @@ export function BeerAwardsStrip({ awards }: { awards: BeerAward[] }) {
             style={{ borderTopColor: accent, animationDelay: `${900 + i * 120}ms` }}
           >
             <span className="relative shrink-0">
-              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-[4.5rem] h-[4.5rem] 2xl:w-24 2xl:h-24 shadow-sm" />
+              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-[clamp(4rem,min(5.5vw,9.5vh),7rem)] h-[clamp(4rem,min(5.5vw,9.5vh),7rem)] shadow-sm" />
               <span
                 className="absolute -bottom-1 -right-1 w-8 h-8 2xl:w-10 2xl:h-10 rounded-full text-cream flex items-center justify-center ring-2 ring-cream"
                 style={{ backgroundColor: accent }}
@@ -40,9 +40,9 @@ export function BeerAwardsStrip({ awards }: { awards: BeerAward[] }) {
               </span>
             </span>
             <span className="min-w-0 flex flex-col">
-              <span className="text-sm 2xl:text-base font-extrabold uppercase tracking-[0.06em] truncate" style={{ color: accent }}>{award.label}</span>
-              <span className="text-2xl 2xl:text-3xl font-extrabold leading-tight truncate">{award.name}</span>
-              <span className="text-base 2xl:text-xl text-ink-soft tabular-nums truncate">{award.detail}</span>
+              <span className="text-[length:clamp(0.85rem,min(0.95vw,1.7vh),1.25rem)] font-extrabold uppercase tracking-[0.02em] truncate" style={{ color: accent }}>{award.label}</span>
+              <span className="text-[length:clamp(1.4rem,min(1.7vw,3vh),2.5rem)] font-extrabold leading-tight line-clamp-2 break-words">{award.name}</span>
+              <span className="text-[length:clamp(1rem,min(1.1vw,2vh),1.5rem)] text-ink-soft tabular-nums truncate">{award.detail}</span>
             </span>
           </li>
         )

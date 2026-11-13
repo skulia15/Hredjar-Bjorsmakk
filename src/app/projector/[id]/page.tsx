@@ -431,11 +431,10 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
   // Calculate current beer stats
   const currentBeerRatings = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { score: number } => r.score !== null)
-  // Ratings come newest first: the right column pages through all of them, the full-width
-  // reveal lays out the six newest
+  // Ratings come newest first: the right column and the reveal both page through all of them
   const allNotes = (pendingRaters?.rated || [])
     .filter((r): r is RatedParticipant & { note: string } => !!r.note?.trim())
-    .map(r => ({ key: r.participantId, name: r.name, avatar: r.avatar, note: r.note.trim() }))
+    .map(r => ({ key: r.participantId, avatar: r.avatar, note: r.note.trim() }))
   const beerNotes = allNotes
   const liveAverage = currentBeerRatings.length > 0
     ? currentBeerRatings.reduce((sum, r) => sum + r.score, 0) / currentBeerRatings.length
@@ -651,7 +650,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     bestGuess={bestGuess}
                     tags={pendingRaters.tags}
                     raters={pendingRaters.ratedCount}
-                    notes={allNotes.slice(0, 6)}
+                    notes={allNotes}
                     justRevealed={justRevealed}
                     showTags={tagsOn}
                     awards={currentBeerAwards(pendingRaters, tasting.beers)}

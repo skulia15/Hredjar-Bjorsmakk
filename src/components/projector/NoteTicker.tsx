@@ -5,7 +5,6 @@ import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 
 export interface TickerNote {
   key: string
-  name: string
   avatar?: string | null
   note: string
 }
@@ -15,8 +14,9 @@ const PAGE_MS = 8000
 /**
  * Rating notes, stacked so a few read at once from across the room. Shows as many as fit whole
  * in the height it's given; when there are more, it pages through them all, newest first.
+ * `cream` is for the cream reveal card, where cream notes would vanish into the card.
  */
-export function NoteStack({ notes }: { notes: TickerNote[] }) {
+export function NoteStack({ notes, tone = 'dark' }: { notes: TickerNote[]; tone?: 'dark' | 'cream' }) {
   const listRef = useRef<HTMLUListElement>(null)
   const [start, setStart] = useState(0)
   // How many whole notes fit, measured from the list itself
@@ -68,18 +68,23 @@ export function NoteStack({ notes }: { notes: TickerNote[] }) {
           <li
             // By author and page: a new page fades in, but a new note arriving doesn't replay the others
             key={`${note.key}-${paging ? first : 0}`}
-            className="shrink-0 flex items-start gap-3.5 rounded-2xl rounded-bl-sm bg-cream px-4 py-3 text-ink animate-in fade-in slide-in-from-bottom-2 duration-500"
+            // Sized off the screen, so a big projector gets big notes
+            className={`shrink-0 flex items-center gap-4 rounded-2xl rounded-bl-sm px-4 py-3 text-ink animate-in fade-in slide-in-from-bottom-2 duration-500 ${
+              tone === 'cream' ? 'bg-white/80 border-2 border-cream-line' : 'bg-cream'
+            }`}
           >
-            <ParticipantAvatar avatar={note.avatar} seed={note.key} className="w-14 h-14 2xl:w-16 2xl:h-16 shrink-0 shadow-sm" />
-            <span className="min-w-0 flex-1 flex flex-col">
-              <span className="text-base 2xl:text-lg font-extrabold uppercase tracking-[0.06em] text-cranberry truncate">{note.name}</span>
-              <blockquote className="text-xl 2xl:text-[1.65rem] font-semibold leading-snug line-clamp-3">„{note.note}“</blockquote>
-            </span>
+            <ParticipantAvatar
+              avatar={note.avatar}
+              seed={note.key}
+              className="w-[clamp(3.5rem,min(4.6vw,8.5vh),6.5rem)] h-[clamp(3.5rem,min(4.6vw,8.5vh),6.5rem)] shrink-0 shadow-sm"
+            />
+            {/* Anonymous on purpose: guessing who wrote what is half the fun */}
+            <blockquote className="min-w-0 flex-1 text-[length:clamp(1.2rem,min(1.45vw,2.6vh),2.25rem)] font-semibold leading-snug line-clamp-3">„{note.note}“</blockquote>
           </li>
         ))}
       </ul>
       {paging && (
-        <span className="shrink-0 text-right text-base font-semibold text-mint tabular-nums">
+        <span className={`shrink-0 text-right text-lg font-semibold tabular-nums ${tone === 'cream' ? 'text-muted-foreground' : 'text-mint'}`}>
           {first + 1}–{Math.min(first + perPage, count)} af {count}
         </span>
       )}

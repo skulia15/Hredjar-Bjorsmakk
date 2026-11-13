@@ -1,12 +1,11 @@
 import Image from 'next/image'
 import { ArrowDown, ArrowUp, Brain, PartyPopper, Sparkles } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
-import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { CountUp } from '@/components/projector/CountUp'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
-import type { TickerNote } from '@/components/projector/NoteTicker'
+import { NoteStack, type TickerNote } from '@/components/projector/NoteTicker'
 import { BeerAwardsStrip } from '@/components/projector/BeerAwardsStrip'
 import { beerImageSrc } from '@/lib/beerImage'
 import { formatAbv } from '@/lib/utils'
@@ -43,9 +42,6 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
   const highest = Math.max(...scores)
   const lowest = Math.min(...scores)
   const showTagCloud = showTags && tags.length > 0
-  // Two rows of notes fit under the bars on a big screen: two a row beside the tags, three without them
-  const shownNotes = notes.slice(0, showTagCloud ? 4 : 6)
-  const hasExtras = showTagCloud || shownNotes.length > 0
 
   return (
     <>
@@ -87,24 +83,24 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
         </div>
 
         <div className="flex flex-col items-end gap-1 text-right">
-          <span className="text-2xl font-semibold text-muted-foreground">Meðaleinkunn</span>
+          <span className="text-2xl 2xl:text-3xl font-semibold text-muted-foreground">Meðaleinkunn</span>
           <span className="text-[length:min(11rem,9vw,15vh)] leading-[0.85] font-extrabold text-cranberry tabular-nums whitespace-nowrap">
             <CountUp value={average} durationMs={justRevealed ? 1800 : 600} />
           </span>
-          <span className="mt-2 flex items-center gap-7 text-2xl 2xl:text-3xl font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
+          <span className="mt-2 flex items-center gap-7 text-[length:clamp(1.5rem,min(1.9vw,3.3vh),2.75rem)] font-semibold text-muted-foreground tabular-nums whitespace-nowrap">
             <span>{scores.length} einkunn{scores.length !== 1 ? 'ir' : ''}</span>
             <span className="inline-flex items-center gap-1" title="Hæsta einkunn">
-              <ArrowUp className="h-7 w-7 text-holly" aria-label="Hæsta" />
+              <ArrowUp className="h-[1.1em] w-[1.1em] text-holly" aria-label="Hæsta" />
               {highest.toFixed(1)}
             </span>
             <span className="inline-flex items-center gap-1" title="Lægsta einkunn">
-              <ArrowDown className="h-7 w-7 text-cranberry" aria-label="Lægsta" />
+              <ArrowDown className="h-[1.1em] w-[1.1em] text-cranberry" aria-label="Lægsta" />
               {lowest.toFixed(1)}
             </span>
           </span>
           {bestGuess && (
-            <span className="mt-2 inline-flex items-center gap-2 text-2xl 2xl:text-3xl font-extrabold text-holly animate-in fade-in fill-mode-both duration-700 [animation-delay:1800ms]">
-              <Brain className="h-7 w-7" />
+            <span className="mt-2 inline-flex items-center gap-2 text-[length:clamp(1.5rem,min(1.9vw,3.3vh),2.75rem)] font-extrabold text-holly animate-in fade-in fill-mode-both duration-700 [animation-delay:1800ms]">
+              <Brain className="h-[1.1em] w-[1.1em]" />
               {bestGuess.userName} giskaði næst: {bestGuess.guess.toFixed(1)}
             </span>
           )}
@@ -113,51 +109,33 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
 
       <BeerAwardsStrip awards={awards} />
 
-      {/* The bars take whatever height the header leaves. On a big screen the tags and notes sit
-          under them; on a smaller projector there's no height for that, so they go beside them */}
+      {/* Bars with the tags under them on the left, notes down the whole right. The notes get the
+          column's full height and page through the rest, so big notes never get cut off */}
       <div
-        className={`w-full flex-1 min-h-0 flex flex-col gap-6 ${
-          hasExtras ? 'max-2xl:grid max-2xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] max-2xl:gap-10' : ''
+        className={`w-full flex-1 min-h-0 grid grid-rows-[minmax(0,1fr)] gap-8 2xl:gap-12 ${
+          notes.length > 0 ? 'grid-cols-2' : ''
         }`}
       >
-        <div className="flex-1 min-h-[10rem]">
-          <ScoreBars size="lg" scores={scores} />
+        <div className="min-h-0 flex flex-col gap-5 [--tag-scale:1.2] 2xl:[--tag-scale:1.6]">
+          <div className="flex-1 min-h-[8rem]">
+            <ScoreBars size="lg" scores={scores} />
+          </div>
+          {showTagCloud && (
+            // A set share of the column (fit needs a fixed height to shrink into), every tag shrunk
+            // only as far as that needs
+            <div className="shrink-0 basis-[35%] min-h-0 flex flex-col gap-3 animate-in fade-in duration-700" aria-label="Bragðlýsingar">
+              <span className="shrink-0 text-2xl 2xl:text-3xl font-semibold text-muted-foreground">Bragðlýsingar</span>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                <TagCloud tags={tags} raters={raters} align="start" fit />
+              </div>
+            </div>
+          )}
         </div>
 
-        {hasExtras && (
-          <div className="shrink-0 grid grid-cols-1 2xl:grid-cols-2 gap-5 2xl:gap-10 content-start [--tag-scale:1.2] 2xl:[--tag-scale:1.5]">
-            {showTagCloud && (
-              <div className="flex flex-col gap-3 animate-in fade-in duration-700" aria-label="Bragðlýsingar">
-                <span className="text-2xl font-semibold text-muted-foreground">Bragðlýsingar</span>
-                <TagCloud tags={tags} raters={raters} limit={10} align="start" />
-              </div>
-            )}
-            {shownNotes.length > 0 && (
-              <div className={`flex flex-col gap-3 animate-in fade-in duration-700 ${showTagCloud ? '' : '2xl:col-span-2'}`}>
-                <span className="text-2xl font-semibold text-muted-foreground">Athugasemdir</span>
-                {/* Named, like the right column. One a row beside the bars, so fewer of them fit there */}
-                <ul
-                  className={`grid gap-3 grid-cols-1 ${showTagCloud ? '2xl:grid-cols-2 max-2xl:[&>li:nth-child(n+3)]:hidden' : '2xl:grid-cols-3 max-2xl:[&>li:nth-child(n+5)]:hidden'}`}
-                >
-                  {shownNotes.map(note => (
-                    <li
-                      key={note.key}
-                      className="flex items-center gap-3.5 rounded-2xl rounded-bl-sm border-2 border-cream-line bg-white/70 px-4 py-3 text-lg 2xl:text-2xl leading-snug"
-                    >
-                      <ParticipantAvatar
-                        avatar={note.avatar}
-                        seed={note.key}
-                        className="w-16 h-16 2xl:w-20 2xl:h-20 shrink-0 shadow-sm"
-                      />
-                      <span className="min-w-0 flex-1 flex flex-col">
-                        <span className="text-base 2xl:text-lg font-extrabold uppercase tracking-[0.06em] text-cranberry truncate">{note.name}</span>
-                        <span className="line-clamp-2 2xl:line-clamp-3">„{note.note}“</span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+        {notes.length > 0 && (
+          <div className="min-h-0 flex flex-col gap-3 animate-in fade-in duration-700">
+            <span className="shrink-0 text-2xl 2xl:text-3xl font-semibold text-muted-foreground">Athugasemdir</span>
+            <NoteStack notes={notes} tone="cream" />
           </div>
         )}
       </div>
