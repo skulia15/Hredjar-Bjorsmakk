@@ -112,7 +112,8 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
             </p>
 
             {hasAwards && (
-              <div className="text-left text-foreground">
+              // Wider than the rest of the overlay, so five tiles keep the strip's projector-sized text
+              <div className="relative left-1/2 -translate-x-1/2 w-[min(110rem,94vw)] text-left text-foreground">
                 <BeerAwardsStrip awards={reveal.awards} />
               </div>
             )}

@@ -17,7 +17,7 @@ export function BeerAwardsStrip({ awards }: { awards: BeerAward[] }) {
   return (
     <ul
       aria-label="Verðlaun fyrir þennan bjór"
-      className="w-full grid gap-3 2xl:gap-4 grid-cols-[repeat(var(--award-count),minmax(0,1fr))]"
+      className="w-full grid gap-4 2xl:gap-5 grid-cols-[repeat(var(--award-count),minmax(0,1fr))]"
       style={{ '--award-count': awards.length } as React.CSSProperties}
     >
       {awards.map((award, i) => {
@@ -25,24 +25,24 @@ export function BeerAwardsStrip({ awards }: { awards: BeerAward[] }) {
         return (
           <li
             key={award.kind}
-            className="min-w-0 flex items-center gap-3 rounded-2xl border-t-4 bg-[#FFFDF7] text-ink px-3.5 py-2.5 2xl:py-3 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
+            className="min-w-0 flex items-center gap-4 rounded-2xl border-t-4 bg-[#FFFDF7] text-ink px-4 py-3 2xl:py-4 animate-in fade-in slide-in-from-bottom-2 fill-mode-both duration-500"
             // Each lands just after the one before, once the bars have grown
             style={{ borderTopColor: accent, animationDelay: `${900 + i * 120}ms` }}
           >
             <span className="relative shrink-0">
-              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-14 h-14 2xl:w-[4.5rem] 2xl:h-[4.5rem] shadow-sm" />
+              <ParticipantAvatar avatar={award.avatar} seed={award.participantId} className="w-[4.5rem] h-[4.5rem] 2xl:w-24 2xl:h-24 shadow-sm" />
               <span
-                className="absolute -bottom-1 -right-1 w-7 h-7 2xl:w-8 2xl:h-8 rounded-full text-cream flex items-center justify-center ring-2 ring-cream"
+                className="absolute -bottom-1 -right-1 w-8 h-8 2xl:w-10 2xl:h-10 rounded-full text-cream flex items-center justify-center ring-2 ring-cream"
                 style={{ backgroundColor: accent }}
                 aria-hidden
               >
-                <Icon className="h-4 w-4 2xl:h-[1.1rem] 2xl:w-[1.1rem]" />
+                <Icon className="h-[1.1rem] w-[1.1rem] 2xl:h-5 2xl:w-5" />
               </span>
             </span>
             <span className="min-w-0 flex flex-col">
-              <span className="text-xs font-extrabold uppercase tracking-[0.06em] truncate" style={{ color: accent }}>{award.label}</span>
-              <span className="text-lg 2xl:text-2xl font-extrabold leading-tight truncate">{award.name}</span>
-              <span className="text-sm 2xl:text-base text-ink-soft tabular-nums truncate">{award.detail}</span>
+              <span className="text-sm 2xl:text-base font-extrabold uppercase tracking-[0.06em] truncate" style={{ color: accent }}>{award.label}</span>
+              <span className="text-2xl 2xl:text-3xl font-extrabold leading-tight truncate">{award.name}</span>
+              <span className="text-base 2xl:text-xl text-ink-soft tabular-nums truncate">{award.detail}</span>
             </span>
           </li>
         )
