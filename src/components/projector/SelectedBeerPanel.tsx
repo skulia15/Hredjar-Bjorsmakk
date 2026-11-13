@@ -1,7 +1,6 @@
 import Image from 'next/image'
 import { ArrowDown, ArrowLeft, ArrowUp } from 'lucide-react'
 import { BeerPlaceholder } from '@/components/BeerPlaceholder'
-import { ParticipantAvatar } from '@/components/ChristmasAvatar'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
@@ -34,11 +33,10 @@ interface SelectedBeerPanelProps {
 
 /**
  * A finished beer picked from the leaderboard, shown in the middle card in place of the
- * current beer: where it landed, its average and what each person gave it.
+ * current beer: where it landed, its average and how the scores spread.
  */
 export function SelectedBeerPanel({ beer, rank, average, ratings, tags, showTags, backLabel, onBack }: SelectedBeerPanelProps) {
   const scores = ratings?.map(r => r.score) ?? []
-  const sorted = [...(ratings ?? [])].sort((a, b) => b.score - a.score || a.userName.localeCompare(b.userName))
 
   return (
     <div className="w-full flex-1 min-h-0 flex flex-col gap-4 text-left animate-in fade-in zoom-in-95 duration-300">
@@ -90,17 +88,10 @@ export function SelectedBeerPanel({ beer, rank, average, ratings, tags, showTags
         <p className="flex-1 flex items-center justify-center text-2xl text-muted-foreground">Sæki einkunnir…</p>
       ) : (
         <>
-          {/* Who gave what, highest first */}
-          <ul className="flex-1 min-h-0 overflow-y-auto grid grid-cols-2 auto-rows-min gap-2.5 content-start">
-            {sorted.map(r => (
-              <li key={r.participantId} className="flex items-center gap-3 pl-2 pr-4 py-1.5 rounded-full bg-white/70 border-2 border-cream-line min-w-0">
-                <ParticipantAvatar avatar={r.avatar} seed={r.participantId} className="w-11 h-11 shrink-0" />
-                <span className="flex-1 min-w-0 truncate text-xl font-semibold">{r.userName}</span>
-                <span className="text-2xl font-extrabold tabular-nums">{r.score.toFixed(1)}</span>
-              </li>
-            ))}
-          </ul>
-          <ScoreBars scores={scores} />
+          {/* No room for who gave what in the middle card: the bars show the spread */}
+          <div className="flex-1 min-h-[8rem]">
+            <ScoreBars size="lg" scores={scores} />
+          </div>
           {showTags && tags.length > 0 && (
             <div className="w-full" aria-label="Bragðlýsingar">
               <TagCloud tags={tags} raters={scores.length} limit={6} />

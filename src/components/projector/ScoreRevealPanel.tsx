@@ -7,7 +7,9 @@ import { CountUp } from '@/components/projector/CountUp'
 import { ScoreBars } from '@/components/projector/ScoreBars'
 import { TagCloud } from '@/components/projector/TagCloud'
 import type { TickerNote } from '@/components/projector/NoteTicker'
+import { BeerAwardsStrip } from '@/components/projector/BeerAwardsStrip'
 import { beerImageSrc } from '@/lib/beerImage'
+import type { BeerAward } from '@/lib/beerAwards'
 
 interface ScoreRevealPanelProps {
   beer: {
@@ -27,13 +29,15 @@ interface ScoreRevealPanelProps {
   // The hidden scores came out just now, not on a reload: count up and celebrate
   justRevealed: boolean
   showTags: boolean
+  /** This beer's own awards (fastest, slowest, most generous, strictest, Útlaginn) */
+  awards: BeerAward[]
 }
 
 /**
  * The current-beer card once everyone has rated, when it takes the whole width of the
  * projector: big average, big score bars, and every tag and note at a readable size.
  */
-export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, raters, notes, justRevealed, showTags }: ScoreRevealPanelProps) {
+export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, raters, notes, justRevealed, showTags, awards }: ScoreRevealPanelProps) {
   const highest = Math.max(...scores)
   const lowest = Math.min(...scores)
   const showTagCloud = showTags && tags.length > 0
@@ -103,6 +107,8 @@ export function ScoreRevealPanel({ beer, scores, average, bestGuess, tags, rater
           )}
         </div>
       </div>
+
+      <BeerAwardsStrip awards={awards} />
 
       {/* The bars take whatever height the header leaves. On a big screen the tags and notes sit
           under them; on a smaller projector there's no height for that, so they go beside them */}

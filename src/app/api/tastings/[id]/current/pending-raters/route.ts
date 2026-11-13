@@ -98,7 +98,9 @@ export async function GET(
       groupGuess: scoresHidden ? null : rating.groupGuess,
       // A note can give the verdict away, so the tasting chooses whether it waits until everyone has rated
       note: notesHidden ? null : rating.note,
-      submittedAt: rating.updatedAt.toISOString()
+      submittedAt: rating.updatedAt.toISOString(),
+      // When they first rated it; edits move submittedAt, not this. For the reveal's fastest and slowest
+      ratedAt: rating.createdAt.toISOString()
     }))
 
     const toPending = (p: (typeof tasting.participants)[number]) => ({

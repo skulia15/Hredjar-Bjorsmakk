@@ -9,6 +9,7 @@ import { fetchTasting } from '@/lib/fetchTasting'
 import { AwardsReveal } from '@/components/AwardsReveal'
 import { buildAwards, closestGuess, extremeRaters, generousAndHarsh, soleWinner, winnersName, type GuessAccuracy, type Rater, type TastePair, type ValuePick } from '@/lib/stats'
 import { playFanfare, playPop } from '@/lib/sounds'
+import { beerAwards, type BeerAward } from '@/lib/beerAwards'
 import { Beer as BeerIcon, Coffee, Crown, MessageSquareOff, Gift, Hourglass, Maximize, Medal, Minimize, PartyPopper, Rocket, Search, Snail, Star, Tags, Target, Trophy, Volume2, VolumeX } from 'lucide-react'
 import { FoamCard } from '@/components/FoamCard'
 import { SantaMug } from '@/components/SantaMug'
@@ -71,6 +72,7 @@ interface RatedParticipant {
   groupGuess: number | null
   note: string | null  // null while scores are hidden
   submittedAt: string
+  ratedAt?: string  // first rating; edits move submittedAt
 }
 
 interface PendingParticipant {
@@ -148,7 +150,17 @@ interface AnalyticsData {
 }
 
 /** Everything the finished-beer reveal shows, from the fresh scores plus the beer's ratings */
-async function loadFinishedReveal(tastingId: string, beer: Beer, scores: ScoresData): Promise<FinishedBeerReveal | null> {
+/** The current beer's awards from its ratings so far; none while its scores are hidden */
+function currentBeerAwards(pending: PendingRatersData | null, beers: Beer[]): BeerAward[] {
+  if (!pending) return []
+  const since = beers.find(b => b.id === pending.currentBeerId)?.currentSince
+  return beerAwards(
+    pending.rated.flatMap(r => r.score === null ? [] : [{ participantId: r.participantId, name: r.name, avatar: r.avatar, score: r.score, ratedAt: r.ratedAt ?? r.submittedAt }]),
+    since ? new Date(since).toISOString() : null
+  )
+}
+
+async function loadFinishedReveal(tastingId: string, beer: Beer, scores: ScoresData, awards: BeerAward[]): Promise<FinishedBeerReveal | null> {
   const score = scores.beers.find(b => b.beerId === beer.id)
   if (!score) return null // Nobody rated it, nothing to reveal
 
@@ -175,6 +187,7 @@ async function loadFinishedReveal(tastingId: string, beer: Beer, scores: ScoresD
     ...extremeRaters(raters),
     closestGuess: guess ?? undefined,
     tags: beerDetail?.tags ?? [],
+    awards,
   }
 }
 
@@ -205,6 +218,8 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
     currentBeerId: string | null
     hiddenBeerId: string | null
     participantIds: Set<string>
+    // Gone from the API once the beer is finished, so kept from the last poll for its overlay
+    awards: BeerAward[]
   } | undefined>(undefined)
 
   useEffect(() => {
@@ -305,6 +320,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         currentBeerId: tastingData.currentBeerId ?? null,
         hiddenBeerId,
         participantIds: new Set(tastingData.participants.map(p => p.id)),
+        awards: currentBeerAwards(pendingData, tastingData.beers),
       }
       if (!before) return
 
@@ -313,7 +329,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
         ? tastingData.beers.find(b => b.id === before.currentBeerId && b.status === 'finished')
         : undefined
       if (finishedBeer) {
-        loadFinishedReveal(params.id, finishedBeer, scoresData)
+        loadFinishedReveal(params.id, finishedBeer, scoresData, before.awards)
           .then(reveal => reveal && setFinishedReveal(reveal))
           .catch(err => console.error('Error loading finished beer reveal:', err))
       }
@@ -628,6 +644,7 @@ export default function ProjectorDisplayPage({ params: paramsPromise }: { params
                     notes={allNotes.slice(0, 6)}
                     justRevealed={justRevealed}
                     showTags={tagsOn}
+                    awards={currentBeerAwards(pendingRaters, tasting.beers)}
                   />
                 </motion.div>
               ) : (

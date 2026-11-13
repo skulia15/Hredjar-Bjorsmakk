@@ -7,6 +7,8 @@ import { CountUp } from '@/components/projector/CountUp'
 import { TagCloud } from '@/components/projector/TagCloud'
 import type { BeerTagCount } from '@/components/TastingNotes'
 import type { Rater } from '@/lib/stats'
+import type { BeerAward } from '@/lib/beerAwards'
+import { BeerAwardsStrip } from '@/components/projector/BeerAwardsStrip'
 import { playDrumroll, playFanfare } from '@/lib/sounds'
 import { beerImageSrc } from '@/lib/beerImage'
 
@@ -23,6 +25,8 @@ export interface FinishedBeerReveal {
   lowestRater?: Rater
   closestGuess?: { userName: string; guess: number }
   tags: BeerTagCount[]
+  /** This beer's awards, as on the score reveal; empty when its scores never came out */
+  awards: BeerAward[]
 }
 
 const DRUMROLL_MS = 2200
@@ -54,14 +58,15 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
   }, [])
 
   const isTop = reveal.rank === 1 && reveal.totalRanked > 1
-  const differentRaters = reveal.highestRater && reveal.lowestRater && reveal.highestRater.score !== reveal.lowestRater.score
+  const hasAwards = reveal.awards.length > 0
+  const differentRaters = !hasAwards && reveal.highestRater && reveal.lowestRater && reveal.highestRater.score !== reveal.lowestRater.score
 
   return (
     <div
       className="fixed inset-0 z-50 bg-background/95 backdrop-blur flex flex-col items-center justify-center p-8 cursor-pointer animate-in fade-in duration-500"
       onClick={onClose}
     >
-      <div className="flex flex-col items-center text-center max-w-4xl w-full space-y-6">
+      <div className="flex flex-col items-center text-center max-w-7xl w-full space-y-6">
         <p className="text-2xl uppercase tracking-widest text-muted-foreground">Bjór kláraður</p>
 
         <div className={phase === 'drumroll' ? 'animate-bounce' : ''}>
@@ -101,6 +106,12 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
               {reveal.count} einkunn{reveal.count !== 1 ? 'ir' : ''}
             </p>
 
+            {hasAwards && (
+              <div className="text-left text-foreground">
+                <BeerAwardsStrip awards={reveal.awards} />
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {differentRaters && (
                 <>
@@ -130,7 +141,7 @@ export function BeerFinishedReveal({ reveal, onClose, showTags = true }: { revea
 
             {showTags && (
               <div className="animate-in fade-in duration-700 fill-mode-both [animation-delay:800ms]">
-                <TagCloud tags={reveal.tags} raters={reveal.count} limit={8} />
+                <TagCloud tags={reveal.tags} raters={reveal.count} limit={reveal.tags.length} />
               </div>
             )}
           </div>
