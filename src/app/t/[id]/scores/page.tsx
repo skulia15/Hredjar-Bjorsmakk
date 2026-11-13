@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic'
 import { NudgeNotification } from '@/components/NudgeNotification'
 import { useNudge } from '@/hooks/useNudge'
 import { PersonalStats } from '@/components/PersonalStats'
-import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown, Table, Users } from 'lucide-react'
+import { Beer as BeerIcon, ChevronDown, ChevronUp, Crown, Feather, Table, Users } from 'lucide-react'
 import { StatCard } from '@/components/StatCard'
 import { FoamCard } from '@/components/FoamCard'
 import { ParticipantAvatar } from '@/components/ChristmasAvatar'
@@ -17,6 +17,8 @@ import { RankMedal } from '@/components/RankMedal'
 import { usePolling } from '@/hooks/usePolling'
 import { ShareResultsButton } from '@/components/ShareResultsButton'
 import { type BeerTagCount, TagChips, TastingNotes } from '@/components/TastingNotes'
+import type { RatingTrendPoint } from '@/components/RatingTrendChart'
+import { isLightBeer } from '@/lib/lightBeer'
 
 const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod => ({ default: mod.ScoresCharts })), {
   ssr: false,
@@ -25,6 +27,11 @@ const ScoresCharts = dynamic(() => import('@/components/ScoresCharts').then(mod 
       <p className="text-muted-foreground">Hleður tölfræði...</p>
     </div>
   )
+})
+
+// Scores over the night, shown on its own while the tasting is on; the full stats wait for the end
+const RatingTrendChart = dynamic(() => import('@/components/RatingTrendChart').then(mod => ({ default: mod.RatingTrendChart })), {
+  ssr: false,
 })
 
 const RatingsTable = dynamic(() => import('@/components/RatingsTable').then(mod => ({ default: mod.RatingsTable })), {
@@ -114,6 +121,7 @@ interface AnalyticsData {
   }>
   ratingDistribution: Record<string, number>
   beerTimings: BeerTiming[]
+  ratingTrend?: RatingTrendPoint[]
   topRatedBeers: Array<{
     beerId: string
     name: string
@@ -249,6 +257,8 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
     participantId ? ratingsDetail?.beers.find(b => b.beerId === beerId)?.ratings[participantId] ?? null : null
   const podiumOrder = [podium[1], podium[0], podium[2]]
   const rest = scores.beers.slice(3)
+  // Light beers ranked against each other, since they rarely stand a chance on the main board
+  const lightBeers = scores.beers.filter(beer => isLightBeer(beer.name))
 
   return (
     <div className="min-h-screen px-4 pt-4 pb-8 md:p-8">
@@ -367,6 +377,38 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
               </div>
             )}
 
+            {lightBeers.length > 0 && (
+              <StatCard
+                defaultOpen
+                icon={Feather}
+                title="Bestu léttbjórarnir"
+                description={`${lightBeers.length} ${lightBeers.length === 1 ? 'bjór' : 'bjórar'} með Lite eða Light í nafninu`}
+              >
+                <ol>
+                  {lightBeers.map((beer, i) => (
+                    <li key={beer.beerId} className="flex items-center gap-3 min-h-14 py-2 border-b border-border last:border-b-0">
+                      <span className="w-8 h-8 shrink-0 rounded-full bg-gold-soft text-ink flex items-center justify-center text-[0.9375rem] font-extrabold">
+                        {i + 1}
+                      </span>
+                      <span className="flex-1 min-w-0 flex flex-col">
+                        <span className="text-base font-semibold">{beer.name}</span>
+                        <span className="text-[0.8125rem] text-muted-foreground truncate">
+                          {beer.brewery} · {beer.rank}. sæti alls
+                        </span>
+                      </span>
+                      <span className="text-right shrink-0">
+                        <span className="block text-lg font-extrabold text-holly">{beer.average.toFixed(2)}</span>
+                        <span className="block text-xs text-muted-foreground">
+                          {beer.count} eink.
+                          {myScore(beer.beerId) != null && <span className="font-semibold"> · Þú: {myScore(beer.beerId)}</span>}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </StatCard>
+            )}
+
             <div className="flex justify-center">
               <ShareResultsButton
                 tastingId={params.id}
@@ -385,6 +427,11 @@ export default function ScoresPage({ params: paramsPromise }: { params: Promise<
             beers={ratingsDetail.beers}
             favoriteStyle={analytics?.participantStylePreferences?.find(p => p.participantId === participantId)?.favoriteStyle}
           />
+        )}
+
+        {/* How scores moved over the night, while it's on; once it's over it's among the charts below */}
+        {isClient && scores.status !== 'closed' && analytics?.ratingTrend && (
+          <RatingTrendChart ratingTrend={analytics.ratingTrend} defaultOpen />
         )}
 
         {/* Charts and awards once it's over, when the projector reveals the awards too */}
